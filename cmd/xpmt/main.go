@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"os"
+
+	"github.com/amplitude/experiment-go-server/pkg/experiment"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func fetch() {
 	userId := fetchCmd.String("i", "", "User id to fetch variants for.")
 	deviceId := fetchCmd.String("d", "", "Device id to fetch variants for.")
 	userJson := fetchCmd.String("u", "", "The full user object to fetch variants for.")
-
+	debug := fetchCmd.Bool("debug", false, "Log additional debug output to std out.")
 	_ = fetchCmd.Parse(os.Args[2:])
 
 	if len(os.Args) == 2 {
@@ -64,7 +65,7 @@ func fetch() {
 		user.DeviceId = *deviceId
 	}
 
-	client := experiment.Initialize(*apiKey, &experiment.Config{})
+	client := experiment.Initialize(*apiKey, &experiment.Config{Debug: *debug})
 	variants, err := client.Fetch(user)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)

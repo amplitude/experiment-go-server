@@ -5,28 +5,33 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/amplitude/experiment-go-server/internal/logger"
 )
 
 var client *Client
-var mutex = sync.Once{}
+var once = sync.Once{}
 
 type Client struct {
+	log    *logger.Log
 	apiKey string
 	config *Config
 	client *http.Client
 }
 
 func Initialize(apiKey string, config *Config) *Client {
-	mutex.Do(func() {
+	once.Do(func() {
 		if apiKey == "" {
 			panic("api key must be set")
 		}
 		config = fillConfigDefaults(config)
 		client = &Client{
+			log:    logger.New(config.Debug),
 			apiKey: apiKey,
 			config: config,
 			client: &http.Client{},
@@ -36,14 +41,19 @@ func Initialize(apiKey string, config *Config) *Client {
 }
 
 func (c *Client) Fetch(user *User) (Variants, error) {
-	variants, err := c.doFetch(user, c.config.FetchTimeoutMillis)
+	variants, err := c.doFetch(user, c.config.FetchTimeout)
 	if err != nil {
-		return c.retryFetch(user)
+		c.log.Error("fetch error: %v", err)
+		if c.config.RetryBackoff.FetchRetries > 0 {
+			return c.retryFetch(user)
+		} else {
+			return nil, err
+		}
 	}
 	return variants, err
 }
 
-func (c *Client) doFetch(user *User, timeoutMillis int) (Variants, error) {
+func (c *Client) doFetch(user *User, timeout time.Duration) (Variants, error) {
 	addLibraryContext(user)
 	endpoint, err := url.Parse(c.config.ServerUrl)
 	if err != nil {
@@ -54,7 +64,8 @@ func (c *Client) doFetch(user *User, timeoutMillis int) (Variants, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutMillis) * time.Millisecond)
+	c.log.Debug("fetch variants for user %s", string(jsonBytes))
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, "POST", endpoint.String(), bytes.NewBuffer(jsonBytes))
 	if err != nil {
@@ -67,33 +78,36 @@ func (c *Client) doFetch(user *User, timeoutMillis int) (Variants, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetch resulted in error response %v", resp.StatusCode)
+		return nil, fmt.Errorf("fetch request resulted in error response %v", resp.StatusCode)
 	}
-	return parseResponse(resp)
+	c.log.Debug("fetch success: %v", *resp)
+	return c.parseResponse(resp)
 }
 
 func (c *Client) retryFetch(user *User) (Variants, error) {
 	var err error
 	var timer *time.Timer
-	delay := time.Duration(c.config.RetryBackoff.FetchRetryBackoffMinMillis) * time.Millisecond
+	delay := c.config.RetryBackoff.FetchRetryBackoffMin
 	for i := 0; i < c.config.RetryBackoff.FetchRetries; i++ {
+		c.log.Debug("retry attempt %v", i)
 		timer = time.NewTimer(delay)
-		<- timer.C
-		variants, err := c.doFetch(user, c.config.RetryBackoff.FetchRetryTimeoutMillis)
+		<-timer.C
+		variants, err := c.doFetch(user, c.config.RetryBackoff.FetchRetryTimeout)
 		if err == nil && variants != nil {
+			c.log.Debug("retry attempt %v success", i)
 			return variants, nil
 		}
+		c.log.Debug("retry attempt %v error: %v", i, err)
+		delay = time.Duration(math.Min(
+			float64(delay)*c.config.RetryBackoff.FetchRetryBackoffScalar,
+			float64(c.config.RetryBackoff.FetchRetryBackoffMax)),
+		)
 	}
+	c.log.Error("fetch retries failed after %v attempts: %v", c.config.RetryBackoff.FetchRetries, err)
 	return nil, err
 }
 
-func addLibraryContext(user *User) {
-	if user.Library == "" {
-		user.Library = fmt.Sprintf("experiment-go-server/%v", VERSION)
-	}
-}
-
-func parseResponse(resp *http.Response) (Variants, error) {
+func (c *Client) parseResponse(resp *http.Response) (Variants, error) {
 	interop := make(interopVariants)
 	err := json.NewDecoder(resp.Body).Decode(&interop)
 	if err != nil {
@@ -108,9 +122,16 @@ func parseResponse(resp *http.Response) (Variants, error) {
 			value = iv.Value
 		}
 		variants[k] = Variant{
-			Value: value,
+			Value:   value,
 			Payload: iv.Payload,
 		}
 	}
+	c.log.Debug("parsed variants from response: %v", variants)
 	return variants, nil
+}
+
+func addLibraryContext(user *User) {
+	if user.Library == "" {
+		user.Library = fmt.Sprintf("experiment-go-server/%v", VERSION)
+	}
 }
