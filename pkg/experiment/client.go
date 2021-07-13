@@ -119,7 +119,7 @@ func (c *Client) parseResponse(resp *http.Response) (Variants, error) {
 		if iv.Value != "" {
 			value = iv.Value
 		} else if iv.Key != "" {
-			value = iv.Value
+			value = iv.Key
 		}
 		variants[k] = Variant{
 			Value:   value,

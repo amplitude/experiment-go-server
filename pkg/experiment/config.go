@@ -28,7 +28,7 @@ var DefaultRetryBackoff = &RetryBackoff{
 var DefaultConfig = &Config{
 	Debug:        false,
 	ServerUrl:    "https://api.lab.amplitude.com/",
-	FetchTimeout: 10000 * time.Millisecond,
+	FetchTimeout: 10_000 * time.Millisecond,
 	RetryBackoff: DefaultRetryBackoff,
 }
 

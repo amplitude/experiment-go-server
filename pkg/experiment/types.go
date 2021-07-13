@@ -22,16 +22,16 @@ type User struct {
 }
 
 type Variant struct {
-	Value   string                 `json:"value,omitempty"`
-	Payload map[string]interface{} `json:"payload,omitempty"`
+	Value   string      `json:"value,omitempty"`
+	Payload interface{} `json:"payload,omitempty"`
 }
 
 type Variants = map[string]Variant
 
 type interopVariant struct {
-	Value   string                 `json:"value,omitempty"`
-	Key     string                 `json:"key,omitempty"`
-	Payload map[string]interface{} `json:"payload,omitempty"`
+	Value   string      `json:"value,omitempty"`
+	Key     string      `json:"key,omitempty"`
+	Payload interface{} `json:"payload,omitempty"`
 }
 
 type interopVariants = map[string]interopVariant
