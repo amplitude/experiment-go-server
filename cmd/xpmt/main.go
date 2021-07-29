@@ -30,6 +30,7 @@ func fetch() {
 	userId := fetchCmd.String("i", "", "User id to fetch variants for.")
 	deviceId := fetchCmd.String("d", "", "Device id to fetch variants for.")
 	userJson := fetchCmd.String("u", "", "The full user object to fetch variants for.")
+	url := fetchCmd.String("url", "", "The server url to use to fetch variants from.")
 	debug := fetchCmd.Bool("debug", false, "Log additional debug output to std out.")
 	_ = fetchCmd.Parse(os.Args[2:])
 
@@ -65,7 +66,16 @@ func fetch() {
 		user.DeviceId = *deviceId
 	}
 
-	client := experiment.Initialize(*apiKey, &experiment.Config{Debug: *debug})
+	config := &experiment.Config{
+		Debug:        *debug,
+		RetryBackoff: &experiment.RetryBackoff{FetchRetries: 0},
+	}
+
+	if *url != "" {
+		config.ServerUrl = *url
+	}
+
+	client := experiment.Initialize(*apiKey, config)
 	variants, err := client.Fetch(user)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
