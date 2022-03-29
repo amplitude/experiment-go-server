@@ -35,3 +35,8 @@ type interopVariant struct {
 }
 
 type interopVariants = map[string]interopVariant
+
+type publishRequest struct {
+	Key   string `json:"key,omitempty"`
+	Value string `json:"value,omitempty"`
+}
