@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/amplitude/experiment-go-server/pkg/experiment/local"
 	"github.com/amplitude/experiment-go-server/pkg/experiment/remote"
@@ -207,19 +206,19 @@ func evaluate() {
 		fmt.Printf("error: %v\n", err)
 	}
 
-	for i := 0; i < 10000; i++ {
-		start := time.Now()
-
-		_, err := client.Evaluate(user, nil)
-		if err != nil {
-			fmt.Printf("error: %v\n", err)
-			os.Exit(1)
-			return
-		}
-
-		duration := time.Since(start)
-		fmt.Println(duration)
-	}
+	//for i := 0; i < 10000; i++ {
+	//	start := time.Now()
+	//
+	//	_, err := client.Evaluate(user, nil)
+	//	if err != nil {
+	//		fmt.Printf("error: %v\n", err)
+	//		os.Exit(1)
+	//		return
+	//	}
+	//
+	//	duration := time.Since(start)
+	//	fmt.Println(duration)
+	//}
 
 	variants, err := client.Evaluate(user, nil)
 	if err != nil {
@@ -228,7 +227,6 @@ func evaluate() {
 		return
 	}
 
-	// Formatted string, such as "2h3m0.5s" or "4.503μs"
 	b, _ := json.Marshal(variants)
 	fmt.Printf("%v\n", string(b))
 }
