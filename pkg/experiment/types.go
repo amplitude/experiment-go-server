@@ -25,18 +25,3 @@ type Variant struct {
 	Value   string      `json:"value,omitempty"`
 	Payload interface{} `json:"payload,omitempty"`
 }
-
-type Variants = map[string]Variant
-
-type interopVariant struct {
-	Value   string      `json:"value,omitempty"`
-	Key     string      `json:"key,omitempty"`
-	Payload interface{} `json:"payload,omitempty"`
-}
-
-type interopVariants = map[string]interopVariant
-
-type publishRequest struct {
-	Key   string `json:"key,omitempty"`
-	Value string `json:"value,omitempty"`
-}
