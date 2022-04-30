@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/amplitude/experiment-go-server/pkg/experiment/local"
 	"github.com/amplitude/experiment-go-server/pkg/experiment/remote"
@@ -91,28 +90,14 @@ func fetch() {
 
 	client := remote.Initialize(*apiKey, config)
 
-	for i := 0; i < 2; i++ {
-		start := time.Now()
-
-		_, err := client.Fetch(user)
-		if err != nil {
-			fmt.Printf("error: %v\n", err)
-			os.Exit(1)
-			return
-		}
-
-		duration := time.Since(start)
-		fmt.Println(duration)
+	variants, err := client.Fetch(user)
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+		os.Exit(1)
+		return
 	}
-
-	//variants, err := client.Fetch(user)
-	//if err != nil {
-	//	fmt.Printf("error: %v\n", err)
-	//	os.Exit(1)
-	//	return
-	//}
-	//b, _ := json.Marshal(variants)
-	//fmt.Printf("%v\n", string(b))
+	b, _ := json.Marshal(variants)
+	fmt.Printf("%v\n", string(b))
 }
 
 func rules() {
