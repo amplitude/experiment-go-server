@@ -9,6 +9,13 @@ type Config struct {
 	RetryBackoff *RetryBackoff
 }
 
+var DefaultConfig = &Config{
+	Debug:        false,
+	ServerUrl:    "https://api.lab.amplitude.com/",
+	FetchTimeout: 500 * time.Millisecond,
+	RetryBackoff: DefaultRetryBackoff,
+}
+
 type RetryBackoff struct {
 	FetchRetries            int
 	FetchRetryBackoffMin    time.Duration
@@ -23,13 +30,6 @@ var DefaultRetryBackoff = &RetryBackoff{
 	FetchRetryBackoffMax:    10_000 * time.Millisecond,
 	FetchRetryBackoffScalar: 1,
 	FetchRetryTimeout:       500 * time.Millisecond,
-}
-
-var DefaultConfig = &Config{
-	Debug:        false,
-	ServerUrl:    "https://api.lab.amplitude.com/",
-	FetchTimeout: 500 * time.Millisecond,
-	RetryBackoff: DefaultRetryBackoff,
 }
 
 func fillConfigDefaults(c *Config) *Config {

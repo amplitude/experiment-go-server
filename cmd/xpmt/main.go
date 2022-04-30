@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/amplitude/experiment-go-server/pkg/experiment/local"
 	"github.com/amplitude/experiment-go-server/pkg/experiment/remote"
@@ -90,14 +91,28 @@ func fetch() {
 
 	client := remote.Initialize(*apiKey, config)
 
-	variants, err := client.Fetch(user)
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-		os.Exit(1)
-		return
+	for i := 0; i < 2; i++ {
+		start := time.Now()
+
+		_, err := client.Fetch(user)
+		if err != nil {
+			fmt.Printf("error: %v\n", err)
+			os.Exit(1)
+			return
+		}
+
+		duration := time.Since(start)
+		fmt.Println(duration)
 	}
-	b, _ := json.Marshal(variants)
-	fmt.Printf("%v\n", string(b))
+
+	//variants, err := client.Fetch(user)
+	//if err != nil {
+	//	fmt.Printf("error: %v\n", err)
+	//	os.Exit(1)
+	//	return
+	//}
+	//b, _ := json.Marshal(variants)
+	//fmt.Printf("%v\n", string(b))
 }
 
 func rules() {
@@ -124,9 +139,8 @@ func rules() {
 		apiKey = &envKey
 	}
 
-	config := &remote.Config{
-		Debug:        *debug,
-		RetryBackoff: &remote.RetryBackoff{FetchRetries: 0},
+	config := &local.Config{
+		Debug: *debug,
 	}
 
 	if *url != "" {
@@ -135,7 +149,7 @@ func rules() {
 		config.ServerUrl = "https://skylab-api.staging.amplitude.com"
 	}
 
-	client := remote.Initialize(*apiKey, config)
+	client := local.Initialize(*apiKey, config)
 	variants, err := client.Rules()
 	if err != nil {
 		fmt.Printf("error: %v\n", err)

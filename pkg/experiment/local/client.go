@@ -102,6 +102,10 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 	return variants, nil
 }
 
+func (c *Client) Rules() (map[string]interface{}, error) {
+	return c.doRules()
+}
+
 func (c *Client) doRules() (map[string]interface{}, error) {
 	endpoint, err := url.Parse(c.config.ServerUrl)
 	if err != nil {

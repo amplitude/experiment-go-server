@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"math/rand"
 	"net/http"
@@ -58,10 +57,6 @@ func (c *Client) Fetch(user *experiment.User) (map[string]experiment.Variant, er
 	return variants, err
 }
 
-func (c *Client) Rules() (string, error) {
-	return c.doRules()
-}
-
 func (c *Client) doFetch(user *experiment.User, timeout time.Duration) (map[string]experiment.Variant, error) {
 	addLibraryContext(user)
 	endpoint, err := url.Parse(c.config.ServerUrl)
@@ -69,7 +64,9 @@ func (c *Client) doFetch(user *experiment.User, timeout time.Duration) (map[stri
 		return nil, err
 	}
 	endpoint.Path = "sdk/vardata"
-	endpoint.RawQuery = fmt.Sprintf("d=%s", randStringRunes(5))
+	if c.config.Debug {
+		endpoint.RawQuery = fmt.Sprintf("d=%s", randStringRunes(5))
+	}
 	jsonBytes, err := json.Marshal(user)
 	if err != nil {
 		return nil, err
@@ -94,33 +91,6 @@ func (c *Client) doFetch(user *experiment.User, timeout time.Duration) (map[stri
 		return nil, fmt.Errorf("fetch request resulted in error response %v", resp.StatusCode)
 	}
 	return c.parseResponse(resp)
-}
-
-func (c *Client) doRules() (string, error) {
-	endpoint, err := url.Parse(c.config.ServerUrl)
-	if err != nil {
-		return "", err
-	}
-	endpoint.Path = "sdk/rules"
-	endpoint.RawQuery = "eval_mode=local"
-	ctx, cancel := context.WithTimeout(context.Background(), c.config.FetchTimeout)
-	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, "GET", endpoint.String(), nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Api-Key %s", c.apiKey))
-	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
 }
 
 func (c *Client) retryFetch(user *experiment.User) (map[string]experiment.Variant, error) {
