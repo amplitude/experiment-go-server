@@ -6,16 +6,16 @@ xpmt: clean
 clean:
 	rm -f xpmt
 
-all: macos linux
+all: darwin linux
 
-macos: macos-amd64 macos-arm64
+darwin: darwin-amd64 darwin-arm64
 
 linux: linux-amd64 linux-arm64
 
-macos-amd64:
+darwin-amd64:
 	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -o cmd/xpmt/bin/darwin/amd64/xpmt cmd/xpmt/main.go
 
-macos-arm64:
+darwin-arm64:
 	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -o cmd/xpmt/bin/darwin/arm64/xpmt cmd/xpmt/main.go
 
 linux-amd64:
