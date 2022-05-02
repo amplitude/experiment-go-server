@@ -65,7 +65,7 @@ func (c *Client) Start() error {
 	return nil
 }
 
-func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
+func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]*experiment.Variant, error) {
 	noFlagKeys := flagKeys == nil || len(flagKeys) == 0
 	var rules []interface{}
 	for k, v := range c.rules {
@@ -92,9 +92,9 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 	if err != nil {
 		return nil, err
 	}
-	variants := make(map[string]experiment.Variant)
+	variants := make(map[string]*experiment.Variant)
 	for k, v := range *result {
-		variants[k] = experiment.Variant{
+		variants[k] = &experiment.Variant{
 			Value:   v.Variant.Key,
 			Payload: v.Variant.Payload,
 		}
