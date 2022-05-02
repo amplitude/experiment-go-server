@@ -44,7 +44,7 @@ func Initialize(apiKey string, config *Config) *Client {
 	return client
 }
 
-func (c *Client) Fetch(user *experiment.User) (map[string]*experiment.Variant, error) {
+func (c *Client) Fetch(user *experiment.User) (map[string]experiment.Variant, error) {
 	variants, err := c.doFetch(user, c.config.FetchTimeout)
 	if err != nil {
 		c.log.Error("fetch error: %v", err)
@@ -57,7 +57,7 @@ func (c *Client) Fetch(user *experiment.User) (map[string]*experiment.Variant, e
 	return variants, err
 }
 
-func (c *Client) doFetch(user *experiment.User, timeout time.Duration) (map[string]*experiment.Variant, error) {
+func (c *Client) doFetch(user *experiment.User, timeout time.Duration) (map[string]experiment.Variant, error) {
 	addLibraryContext(user)
 	endpoint, err := url.Parse(c.config.ServerUrl)
 	if err != nil {
@@ -93,7 +93,7 @@ func (c *Client) doFetch(user *experiment.User, timeout time.Duration) (map[stri
 	return c.parseResponse(resp)
 }
 
-func (c *Client) retryFetch(user *experiment.User) (map[string]*experiment.Variant, error) {
+func (c *Client) retryFetch(user *experiment.User) (map[string]experiment.Variant, error) {
 	var err error
 	var timer *time.Timer
 	delay := c.config.RetryBackoff.FetchRetryBackoffMin
@@ -116,13 +116,13 @@ func (c *Client) retryFetch(user *experiment.User) (map[string]*experiment.Varia
 	return nil, err
 }
 
-func (c *Client) parseResponse(resp *http.Response) (map[string]*experiment.Variant, error) {
+func (c *Client) parseResponse(resp *http.Response) (map[string]experiment.Variant, error) {
 	interop := make(interopVariants)
 	err := json.NewDecoder(resp.Body).Decode(&interop)
 	if err != nil {
 		return nil, err
 	}
-	variants := make(map[string]*experiment.Variant)
+	variants := make(map[string]experiment.Variant)
 	for k, iv := range interop {
 		var value string
 		if iv.Value != "" {
@@ -130,7 +130,7 @@ func (c *Client) parseResponse(resp *http.Response) (map[string]*experiment.Vari
 		} else if iv.Key != "" {
 			value = iv.Key
 		}
-		variants[k] = &experiment.Variant{
+		variants[k] = experiment.Variant{
 			Value:   value,
 			Payload: iv.Payload,
 		}
@@ -139,8 +139,8 @@ func (c *Client) parseResponse(resp *http.Response) (map[string]*experiment.Vari
 	return variants, nil
 }
 
-func (c *Client) convertInteropVariants(interop interopVariants) map[string]*experiment.Variant {
-	variants := make(map[string]*experiment.Variant)
+func (c *Client) convertInteropVariants(interop interopVariants) map[string]experiment.Variant {
+	variants := make(map[string]experiment.Variant)
 	for k, iv := range interop {
 		var value string
 		if iv.Value != "" {
@@ -148,7 +148,7 @@ func (c *Client) convertInteropVariants(interop interopVariants) map[string]*exp
 		} else if iv.Key != "" {
 			value = iv.Key
 		}
-		variants[k] = &experiment.Variant{
+		variants[k] = experiment.Variant{
 			Value:   value,
 			Payload: iv.Payload,
 		}
