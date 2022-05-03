@@ -21,24 +21,35 @@ make xpmt
 
 ### Run
 
-> **NOTE:** All examples below assume the `EXPERIMENT_KEY` environment variable has been set. Alternatively, use the `-k` 
-flag to set the key in the command.
+!!!warning Setting the deployment key
+      All examples below assume the `EXPERIMENT_KEY` environment variable has been set. Alternatively, use the `-k`
+      flag to set the key in the command.
 
 #### Subcommands
   * `fetch`: fetch variants for a user from the server
+  * `rules`: fetch flag configs (rules) from experiment
+  * `evaluate`: fetch flag configs from experiment and evaluate the user locally
 
 ### Fetch
+
+Fetch variants via remote evaluation for the given input user.
 
 ```
 Usage of fetch:
   -d string
         Device id to fetch variants for.
+  -debug
+        Log additional debug output to std out.
   -i string
         User id to fetch variants for.
   -k string
         Api key for authorization, or use EXPERIMENT_KEY env var.
+  -staging
+        Use skylab staging environment.
   -u string
         The full user object to fetch variants for.
+  -url string
+        The server url to use to fetch variants from.
 ```
 
 #### Examples
@@ -55,7 +66,7 @@ Fetch variants for a user given the device ID
 
 Fetch variants for a user given an experiment user JSON object
 ```
-./xpmt fetch -u '{"user_id":"user@company.com","country":"France"}'
+./xpmt fetch -u '{"user_id":"user@company.com","user_properties":{"premium":true}}'
 ```
 
 > Note: must use single quotes around JSON object string
@@ -63,35 +74,42 @@ Fetch variants for a user given an experiment user JSON object
 
 ### Evaluate
 
-Fetch flag configurations and remotely evaluate the user.
+Fetch flag configurations and locally evaluate the user.
 
 ```
-Usage of fetch:
+Usage of evaluate:
   -d string
         Device id to fetch variants for.
+  -debug
+        Log additional debug output to std out.
   -i string
         User id to fetch variants for.
   -k string
-        Api key for authorization, or use EXPERIMENT_KEY env var.
+        Server api key for authorization, or use EXPERIMENT_KEY env var.
+  -staging
+        Use skylab staging environment.
   -u string
         The full user object to fetch variants for.
+  -url string
+        The server url to use poll for flag configs from.
+
 ```
 
 #### Examples
 
 Fetch variants for a user given the user ID
 ```
-./xpmt fetch -i user@company.com
+./xpmt evaluate -i user@company.com
 ```
 
 Fetch variants for a user given the device ID
 ```
-./xpmt fetch -d Xg0nG1v3iToYA
+./xpmt evaluate -d Xg0nG1v3iToYA
 ```
 
 Fetch variants for a user given an experiment user JSON object
 ```
-./xpmt fetch -u '{"user_id":"user@company.com","country":"France"}'
+./xpmt evaluate -u '{"user_id":"user@company.com","user_properties":{"premium":true}}'
 ```
 
 > Note: must use single quotes around JSON object string
