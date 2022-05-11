@@ -14,20 +14,34 @@ package evaluation
 #cgo linux,arm64 LDFLAGS: -L${SRCDIR}/lib/linuxArm64 -levaluation_interop
 
 #include "libevaluation_interop_api.h"
+#include <stdlib.h>
 
 typedef const char * (*evaluate) (const char * r, const char * u);
+typedef void (*DisposeString) (const char* s);
 
 const char * bridge_evaluate(evaluate f, const char * r, const char * u)
 {
 	return f(r, u);
 }
+
+void bridge_dispose(DisposeString f, const char * s)
+{
+	return f(s);
+}
 */
 import "C"
+import "unsafe"
+
+var lib = C.libevaluation_interop_symbols()
+var root = lib.kotlin.root
 
 func Evaluate(rules, user string) string {
 	rulesCString := C.CString(rules)
 	userCString := C.CString(user)
-	root := C.libevaluation_interop_symbols().kotlin.root
 	resultCString := C.bridge_evaluate(root.evaluate, rulesCString, userCString)
-	return C.GoString(resultCString)
+	result := C.GoString(resultCString)
+	C.bridge_dispose(lib.DisposeString, resultCString)
+	C.free(unsafe.Pointer(rulesCString))
+	C.free(unsafe.Pointer(userCString))
+	return result
 }
