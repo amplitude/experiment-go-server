@@ -7,10 +7,9 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"github.com/amplitude/experiment-go-server/pkg/experiment/local"
 	"github.com/amplitude/experiment-go-server/pkg/experiment/remote"
-
-	"github.com/amplitude/experiment-go-server/pkg/experiment"
 )
 
 func main() {
@@ -205,7 +204,8 @@ func evaluate() {
 		fmt.Printf("error: %v\n", err)
 	}
 
-	//for i := 0; i < 10000; i++ {
+	//for {
+	//	time.Sleep(time.Duration(rand.Intn(1000)) * time.Microsecond)
 	//	start := time.Now()
 	//
 	//	_, err := client.Evaluate(user, nil)

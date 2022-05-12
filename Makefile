@@ -3,6 +3,10 @@
 xpmt: clean
 	CGO_ENABLED=1 go build -o xpmt cmd/xpmt/main.go
 
+release: copy-lib-release xpmt
+
+debug: copy-lib-debug xpmt
+
 clean:
 	rm -f xpmt
 

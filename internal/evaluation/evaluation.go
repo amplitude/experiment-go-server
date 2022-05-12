@@ -8,10 +8,10 @@ package evaluation
 #cgo darwin,arm64 LDFLAGS: -L${SRCDIR}/lib/macosArm64 -levaluation_interop
 
 #cgo linux,amd64 CFLAGS: -I${SRCDIR}/lib/linuxX64
-#cgo linux,amd64 LDFLAGS: -L${SRCDIR}/lib/linuxX64 -levaluation_interop
+#cgo linux,amd64 LDFLAGS: -L${SRCDIR}/lib/linuxX64 -Wl,-rpath=${SRCDIR}/lib/linuxX64 -levaluation_interop
 
 #cgo linux,arm64 CFLAGS: -I${SRCDIR}/lib/linuxArm64
-#cgo linux,arm64 LDFLAGS: -L${SRCDIR}/lib/linuxArm64 -levaluation_interop
+#cgo linux,arm64 LDFLAGS: -L${SRCDIR}/lib/linuxArm64 -Wl,-rpath=${SRCDIR}/lib/linuxArm64 -levaluation_interop
 
 #include "libevaluation_interop_api.h"
 #include <stdlib.h>
@@ -30,7 +30,9 @@ void bridge_dispose(DisposeString f, const char * s)
 }
 */
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+)
 
 var lib = C.libevaluation_interop_symbols()
 var root = lib.kotlin.root
