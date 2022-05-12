@@ -1,5 +1,3 @@
-
-
 xpmt: clean
 	CGO_ENABLED=1 go build -o xpmt cmd/xpmt/main.go
 
