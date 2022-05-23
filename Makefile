@@ -34,12 +34,17 @@ copy-lib-debug:
 	# macosArm64
 	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/debugShared/libevaluation_interop_api.h internal/evaluation/lib/macosArm64/
 	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/debugShared/libevaluation_interop.dylib internal/evaluation/lib/macosArm64/
+	# change the LC_ID_DYLIB field on the dynamic library for macos. Default load location is an absolute path to the
+	# original output file location: http://clarkkromenaker.com/post/library-dynamic-loading-mac/
+	install_name_tool -id @rpath/libevaluation_interop.dylib internal/evaluation/lib/macosX64/libevaluation_interop.dylib
+	install_name_tool -id @rpath/libevaluation_interop.dylib internal/evaluation/lib/macosArm64/libevaluation_interop.dylib
 	# linuxX64
 	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/debugShared/libevaluation_interop_api.h internal/evaluation/lib/linuxX64/
 	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/debugShared/libevaluation_interop.so internal/evaluation/lib/linuxX64/
 	# linuxArm64
 	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxArm64/debugShared/libevaluation_interop_api.h internal/evaluation/lib/linuxArm64/
 	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxArm64/debugShared/libevaluation_interop.so internal/evaluation/lib/linuxArm64/
+
 
 # expects experiment-evaluation lives in same directory and experiment-go-server
 copy-lib-release:
@@ -49,6 +54,10 @@ copy-lib-release:
 	# macosArm64
 	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/releaseShared/libevaluation_interop_api.h internal/evaluation/lib/macosArm64/
 	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/releaseShared/libevaluation_interop.dylib internal/evaluation/lib/macosArm64/
+	# change the LC_ID_DYLIB field on the dynamic library for macos. Default load location is an absolute path to the
+	# original output file location: http://clarkkromenaker.com/post/library-dynamic-loading-mac/
+	install_name_tool -id @rpath/libevaluation_interop.dylib internal/evaluation/lib/macosX64/libevaluation_interop.dylib
+	install_name_tool -id @rpath/libevaluation_interop.dylib internal/evaluation/lib/macosArm64/libevaluation_interop.dylib
 	# linuxX64
 	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/releaseShared/libevaluation_interop_api.h internal/evaluation/lib/linuxX64/
 	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/releaseShared/libevaluation_interop.so internal/evaluation/lib/linuxX64/

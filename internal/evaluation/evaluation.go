@@ -2,10 +2,10 @@ package evaluation
 
 /*
 #cgo darwin,amd64 CFLAGS: -I${SRCDIR}/lib/macosX64
-#cgo darwin,amd64 LDFLAGS: -L${SRCDIR}/lib/macosX64 -levaluation_interop
+#cgo darwin,amd64 LDFLAGS: -L${SRCDIR}/lib/macosX64 -Wl,-rpath ${SRCDIR}/lib/macosX64 -levaluation_interop
 
 #cgo darwin,arm64 CFLAGS: -I${SRCDIR}/lib/macosArm64
-#cgo darwin,arm64 LDFLAGS: -L${SRCDIR}/lib/macosArm64 -levaluation_interop
+#cgo darwin,arm64 LDFLAGS: -L${SRCDIR}/lib/macosArm64 -Wl,-rpath ${SRCDIR}/lib/macosArm64 -levaluation_interop
 
 #cgo linux,amd64 CFLAGS: -I${SRCDIR}/lib/linuxX64
 #cgo linux,amd64 LDFLAGS: -L${SRCDIR}/lib/linuxX64 -Wl,-rpath=${SRCDIR}/lib/linuxX64 -levaluation_interop
