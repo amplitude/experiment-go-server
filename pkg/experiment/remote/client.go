@@ -95,13 +95,14 @@ func (c *Client) doFetch(user *experiment.User, timeout time.Duration) (map[stri
 
 func (c *Client) retryFetch(user *experiment.User) (map[string]experiment.Variant, error) {
 	var err error
+	var variants map[string]experiment.Variant
 	var timer *time.Timer
 	delay := c.config.RetryBackoff.FetchRetryBackoffMin
 	for i := 0; i < c.config.RetryBackoff.FetchRetries; i++ {
 		c.log.Debug("retry attempt %v", i)
 		timer = time.NewTimer(delay)
 		<-timer.C
-		variants, err := c.doFetch(user, c.config.RetryBackoff.FetchRetryTimeout)
+		variants, err = c.doFetch(user, c.config.RetryBackoff.FetchRetryTimeout)
 		if err == nil && variants != nil {
 			c.log.Debug("retry attempt %v success", i)
 			return variants, nil
