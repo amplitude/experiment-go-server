@@ -27,7 +27,7 @@ type RetryBackoff struct {
 var DefaultRetryBackoff = &RetryBackoff{
 	FetchRetries:            1,
 	FetchRetryBackoffMin:    0 * time.Millisecond,
-	FetchRetryBackoffMax:    10_000 * time.Millisecond,
+	FetchRetryBackoffMax:    10000 * time.Millisecond,
 	FetchRetryBackoffScalar: 1,
 	FetchRetryTimeout:       500 * time.Millisecond,
 }
