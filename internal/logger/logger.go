@@ -3,6 +3,7 @@ package logger
 import (
 	"fmt"
 	"log"
+	"os"
 )
 
 type Log struct {
@@ -12,7 +13,7 @@ type Log struct {
 
 func New(debug bool) *Log {
 	return &Log{
-		logger:  log.Default(),
+		logger:  log.New(os.Stderr, "", log.LstdFlags),
 		isDebug: debug,
 	}
 }
