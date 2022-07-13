@@ -74,10 +74,11 @@ func (c *Client) doFetch(user *experiment.User, timeout time.Duration) (map[stri
 	c.log.Debug("fetch variants for user %s", string(jsonBytes))
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, "POST", endpoint.String(), bytes.NewBuffer(jsonBytes))
+	req, err := http.NewRequest("POST", endpoint.String(), bytes.NewBuffer(jsonBytes))
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	req.Header.Set("Authorization", fmt.Sprintf("Api-Key %s", c.apiKey))
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	c.log.Debug("fetch request: %v", req)

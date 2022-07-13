@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sync"
@@ -115,10 +115,11 @@ func (c *Client) doRules() (map[string]interface{}, error) {
 	endpoint.RawQuery = "eval_mode=local"
 	ctx, cancel := context.WithTimeout(context.Background(), c.config.FlagConfigPollerRequestTimeout)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, "GET", endpoint.String(), nil)
+	req, err := http.NewRequest("GET", endpoint.String(), nil)
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	req.Header.Set("Authorization", fmt.Sprintf("Api-Key %s", c.apiKey))
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	resp, err := c.client.Do(req)
@@ -126,7 +127,7 @@ func (c *Client) doRules() (map[string]interface{}, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
