@@ -1,6 +1,6 @@
 package experiment
 
-const VERSION = "0.4.8"
+const VERSION = "0.4.9"
 
 type User struct {
 	UserId             string                 `json:"user_id,omitempty"`
