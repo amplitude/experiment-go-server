@@ -1,6 +1,10 @@
 xpmt: clean
 	CGO_ENABLED=1 go build -o xpmt cmd/xpmt/main.go
 
+docker:
+	docker build -t experiment . --progress plain
+	docker run -it --rm --name experiment-run experiment
+
 release: copy-lib-release xpmt
 
 debug: copy-lib-debug xpmt
@@ -29,38 +33,30 @@ linux-arm64:
 # expects experiment-evaluation lives in same directory and experiment-go-server
 copy-lib-debug:
 	# macosX64
-	cp ../experiment-evaluation/evaluation-interop/build/bin/macosX64/debugShared/libevaluation_interop_api.h internal/evaluation/lib/macosX64/
-	cp ../experiment-evaluation/evaluation-interop/build/bin/macosX64/debugShared/libevaluation_interop.dylib internal/evaluation/lib/macosX64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/macosX64/debugStatic/libevaluation_interop_api.h internal/evaluation/lib/macosX64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/macosX64/debugStatic/libevaluation_interop.a internal/evaluation/lib/macosX64/
 	# macosArm64
-	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/debugShared/libevaluation_interop_api.h internal/evaluation/lib/macosArm64/
-	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/debugShared/libevaluation_interop.dylib internal/evaluation/lib/macosArm64/
-	# change the LC_ID_DYLIB field on the dynamic library for macos. Default load location is an absolute path to the
-	# original output file location: http://clarkkromenaker.com/post/library-dynamic-loading-mac/
-	install_name_tool -id @rpath/libevaluation_interop.dylib internal/evaluation/lib/macosX64/libevaluation_interop.dylib
-	install_name_tool -id @rpath/libevaluation_interop.dylib internal/evaluation/lib/macosArm64/libevaluation_interop.dylib
+	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/debugStatic/libevaluation_interop_api.h internal/evaluation/lib/macosArm64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/debugStatic/libevaluation_interop.a internal/evaluation/lib/macosArm64/
 	# linuxX64
-	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/debugShared/libevaluation_interop_api.h internal/evaluation/lib/linuxX64/
-	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/debugShared/libevaluation_interop.so internal/evaluation/lib/linuxX64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/debugStatic/libevaluation_interop_api.h internal/evaluation/lib/linuxX64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/debugStatic/libevaluation_interop.a internal/evaluation/lib/linuxX64/
 	# linuxArm64
-	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxArm64/debugShared/libevaluation_interop_api.h internal/evaluation/lib/linuxArm64/
-	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxArm64/debugShared/libevaluation_interop.so internal/evaluation/lib/linuxArm64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxArm64/debugStatic/libevaluation_interop_api.h internal/evaluation/lib/linuxArm64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxArm64/debugStatic/libevaluation_interop.a internal/evaluation/lib/linuxArm64/
 
 
 # expects experiment-evaluation lives in same directory and experiment-go-server
 copy-lib-release:
 	# macosX64
-	cp ../experiment-evaluation/evaluation-interop/build/bin/macosX64/releaseShared/libevaluation_interop_api.h internal/evaluation/lib/macosX64/
-	cp ../experiment-evaluation/evaluation-interop/build/bin/macosX64/releaseShared/libevaluation_interop.dylib internal/evaluation/lib/macosX64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/macosX64/releaseStatic/libevaluation_interop_api.h internal/evaluation/lib/macosX64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/macosX64/releaseStatic/libevaluation_interop.a internal/evaluation/lib/macosX64/
 	# macosArm64
-	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/releaseShared/libevaluation_interop_api.h internal/evaluation/lib/macosArm64/
-	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/releaseShared/libevaluation_interop.dylib internal/evaluation/lib/macosArm64/
-	# change the LC_ID_DYLIB field on the dynamic library for macos. Default load location is an absolute path to the
-	# original output file location: http://clarkkromenaker.com/post/library-dynamic-loading-mac/
-	install_name_tool -id @rpath/libevaluation_interop.dylib internal/evaluation/lib/macosX64/libevaluation_interop.dylib
-	install_name_tool -id @rpath/libevaluation_interop.dylib internal/evaluation/lib/macosArm64/libevaluation_interop.dylib
+	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/releaseStatic/libevaluation_interop_api.h internal/evaluation/lib/macosArm64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/macosArm64/releaseStatic/libevaluation_interop.a internal/evaluation/lib/macosArm64/
 	# linuxX64
-	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/releaseShared/libevaluation_interop_api.h internal/evaluation/lib/linuxX64/
-	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/releaseShared/libevaluation_interop.so internal/evaluation/lib/linuxX64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/releaseStatic/libevaluation_interop_api.h internal/evaluation/lib/linuxX64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxX64/releaseStatic/libevaluation_interop.a internal/evaluation/lib/linuxX64/
 	# linuxArm64
-	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxArm64/releaseShared/libevaluation_interop_api.h internal/evaluation/lib/linuxArm64/
-	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxArm64/releaseShared/libevaluation_interop.so internal/evaluation/lib/linuxArm64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxArm64/releaseStatic/libevaluation_interop_api.h internal/evaluation/lib/linuxArm64/
+	cp ../experiment-evaluation/evaluation-interop/build/bin/linuxArm64/releaseStatic/libevaluation_interop.a internal/evaluation/lib/linuxArm64/

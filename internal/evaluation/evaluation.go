@@ -2,16 +2,16 @@ package evaluation
 
 /*
 #cgo darwin,amd64 CFLAGS: -I${SRCDIR}/lib/macosX64
-#cgo darwin,amd64 LDFLAGS: -L${SRCDIR}/lib/macosX64 -Wl,-rpath ${SRCDIR}/lib/macosX64 -levaluation_interop
+#cgo darwin,amd64 LDFLAGS: -framework Foundation -lstdc++ -L${SRCDIR}/lib/macosX64 -levaluation_interop
 
 #cgo darwin,arm64 CFLAGS: -I${SRCDIR}/lib/macosArm64
-#cgo darwin,arm64 LDFLAGS: -L${SRCDIR}/lib/macosArm64 -Wl,-rpath ${SRCDIR}/lib/macosArm64 -levaluation_interop
+#cgo darwin,arm64 LDFLAGS: -framework Foundation -lstdc++ -L${SRCDIR}/lib/macosArm64 -levaluation_interop
 
 #cgo linux,amd64 CFLAGS: -I${SRCDIR}/lib/linuxX64
-#cgo linux,amd64 LDFLAGS: -L${SRCDIR}/lib/linuxX64 -Wl,-rpath=${SRCDIR}/lib/linuxX64 -levaluation_interop
+#cgo linux,amd64 LDFLAGS: -L${SRCDIR}/lib/linuxX64 -levaluation_interop -lstdc++ -lpthread -lc -ldl -lm
 
 #cgo linux,arm64 CFLAGS: -I${SRCDIR}/lib/linuxArm64
-#cgo linux,arm64 LDFLAGS: -L${SRCDIR}/lib/linuxArm64 -Wl,-rpath=${SRCDIR}/lib/linuxArm64 -levaluation_interop
+#cgo linux,arm64 LDFLAGS: -L${SRCDIR}/lib/linuxArm64 -levaluation_interop -lstdc++ -lpthread -lc -ldl -lm
 
 #include "libevaluation_interop_api.h"
 #include <stdlib.h>
