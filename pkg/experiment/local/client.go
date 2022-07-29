@@ -86,6 +86,7 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 
 	evaluationMutex.Lock()
 	resultJson := evaluation.Evaluate(string(rulesJson), string(userJson))
+	c.log.Debug("evaluate result: %v\n", resultJson)
 	evaluationMutex.Unlock()
 	var result *evaluationResult
 	err = json.Unmarshal([]byte(resultJson), &result)
@@ -94,6 +95,9 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 	}
 	variants := make(map[string]experiment.Variant)
 	for k, v := range *result {
+		if v.IsDefaultVariant {
+			continue
+		}
 		variants[k] = experiment.Variant{
 			Value:   v.Variant.Key,
 			Payload: v.Variant.Payload,
