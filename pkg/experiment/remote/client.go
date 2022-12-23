@@ -141,24 +141,6 @@ func (c *Client) parseResponse(resp *http.Response) (map[string]experiment.Varia
 	return variants, nil
 }
 
-func (c *Client) convertInteropVariants(interop interopVariants) map[string]experiment.Variant {
-	variants := make(map[string]experiment.Variant)
-	for k, iv := range interop {
-		var value string
-		if iv.Value != "" {
-			value = iv.Value
-		} else if iv.Key != "" {
-			value = iv.Key
-		}
-		variants[k] = experiment.Variant{
-			Value:   value,
-			Payload: iv.Payload,
-		}
-	}
-	c.log.Debug("parsed variants from response: %v", variants)
-	return variants
-}
-
 func addLibraryContext(user *experiment.User) {
 	if user.Library == "" {
 		user.Library = fmt.Sprintf("experiment-go-server/%v", experiment.VERSION)

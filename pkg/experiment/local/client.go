@@ -27,7 +27,6 @@ type Client struct {
 	client *http.Client
 	poller *poller
 	rules  map[string]interface{}
-	mutex  *sync.Mutex
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -66,7 +65,7 @@ func (c *Client) Start() error {
 }
 
 func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
-	noFlagKeys := flagKeys == nil || len(flagKeys) == 0
+	noFlagKeys := len(flagKeys) == 0
 	rules := make([]interface{}, 0)
 	for k, v := range c.rules {
 		if noFlagKeys || contains(flagKeys, k) {
