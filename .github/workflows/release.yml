@@ -29,10 +29,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Set up Ruby 2.7
-      uses: ruby/setup-ruby@v1
+    - uses: actions/setup-go@v3
       with:
-        ruby-version: 2.7
+        go-version: '1.17'
+        check-latest: true
 
     - name: Semantic Release --dry-run
       if: ${{ github.event.inputs.dryRun == 'true'}}
@@ -51,7 +51,6 @@ jobs:
         -p @semantic-release/git@9 \
         -p @google/semantic-release-replace-plugin@1 \
         -p @semantic-release/exec@5 \
-        -p semantic-release-rubygem \
         semantic-release --dry-run
 
     - name: Semantic Release
@@ -71,5 +70,4 @@ jobs:
         -p @semantic-release/git@9 \
         -p @google/semantic-release-replace-plugin@1 \
         -p @semantic-release/exec@5 \
-        -p semantic-release-rubygem \
         semantic-release
