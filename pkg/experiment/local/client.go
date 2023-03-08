@@ -69,6 +69,7 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 	if c.flags == nil || len(*c.flags) == 0 {
 		c.log.Debug("evaluate: no flags")
 		return variants, nil
+
 	}
 	userJson, err := json.Marshal(user)
 	if err != nil {

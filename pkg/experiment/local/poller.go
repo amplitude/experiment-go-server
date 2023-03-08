@@ -20,7 +20,7 @@ func (p *poller) Poll(interval time.Duration, function func()) {
 			case <-p.shutdown:
 				ticker.Stop()
 				return
-			case _ = <-ticker.C:
+			case <-ticker.C:
 				go function()
 			}
 		}
