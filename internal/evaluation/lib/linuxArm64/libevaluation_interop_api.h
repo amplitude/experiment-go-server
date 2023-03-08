@@ -51,6 +51,18 @@ typedef struct {
 typedef struct {
   libevaluation_interop_KNativePtr pinned;
 } libevaluation_interop_kref_kotlin_Unit;
+typedef struct {
+  libevaluation_interop_KNativePtr pinned;
+} libevaluation_interop_kref_kotlin_UByte;
+typedef struct {
+  libevaluation_interop_KNativePtr pinned;
+} libevaluation_interop_kref_kotlin_UShort;
+typedef struct {
+  libevaluation_interop_KNativePtr pinned;
+} libevaluation_interop_kref_kotlin_UInt;
+typedef struct {
+  libevaluation_interop_KNativePtr pinned;
+} libevaluation_interop_kref_kotlin_ULong;
 
 
 typedef struct {
@@ -59,14 +71,30 @@ typedef struct {
   void (*DisposeString)(const char* string);
   libevaluation_interop_KBoolean (*IsInstance)(libevaluation_interop_KNativePtr ref, const libevaluation_interop_KType* type);
   libevaluation_interop_kref_kotlin_Byte (*createNullableByte)(libevaluation_interop_KByte);
+  libevaluation_interop_KByte (*getNonNullValueOfByte)(libevaluation_interop_kref_kotlin_Byte);
   libevaluation_interop_kref_kotlin_Short (*createNullableShort)(libevaluation_interop_KShort);
+  libevaluation_interop_KShort (*getNonNullValueOfShort)(libevaluation_interop_kref_kotlin_Short);
   libevaluation_interop_kref_kotlin_Int (*createNullableInt)(libevaluation_interop_KInt);
+  libevaluation_interop_KInt (*getNonNullValueOfInt)(libevaluation_interop_kref_kotlin_Int);
   libevaluation_interop_kref_kotlin_Long (*createNullableLong)(libevaluation_interop_KLong);
+  libevaluation_interop_KLong (*getNonNullValueOfLong)(libevaluation_interop_kref_kotlin_Long);
   libevaluation_interop_kref_kotlin_Float (*createNullableFloat)(libevaluation_interop_KFloat);
+  libevaluation_interop_KFloat (*getNonNullValueOfFloat)(libevaluation_interop_kref_kotlin_Float);
   libevaluation_interop_kref_kotlin_Double (*createNullableDouble)(libevaluation_interop_KDouble);
+  libevaluation_interop_KDouble (*getNonNullValueOfDouble)(libevaluation_interop_kref_kotlin_Double);
   libevaluation_interop_kref_kotlin_Char (*createNullableChar)(libevaluation_interop_KChar);
+  libevaluation_interop_KChar (*getNonNullValueOfChar)(libevaluation_interop_kref_kotlin_Char);
   libevaluation_interop_kref_kotlin_Boolean (*createNullableBoolean)(libevaluation_interop_KBoolean);
+  libevaluation_interop_KBoolean (*getNonNullValueOfBoolean)(libevaluation_interop_kref_kotlin_Boolean);
   libevaluation_interop_kref_kotlin_Unit (*createNullableUnit)(void);
+  libevaluation_interop_kref_kotlin_UByte (*createNullableUByte)(libevaluation_interop_KUByte);
+  libevaluation_interop_KUByte (*getNonNullValueOfUByte)(libevaluation_interop_kref_kotlin_UByte);
+  libevaluation_interop_kref_kotlin_UShort (*createNullableUShort)(libevaluation_interop_KUShort);
+  libevaluation_interop_KUShort (*getNonNullValueOfUShort)(libevaluation_interop_kref_kotlin_UShort);
+  libevaluation_interop_kref_kotlin_UInt (*createNullableUInt)(libevaluation_interop_KUInt);
+  libevaluation_interop_KUInt (*getNonNullValueOfUInt)(libevaluation_interop_kref_kotlin_UInt);
+  libevaluation_interop_kref_kotlin_ULong (*createNullableULong)(libevaluation_interop_KULong);
+  libevaluation_interop_KULong (*getNonNullValueOfULong)(libevaluation_interop_kref_kotlin_ULong);
 
   /* User functions. */
   struct {
