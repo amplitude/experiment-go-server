@@ -26,7 +26,6 @@ type Client struct {
 	client *http.Client
 	poller *poller
 	flags  *string
-	mutex  *sync.Mutex
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -66,7 +65,7 @@ func (c *Client) Start() error {
 
 func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
 	variants := make(map[string]experiment.Variant)
-	if c.flags == nil || len(*c.flags) == 0 {
+	if len(*c.flags) == 0 {
 		c.log.Debug("evaluate: no flags")
 		return variants, nil
 
