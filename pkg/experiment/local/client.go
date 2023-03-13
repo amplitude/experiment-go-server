@@ -84,7 +84,7 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 	if err != nil {
 		return nil, err
 	}
-	filter := flagKeys != nil && len(flagKeys) != 0
+	filter := len(flagKeys) != 0
 	for k, v := range *result {
 		if v.IsDefaultVariant || (filter && !contains(flagKeys, k)) {
 			continue
