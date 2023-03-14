@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"github.com/amplitude/experiment-go-server/pkg/experiment/local"
@@ -17,6 +18,7 @@ func main() {
 		fmt.Printf("error: command required\n")
 		fmt.Printf("Available commands:\n" +
 			"  fetch\n" +
+			"  flags\n" +
 			"  rules\n" +
 			"  evaluate\n")
 		return
@@ -24,6 +26,8 @@ func main() {
 	switch os.Args[1] {
 	case "fetch":
 		fetch()
+	case "flags":
+		flags()
 	case "rules":
 		rules()
 	case "evaluate":
@@ -78,6 +82,7 @@ func fetch() {
 
 	config := &remote.Config{
 		Debug:        *debug,
+		FetchTimeout: 10 * time.Second,
 		RetryBackoff: &remote.RetryBackoff{FetchRetries: 0},
 	}
 
@@ -88,15 +93,61 @@ func fetch() {
 	}
 
 	client := remote.Initialize(*apiKey, config)
-
+	start := time.Now()
 	variants, err := client.Fetch(user)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		os.Exit(1)
 		return
 	}
+	duration := time.Since(start)
+	fmt.Println(duration)
 	b, _ := json.Marshal(variants)
 	fmt.Printf("%v\n", string(b))
+}
+
+func flags() {
+	rulesCmd := flag.NewFlagSet("flags", flag.ExitOnError)
+	apiKey := rulesCmd.String("k", "", "Api key for authorization, or use EXPERIMENT_KEY env var.")
+	url := rulesCmd.String("url", "", "The server url to use to fetch variants from.")
+	debug := rulesCmd.Bool("debug", false, "Log additional debug output to std out.")
+	staging := rulesCmd.Bool("staging", false, "Use skylab staging environment.")
+	_ = rulesCmd.Parse(os.Args[2:])
+
+	if len(os.Args) == 3 && os.Args[1] == "--help" {
+		rulesCmd.Usage()
+		return
+	}
+
+	if apiKey == nil || *apiKey == "" {
+		envKey := os.Getenv("EXPERIMENT_KEY")
+		if envKey == "" {
+			rulesCmd.Usage()
+			fmt.Printf("error: must set experiment api key using cli flag or EXPERIMENT_KEY env var\n")
+			os.Exit(1)
+			return
+		}
+		apiKey = &envKey
+	}
+
+	config := &local.Config{
+		Debug: *debug,
+	}
+
+	if *url != "" {
+		config.ServerUrl = *url
+	} else if *staging {
+		config.ServerUrl = "https://skylab-api.staging.amplitude.com"
+	}
+
+	client := local.Initialize(*apiKey, config)
+	flags, err := client.Flags()
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+		os.Exit(1)
+		return
+	}
+	println(*flags)
 }
 
 func rules() {

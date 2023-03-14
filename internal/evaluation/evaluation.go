@@ -30,7 +30,9 @@ void bridge_dispose(DisposeString f, const char * s)
 }
 */
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+)
 
 var lib = C.libevaluation_interop_symbols()
 var root = lib.kotlin.root
