@@ -26,7 +26,7 @@ type Client struct {
 	config *Config
 	client *http.Client
 	poller *poller
-	rules  map[string]interface{}
+	flags  *string
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -51,53 +51,46 @@ func Initialize(apiKey string, config *Config) *Client {
 }
 
 func (c *Client) Start() error {
-	result, err := c.doRules()
+	result, err := c.doFlags()
 	if err != nil {
 		return err
 	}
-	c.rules = result
+	c.flags = result
 	c.poller.Poll(c.config.FlagConfigPollerInterval, func() {
-		result, err := c.doRules()
+		result, err := c.doFlags()
 		if err != nil {
 			return
 		}
-		c.rules = result
+		c.flags = result
 	})
 
 	return nil
 }
 
 func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
-	noFlagKeys := len(flagKeys) == 0
-	rules := make([]interface{}, 0)
-	for k, v := range c.rules {
-		if noFlagKeys || contains(flagKeys, k) {
-			rules = append(rules, v)
-		}
-	}
-	rulesJson, err := json.Marshal(rules)
-	if err != nil {
-		return nil, err
+	variants := make(map[string]experiment.Variant)
+	if len(*c.flags) == 0 {
+		c.log.Debug("evaluate: no flags")
+		return variants, nil
+
 	}
 	userJson, err := json.Marshal(user)
 	if err != nil {
 		return nil, err
 	}
 
-	c.log.Debug("evaluate:\n\t- user: %v\n\t- rules: %v\n", string(userJson), string(rulesJson))
+	c.log.Debug("evaluate:\n\t- user: %v\n\t- rules: %v\n", string(userJson), *c.flags)
 
-	evaluationMutex.Lock()
-	resultJson := evaluation.Evaluate(string(rulesJson), string(userJson))
+	resultJson := evaluation.Evaluate(*c.flags, string(userJson))
 	c.log.Debug("evaluate result: %v\n", resultJson)
-	evaluationMutex.Unlock()
 	var result *evaluationResult
 	err = json.Unmarshal([]byte(resultJson), &result)
 	if err != nil {
 		return nil, err
 	}
-	variants := make(map[string]experiment.Variant)
+	filter := len(flagKeys) != 0
 	for k, v := range *result {
-		if v.IsDefaultVariant {
+		if v.IsDefaultVariant || (filter && !contains(flagKeys, k)) {
 			continue
 		}
 		variants[k] = experiment.Variant{
@@ -150,6 +143,40 @@ func (c *Client) doRules() (map[string]interface{}, error) {
 		result[fmt.Sprintf("%v", flagKey)] = rule
 	}
 	return result, nil
+}
+
+func (c *Client) Flags() (*string, error) {
+	return c.doFlags()
+}
+
+func (c *Client) doFlags() (*string, error) {
+	endpoint, err := url.Parse(c.config.ServerUrl)
+	if err != nil {
+		return nil, err
+	}
+	endpoint.Path = "sdk/v1/flags"
+	ctx, cancel := context.WithTimeout(context.Background(), c.config.FlagConfigPollerRequestTimeout)
+	defer cancel()
+	req, err := http.NewRequest("GET", endpoint.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	req.Header.Set("Authorization", fmt.Sprintf("Api-Key %s", c.apiKey))
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+	req.Header.Set("X-Amp-Exp-Library", fmt.Sprintf("experiment-go-server/%v", experiment.VERSION))
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	flags := string(body)
+	c.log.Debug("flags: %v", flags)
+	return &flags, nil
 }
 
 func contains(s []string, e string) bool {
