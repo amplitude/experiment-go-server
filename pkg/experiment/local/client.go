@@ -16,14 +16,9 @@ import (
 	"github.com/amplitude/experiment-go-server/internal/logger"
 )
 
-<<<<<<< Updated upstream
-var client *Client
-var once = sync.Once{}
-var evaluationMutex = sync.Mutex{}
-=======
 var clients = map[string]*Client{}
 var initMutex = sync.Mutex{}
->>>>>>> Stashed changes
+var evaluationMutex = sync.Mutex{}
 
 type Client struct {
 	log    *logger.Log
