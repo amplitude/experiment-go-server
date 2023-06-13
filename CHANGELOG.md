@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/amplitude/experiment-go-server/compare/v1.1.0...v1.1.1) (2023-06-13)
+
+
+### Bug Fixes
+
+* support multiple client instances based on apiKey ([#11](https://github.com/amplitude/experiment-go-server/issues/11)) ([e365735](https://github.com/amplitude/experiment-go-server/commit/e36573555bd672f778607969cb592dcb76a8d368))
+
 # [1.1.0](https://github.com/amplitude/experiment-go-server/compare/v1.0.0...v1.1.0) (2023-03-14)
 
 
