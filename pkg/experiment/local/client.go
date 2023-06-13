@@ -16,9 +16,14 @@ import (
 	"github.com/amplitude/experiment-go-server/internal/logger"
 )
 
+<<<<<<< Updated upstream
 var client *Client
 var once = sync.Once{}
 var evaluationMutex = sync.Mutex{}
+=======
+var clients = map[string]*Client{}
+var initMutex = sync.Mutex{}
+>>>>>>> Stashed changes
 
 type Client struct {
 	log    *logger.Log
@@ -30,7 +35,9 @@ type Client struct {
 }
 
 func Initialize(apiKey string, config *Config) *Client {
-	once.Do(func() {
+	initMutex.Lock()
+	client := clients[apiKey]
+	if client == nil {
 		if apiKey == "" {
 			panic("api key must be set")
 		}
@@ -43,7 +50,8 @@ func Initialize(apiKey string, config *Config) *Client {
 			poller: newPoller(),
 		}
 		client.log.Debug("config: %v", *config)
-	})
+	}
+	initMutex.Unlock()
 	return client
 }
 
