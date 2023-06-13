@@ -18,7 +18,6 @@ import (
 
 var clients = map[string]*Client{}
 var initMutex = sync.Mutex{}
-var evaluationMutex = sync.Mutex{}
 
 type Client struct {
 	log    *logger.Log
