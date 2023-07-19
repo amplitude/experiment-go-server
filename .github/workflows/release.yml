@@ -46,11 +46,11 @@ jobs:
       run: |
         npx \
         -p lodash \
-        -p semantic-release@17 \
-        -p @semantic-release/changelog@5 \
-        -p @semantic-release/git@9 \
-        -p @google/semantic-release-replace-plugin@1 \
-        -p @semantic-release/exec@5 \
+        -p semantic-release \
+        -p @semantic-release/changelog \
+        -p @semantic-release/git \
+        -p @google/semantic-release-replace-plugin \
+        -p @semantic-release/exec \
         semantic-release --dry-run
 
     - name: Semantic Release
@@ -65,9 +65,9 @@ jobs:
       run: |
         npx \
         -p lodash \
-        -p semantic-release@17 \
-        -p @semantic-release/changelog@5 \
-        -p @semantic-release/git@9 \
-        -p @google/semantic-release-replace-plugin@1 \
-        -p @semantic-release/exec@5 \
+        -p semantic-release \
+        -p @semantic-release/changelog \
+        -p @semantic-release/git \
+        -p @google/semantic-release-replace-plugin \
+        -p @semantic-release/exec \
         semantic-release
