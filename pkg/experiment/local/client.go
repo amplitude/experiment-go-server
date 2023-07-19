@@ -82,11 +82,15 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 
 	resultJson := evaluation.Evaluate(*c.flags, string(userJson))
 	c.log.Debug("evaluate result: %v\n", resultJson)
-	var result *evaluationResult
-	err = json.Unmarshal([]byte(resultJson), &result)
+	var interopResult *interopResult
+	err = json.Unmarshal([]byte(resultJson), &interopResult)
 	if err != nil {
 		return nil, err
 	}
+	if interopResult.Error != nil {
+		return nil, fmt.Errorf("evaluation resulted in error: %v", *interopResult.Error)
+	}
+	result := interopResult.Result
 	filter := len(flagKeys) != 0
 	for k, v := range *result {
 		if v.IsDefaultVariant || (filter && !contains(flagKeys, k)) {
