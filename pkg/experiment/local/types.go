@@ -12,3 +12,8 @@ type flagResult struct {
 }
 
 type evaluationResult = map[string]flagResult
+
+type interopResult struct {
+	Result *evaluationResult `json:"result,omitempty"`
+	Error  *string           `json:"error,omitempty"`
+}
