@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/amplitude/experiment-go-server/compare/v1.1.1...v1.1.2) (2023-07-19)
+
+
+### Bug Fixes
+
+* evaluation 1.1.1 fix SIGABRT on json parse error ([#12](https://github.com/amplitude/experiment-go-server/issues/12)) ([326b9a7](https://github.com/amplitude/experiment-go-server/commit/326b9a77e481fadacc17e61e281ef51733eabd3d))
+
 ## [1.1.1](https://github.com/amplitude/experiment-go-server/compare/v1.1.0...v1.1.1) (2023-06-13)
 
 
