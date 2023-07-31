@@ -50,10 +50,10 @@ func Initialize(apiKey string, config *Config) *Client {
 	// create assignment service if apikey is provided
 	if config.AssignmentConfig.ApiKey != "" {
 		ampConfig := amplitude.NewConfig(config.AssignmentConfig.ApiKey)
-		amplitude := amplitude.NewClient(ampConfig)
+		instance := amplitude.NewClient(ampConfig)
 		filter := NewAssignmentFilter(config.AssignmentConfig.FilterCapacity)
 		client.assignmentService = &AssignmentService{
-			Amplitude: &amplitude, Filter: filter,
+			Amplitude: &instance, Filter: filter,
 		}
 	}
 	initMutex.Unlock()
