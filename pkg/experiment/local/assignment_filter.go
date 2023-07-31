@@ -11,8 +11,9 @@ type AssignmentFilter struct {
 }
 
 func NewAssignmentFilter(size int) *AssignmentFilter {
+
 	filter := &AssignmentFilter{
-		cache: cache.NewCache(size, int64(DayMillis)),
+		cache: cache.NewCache(size, DayMillis),
 	}
 	return filter
 }

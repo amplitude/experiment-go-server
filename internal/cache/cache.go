@@ -13,12 +13,12 @@ type Item struct {
 
 type Cache struct {
 	Capacity  int
-	TTL       int64
+	TTL       int
 	cacheMap  map[string]*list.Element
 	cacheList *list.List
 }
 
-func NewCache(capacity int, ttlMillis int64) *Cache {
+func NewCache(capacity int, ttlMillis int) *Cache {
 	return &Cache{
 		Capacity:  capacity,
 		TTL:       ttlMillis,

@@ -302,7 +302,8 @@ func TestTTLBasedEviction(t *testing.T) {
 
 	assignment1 := NewAssignment(user1, results)
 	assignment2 := NewAssignment(user2, results)
-	filter := NewMockAssignmentFilter(100, 1000)
+	filter := NewAssignmentFilter(100)
+	filter.cache.TTL = 1000
 	if !filter.shouldTrack(assignment1) {
 		t.Errorf("Assignment1 should be tracked")
 	}
