@@ -9,21 +9,21 @@ const DayMillis = 24 * 60 * 60 * 1000
 
 type AssignmentService struct {
 	Amplitude *amplitude.Client
-	Filter    *AssignmentFilter
+	Filter    *assignmentFilter
 }
 
-func (s *AssignmentService) Track(assignment *Assignment) {
+func (s *AssignmentService) Track(assignment *assignment) {
 	if s.Filter.shouldTrack(assignment) {
 		(*s.Amplitude).Track(toEvent(assignment))
 	}
 }
 
-func toEvent(assignment *Assignment) amplitude.Event {
+func toEvent(assignment *assignment) amplitude.Event {
 
 	FlagTypeMutualExclusionGroup := "mutual-exclusion-group"
 
 	event := amplitude.Event{
-		EventType:       "[Experiment] Assignment",
+		EventType:       "[Experiment] assignment",
 		UserID:          assignment.user.UserId,
 		DeviceID:        assignment.user.DeviceId,
 		EventProperties: make(map[string]interface{}),

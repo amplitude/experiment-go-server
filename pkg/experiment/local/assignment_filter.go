@@ -5,20 +5,20 @@ import (
 	"sync"
 )
 
-type AssignmentFilter struct {
+type assignmentFilter struct {
 	mu    sync.Mutex
 	cache *cache.Cache
 }
 
-func NewAssignmentFilter(size int) *AssignmentFilter {
+func newAssignmentFilter(size int) *assignmentFilter {
 
-	filter := &AssignmentFilter{
+	filter := &assignmentFilter{
 		cache: cache.NewCache(size, DayMillis),
 	}
 	return filter
 }
 
-func (f *AssignmentFilter) shouldTrack(assignment *Assignment) bool {
+func (f *assignmentFilter) shouldTrack(assignment *assignment) bool {
 	canonicalAssignment := assignment.Canonicalize()
 	f.mu.Lock()
 	track, found := f.cache.Get(canonicalAssignment)

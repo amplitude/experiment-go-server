@@ -27,7 +27,7 @@ func TestToEvent(t *testing.T) {
 		},
 	}
 
-	assignment := NewAssignment(user, results)
+	assignment := newAssignment(user, results)
 	event := toEvent(assignment)
 	canonicalization := "user device flag-key-1 on flag-key-2 control "
 	expectedInsertID := fmt.Sprintf("user device %d %d", hashCode(canonicalization), assignment.timestamp/DayMillis)
