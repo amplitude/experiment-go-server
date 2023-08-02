@@ -27,10 +27,10 @@ func TestSingleAssignment(t *testing.T) {
 		},
 	}
 
-	assignment := NewAssignment(user, results)
-	filter := NewAssignmentFilter(100)
+	assignment := newAssignment(user, results)
+	filter := newAssignmentFilter(100)
 	if !filter.shouldTrack(assignment) {
-		t.Errorf("Assignment should be tracked")
+		t.Errorf("assignment should be tracked")
 	}
 }
 
@@ -55,9 +55,9 @@ func TestDuplicateAssignment(t *testing.T) {
 		},
 	}
 
-	assignment1 := NewAssignment(user, results)
-	assignment2 := NewAssignment(user, results)
-	filter := NewAssignmentFilter(100)
+	assignment1 := newAssignment(user, results)
+	assignment2 := newAssignment(user, results)
+	filter := newAssignmentFilter(100)
 	if !filter.shouldTrack(assignment1) {
 		t.Errorf("Assignment1 should be tracked")
 	}
@@ -102,9 +102,9 @@ func TestSameUserDifferentResults(t *testing.T) {
 		},
 	}
 
-	assignment1 := NewAssignment(user, results1)
-	assignment2 := NewAssignment(user, results2)
-	filter := NewAssignmentFilter(100)
+	assignment1 := newAssignment(user, results1)
+	assignment2 := newAssignment(user, results2)
+	filter := newAssignmentFilter(100)
 	if !filter.shouldTrack(assignment1) {
 		t.Errorf("Assignment1 should be tracked")
 	}
@@ -139,9 +139,9 @@ func TestSameResultsDifferentUser(t *testing.T) {
 		},
 	}
 
-	assignment1 := NewAssignment(user1, results)
-	assignment2 := NewAssignment(user2, results)
-	filter := NewAssignmentFilter(100)
+	assignment1 := newAssignment(user1, results)
+	assignment2 := newAssignment(user2, results)
+	filter := newAssignmentFilter(100)
 	if !filter.shouldTrack(assignment1) {
 		t.Errorf("Assignment1 should be tracked")
 	}
@@ -163,10 +163,10 @@ func TestEmptyResult(t *testing.T) {
 
 	results := &evaluationResult{}
 
-	assignment1 := NewAssignment(user1, results)
-	assignment2 := NewAssignment(user1, results)
-	assignment3 := NewAssignment(user2, results)
-	filter := NewAssignmentFilter(100)
+	assignment1 := newAssignment(user1, results)
+	assignment2 := newAssignment(user1, results)
+	assignment3 := newAssignment(user2, results)
+	filter := newAssignmentFilter(100)
 	if !filter.shouldTrack(assignment1) {
 		t.Errorf("Assignment1 should be tracked")
 	}
@@ -214,9 +214,9 @@ func TestDuplicateAssignmentsWithDifferentResultOrder(t *testing.T) {
 		},
 	}
 
-	assignment1 := NewAssignment(user, results1)
-	assignment2 := NewAssignment(user, results2)
-	filter := NewAssignmentFilter(100)
+	assignment1 := newAssignment(user, results1)
+	assignment2 := newAssignment(user, results2)
+	filter := newAssignmentFilter(100)
 	if !filter.shouldTrack(assignment1) {
 		t.Errorf("Assignment1 should be tracked")
 	}
@@ -256,10 +256,10 @@ func TestLRUReplacement(t *testing.T) {
 		},
 	}
 
-	assignment1 := NewAssignment(user1, results)
-	assignment2 := NewAssignment(user2, results)
-	assignment3 := NewAssignment(user3, results)
-	filter := NewAssignmentFilter(2)
+	assignment1 := newAssignment(user1, results)
+	assignment2 := newAssignment(user2, results)
+	assignment3 := newAssignment(user3, results)
+	filter := newAssignmentFilter(2)
 	if !filter.shouldTrack(assignment1) {
 		t.Errorf("Assignment1 should be tracked")
 	}
@@ -300,9 +300,9 @@ func TestTTLBasedEviction(t *testing.T) {
 		},
 	}
 
-	assignment1 := NewAssignment(user1, results)
-	assignment2 := NewAssignment(user2, results)
-	filter := NewAssignmentFilter(100)
+	assignment1 := newAssignment(user1, results)
+	assignment2 := newAssignment(user2, results)
+	filter := newAssignmentFilter(100)
 	filter.cache.TTL = 1000
 	if !filter.shouldTrack(assignment1) {
 		t.Errorf("Assignment1 should be tracked")

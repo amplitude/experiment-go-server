@@ -10,13 +10,12 @@ type Config struct {
 	ServerUrl                      string
 	FlagConfigPollerInterval       time.Duration
 	FlagConfigPollerRequestTimeout time.Duration
-	AssignmentConfig               AssignmentConfig
+	AssignmentConfig               *AssignmentConfig
 }
 
 type AssignmentConfig struct {
-	ApiKey         string
+	amplitude.Config
 	FilterCapacity int
-	AmpConfig      amplitude.Config
 }
 
 var DefaultConfig = &Config{

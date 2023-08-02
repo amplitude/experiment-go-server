@@ -48,10 +48,9 @@ func Initialize(apiKey string, config *Config) *Client {
 		client.log.Debug("config: %v", *config)
 	}
 	// create assignment service if apikey is provided
-	if config.AssignmentConfig.ApiKey != "" {
-		ampConfig := amplitude.NewConfig(config.AssignmentConfig.ApiKey)
-		instance := amplitude.NewClient(ampConfig)
-		filter := NewAssignmentFilter(config.AssignmentConfig.FilterCapacity)
+	if config.AssignmentConfig != nil && config.AssignmentConfig.IsValid() {
+		instance := amplitude.NewClient(config.AssignmentConfig.Config)
+		filter := newAssignmentFilter(config.AssignmentConfig.FilterCapacity)
 		client.assignmentService = &AssignmentService{
 			Amplitude: &instance, Filter: filter,
 		}
@@ -103,7 +102,7 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 	}
 	result := interopResult.Result
 	if c.assignmentService != nil {
-		(*c.assignmentService).Track(NewAssignment(user, interopResult.Result))
+		(*c.assignmentService).Track(newAssignment(user, interopResult.Result))
 	}
 	filter := len(flagKeys) != 0
 	for k, v := range *result {

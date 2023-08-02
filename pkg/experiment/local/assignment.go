@@ -7,14 +7,14 @@ import (
 	"time"
 )
 
-type Assignment struct {
+type assignment struct {
 	user      *experiment.User
 	results   *evaluationResult
 	timestamp int
 }
 
-func NewAssignment(user *experiment.User, results *evaluationResult) *Assignment {
-	assignment := &Assignment{
+func newAssignment(user *experiment.User, results *evaluationResult) *assignment {
+	assignment := &assignment{
 		user:      user,
 		results:   results,
 		timestamp: int(time.Now().UnixNano() / int64(time.Millisecond)),
@@ -23,7 +23,7 @@ func NewAssignment(user *experiment.User, results *evaluationResult) *Assignment
 	return assignment
 }
 
-func (a *Assignment) Canonicalize() string {
+func (a *assignment) Canonicalize() string {
 	var sb strings.Builder
 
 	if a.user != nil {
