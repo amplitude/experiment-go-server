@@ -425,7 +425,7 @@ func topologicalSortArray(flags []interface{}, flagKeys []string) ([]interface{}
 		}
 	}
 	// Get the starting keys
-	startingKeys := make([]string, 0)
+	var startingKeys []string
 	if len(flagKeys) > 0 {
 		startingKeys = flagKeys
 	} else {

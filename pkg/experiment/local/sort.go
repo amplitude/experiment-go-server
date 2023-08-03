@@ -12,7 +12,7 @@ func topologicalSort(flags map[string]interface{}, flagKeys []string) ([]interfa
 		available[k] = v
 	}
 	// Get the starting keys
-	startingKeys := make([]string, 0)
+	var startingKeys []string
 	if len(flagKeys) > 0 {
 		startingKeys = flagKeys
 	} else {
@@ -56,7 +56,6 @@ func parentTraversal(flagKey string, available map[string]interface{}, path []st
 		}
 	}
 	result = append(result, flag)
-	path = path[:len(path)-1]
 	delete(available, flagKey)
 	return result, nil
 }
@@ -77,7 +76,7 @@ func extractDependencies(flag interface{}) []string {
 			switch flags := flagsAny.(type) {
 			case map[string]interface{}:
 				result := make([]string, 0)
-				for k, _ := range flags {
+				for k := range flags {
 					result = append(result, k)
 				}
 				return result
