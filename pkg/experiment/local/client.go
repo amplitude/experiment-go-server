@@ -25,7 +25,7 @@ type Client struct {
 	config *Config
 	client *http.Client
 	poller *poller
-	flags  *string
+	flags  map[string]interface{}
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -62,25 +62,29 @@ func (c *Client) Start() error {
 		}
 		c.flags = result
 	})
-
 	return nil
 }
 
 func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
 	variants := make(map[string]experiment.Variant)
-	if len(*c.flags) == 0 {
+	if len(c.flags) == 0 {
 		c.log.Debug("evaluate: no flags")
 		return variants, nil
-
 	}
 	userJson, err := json.Marshal(user)
 	if err != nil {
 		return nil, err
 	}
-
-	c.log.Debug("evaluate:\n\t- user: %v\n\t- rules: %v\n", string(userJson), *c.flags)
-
-	resultJson := evaluation.Evaluate(*c.flags, string(userJson))
+	sortedFlags, err := topologicalSort(c.flags, flagKeys)
+	if err != nil {
+		return nil, err
+	}
+	flagsJson, err := json.Marshal(sortedFlags)
+	if err != nil {
+		return nil, err
+	}
+	c.log.Debug("evaluate:\n\t- user: %v\n\t- rules: %v\n", string(userJson), string(flagsJson))
+	resultJson := evaluation.Evaluate(string(flagsJson), string(userJson))
 	c.log.Debug("evaluate result: %v\n", resultJson)
 	var interopResult *interopResult
 	err = json.Unmarshal([]byte(resultJson), &interopResult)
@@ -149,10 +153,19 @@ func (c *Client) doRules() (map[string]interface{}, error) {
 }
 
 func (c *Client) Flags() (*string, error) {
-	return c.doFlags()
+	flags, err := c.doFlags()
+	if err != nil {
+		return nil, err
+	}
+	flagsJson, err := json.Marshal(flags)
+	if err != nil {
+		return nil, err
+	}
+	flagsString := string(flagsJson)
+	return &flagsString, nil
 }
 
-func (c *Client) doFlags() (*string, error) {
+func (c *Client) doFlags() (map[string]interface{}, error) {
 	endpoint, err := url.Parse(c.config.ServerUrl)
 	if err != nil {
 		return nil, err
@@ -177,9 +190,24 @@ func (c *Client) doFlags() (*string, error) {
 	if err != nil {
 		return nil, err
 	}
-	flags := string(body)
-	c.log.Debug("flags: %v", flags)
-	return &flags, nil
+	c.log.Debug("flags: %v", string(body))
+	flagsArray := make([]interface{}, 0)
+	err = json.Unmarshal(body, &flagsArray)
+	if err != nil {
+		return nil, err
+	}
+	// Extract keys and create flags map
+	flags := make(map[string]interface{})
+	for _, flagAny := range flagsArray {
+		switch flag := flagAny.(type) {
+		case map[string]interface{}:
+			switch flagKey := flag["flagKey"].(type) {
+			case string:
+				flags[flagKey] = flag
+			}
+		}
+	}
+	return flags, nil
 }
 
 func contains(s []string, e string) bool {
