@@ -381,6 +381,39 @@ func TestComplexNoCycleStartingWithRoot(t *testing.T) {
 	}
 }
 
+func TestComplexNoCycleWithFlagKeys(t *testing.T) {
+	inputFlags := flagsArray(
+		flag{Key: "1", Dependencies: []string{"6", "3"}},
+		flag{Key: "2", Dependencies: []string{"8", "5", "3", "1"}},
+		flag{Key: "3", Dependencies: []string{"6", "5"}},
+		flag{Key: "4", Dependencies: []string{"8", "7"}},
+		flag{Key: "5", Dependencies: []string{"10", "7"}},
+		flag{Key: "7", Dependencies: []string{"8"}},
+		flag{Key: "6", Dependencies: []string{"7", "4"}},
+		flag{Key: "8", Dependencies: []string{}},
+		flag{Key: "9", Dependencies: []string{"10", "7", "5"}},
+		flag{Key: "10", Dependencies: []string{"7"}},
+		flag{Key: "20", Dependencies: []string{}},
+		flag{Key: "21", Dependencies: []string{"20"}},
+		flag{Key: "30", Dependencies: []string{}},
+	)
+	inputFlagKeys := []string{"1"}
+	actual, _ := topologicalSortArray(inputFlags, inputFlagKeys)
+	expected := flagsArray(
+		flag{Key: "8", Dependencies: []string{}},
+		flag{Key: "7", Dependencies: []string{"8"}},
+		flag{Key: "4", Dependencies: []string{"8", "7"}},
+		flag{Key: "6", Dependencies: []string{"7", "4"}},
+		flag{Key: "10", Dependencies: []string{"7"}},
+		flag{Key: "5", Dependencies: []string{"10", "7"}},
+		flag{Key: "3", Dependencies: []string{"6", "5"}},
+		flag{Key: "1", Dependencies: []string{"6", "3"}},
+	)
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("expected %v, actual %v", expected, actual)
+	}
+}
+
 // Utilities
 
 type flag struct {
