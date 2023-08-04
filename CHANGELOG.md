@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/amplitude/experiment-go-server/compare/v1.1.2...v1.1.3) (2023-08-04)
+
+
+### Bug Fixes
+
+* evaluate specific flags, topo sort before evaluate ([#14](https://github.com/amplitude/experiment-go-server/issues/14)) ([6b00979](https://github.com/amplitude/experiment-go-server/commit/6b00979857a5bf772d097d838aa581bd3b324eec))
+
 ## [1.1.2](https://github.com/amplitude/experiment-go-server/compare/v1.1.1...v1.1.2) (2023-07-19)
 
 
