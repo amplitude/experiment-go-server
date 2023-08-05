@@ -6,6 +6,8 @@ import (
 )
 
 const DayMillis = 24 * 60 * 60 * 1000
+const FlagTypeMutualExclusionGroup = "mutual-exclusion-group"
+const FlagTypeHoldoutGroup = "mutual-holdout-group"
 
 type AssignmentService struct {
 	Amplitude *amplitude.Client
@@ -19,8 +21,6 @@ func (s *AssignmentService) Track(assignment *assignment) {
 }
 
 func toEvent(assignment *assignment) amplitude.Event {
-
-	FlagTypeMutualExclusionGroup := "mutual-exclusion-group"
 
 	event := amplitude.Event{
 		EventType:       "[Experiment] assignment",
