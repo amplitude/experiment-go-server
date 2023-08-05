@@ -105,18 +105,23 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 		return nil, fmt.Errorf("evaluation resulted in error: %v", *interopResult.Error)
 	}
 	result := interopResult.Result
-	if c.assignmentService != nil {
-		(*c.assignmentService).Track(newAssignment(user, interopResult.Result))
-	}
+	assignmentResult := evaluationResult{}
+
 	filter := len(flagKeys) != 0
 	for k, v := range *result {
-		if v.IsDefaultVariant || (filter && !contains(flagKeys, k)) {
-			continue
+		included := !filter || contains(flagKeys, k)
+		if !v.IsDefaultVariant && included {
+			variants[k] = experiment.Variant{
+				Value:   v.Variant.Key,
+				Payload: v.Variant.Payload,
+			}
 		}
-		variants[k] = experiment.Variant{
-			Value:   v.Variant.Key,
-			Payload: v.Variant.Payload,
+		if included || v.Type == FlagTypeMutualExclusionGroup || v.Type == FlagTypeHoldoutGroup {
+			assignmentResult[k] = v
 		}
+	}
+	if c.assignmentService != nil {
+		(*c.assignmentService).Track(newAssignment(user, &assignmentResult))
 	}
 	return variants, nil
 }
