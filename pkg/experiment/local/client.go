@@ -50,7 +50,7 @@ func Initialize(apiKey string, config *Config) *Client {
 	// create assignment service if apikey is provided
 	if config.AssignmentConfig != nil && config.AssignmentConfig.IsValid() {
 		instance := amplitude.NewClient(config.AssignmentConfig.Config)
-		filter := newAssignmentFilter(config.AssignmentConfig.FilterCapacity)
+		filter := newAssignmentFilter(config.AssignmentConfig.CacheCapacity)
 		client.assignmentService = &AssignmentService{
 			Amplitude: &instance, Filter: filter,
 		}

@@ -15,7 +15,7 @@ type Config struct {
 
 type AssignmentConfig struct {
 	amplitude.Config
-	FilterCapacity int
+	CacheCapacity int
 }
 
 var DefaultConfig = &Config{
@@ -26,7 +26,7 @@ var DefaultConfig = &Config{
 }
 
 var DefaultAssignmentConfig = &AssignmentConfig{
-	FilterCapacity: 65536,
+	CacheCapacity: 65536,
 }
 
 func fillConfigDefaults(c *Config) *Config {
@@ -42,8 +42,8 @@ func fillConfigDefaults(c *Config) *Config {
 	if c.FlagConfigPollerRequestTimeout == 0 {
 		c.FlagConfigPollerRequestTimeout = DefaultConfig.FlagConfigPollerRequestTimeout
 	}
-	if c.AssignmentConfig.FilterCapacity == 0 {
-		c.AssignmentConfig.FilterCapacity = DefaultAssignmentConfig.FilterCapacity
+	if c.AssignmentConfig.CacheCapacity == 0 {
+		c.AssignmentConfig.CacheCapacity = DefaultAssignmentConfig.CacheCapacity
 	}
 	return c
 }
