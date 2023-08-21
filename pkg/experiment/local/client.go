@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/amplitude/analytics-go/amplitude"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -20,12 +21,13 @@ var clients = map[string]*Client{}
 var initMutex = sync.Mutex{}
 
 type Client struct {
-	log    *logger.Log
-	apiKey string
-	config *Config
-	client *http.Client
-	poller *poller
-	flags  map[string]interface{}
+	log               *logger.Log
+	apiKey            string
+	config            *Config
+	client            *http.Client
+	poller            *poller
+	flags             map[string]interface{}
+	assignmentService *AssignmentService
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -44,6 +46,15 @@ func Initialize(apiKey string, config *Config) *Client {
 			poller: newPoller(),
 		}
 		client.log.Debug("config: %v", *config)
+	}
+	// create assignment service if apikey is provided
+	if config.AssignmentConfig.ApiKey != "" {
+		ampConfig := amplitude.NewConfig(config.AssignmentConfig.ApiKey)
+		amplitude := amplitude.NewClient(ampConfig)
+		filter := NewAssignmentFilter(config.AssignmentConfig.FilterCapacity)
+		client.assignmentService = &AssignmentService{
+			Amplitude: &amplitude, Filter: filter,
+		}
 	}
 	initMutex.Unlock()
 	return client
@@ -95,6 +106,9 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 		return nil, fmt.Errorf("evaluation resulted in error: %v", *interopResult.Error)
 	}
 	result := interopResult.Result
+	if c.assignmentService != nil {
+		(*c.assignmentService).Track(NewAssignment(user, interopResult.Result))
+	}
 	filter := len(flagKeys) != 0
 	for k, v := range *result {
 		if v.IsDefaultVariant || (filter && !contains(flagKeys, k)) {

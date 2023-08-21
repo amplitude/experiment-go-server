@@ -9,6 +9,7 @@ type flagResult struct {
 	Variant          evaluationVariant `json:"variant,omitempty"`
 	Description      string            `json:"description,omitempty"`
 	IsDefaultVariant bool              `json:"isDefaultVariant,omitempty"`
+	Type             string            `json:"type,omitempty"`
 }
 
 type evaluationResult = map[string]flagResult
