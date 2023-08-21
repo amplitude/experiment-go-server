@@ -10,13 +10,13 @@ const FlagTypeMutualExclusionGroup = "mutual-exclusion-group"
 const FlagTypeHoldoutGroup = "mutual-holdout-group"
 
 type AssignmentService struct {
-	Amplitude *amplitude.Client
-	Filter    *assignmentFilter
+	amplitude *amplitude.Client
+	filter    *assignmentFilter
 }
 
 func (s *AssignmentService) Track(assignment *assignment) {
-	if s.Filter.shouldTrack(assignment) {
-		(*s.Amplitude).Track(toEvent(assignment))
+	if s.filter.shouldTrack(assignment) {
+		(*s.amplitude).Track(toEvent(assignment))
 	}
 }
 
