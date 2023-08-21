@@ -52,7 +52,7 @@ func Initialize(apiKey string, config *Config) *Client {
 		instance := amplitude.NewClient(config.AssignmentConfig.Config)
 		filter := newAssignmentFilter(config.AssignmentConfig.CacheCapacity)
 		client.assignmentService = &AssignmentService{
-			Amplitude: &instance, Filter: filter,
+			amplitude: &instance, filter: filter,
 		}
 	}
 	initMutex.Unlock()

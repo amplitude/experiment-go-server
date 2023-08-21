@@ -13,12 +13,12 @@ type Item struct {
 
 type Cache struct {
 	Capacity  int
-	TTL       int
+	TTL       time.Duration
 	cacheMap  map[string]*list.Element
 	cacheList *list.List
 }
 
-func NewCache(capacity int, ttlMillis int) *Cache {
+func NewCache(capacity int, ttlMillis time.Duration) *Cache {
 	return &Cache{
 		Capacity:  capacity,
 		TTL:       ttlMillis,
@@ -40,7 +40,7 @@ func (c *Cache) Get(key string) (interface{}, bool) {
 }
 
 func (c *Cache) Set(key string, value interface{}) {
-	expiresAt := time.Now().Add(time.Millisecond * time.Duration(c.TTL))
+	expiresAt := time.Now().Add(time.Millisecond * c.TTL)
 	if elem, found := c.cacheMap[key]; found {
 		c.cacheList.MoveToFront(elem)
 		cacheItem := elem.Value.(*Item)
