@@ -27,7 +27,7 @@ type Client struct {
 	client            *http.Client
 	poller            *poller
 	flags             map[string]interface{}
-	assignmentService *AssignmentService
+	assignmentService *assignmentService
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -51,7 +51,7 @@ func Initialize(apiKey string, config *Config) *Client {
 	if config.AssignmentConfig != nil && config.AssignmentConfig.IsValid() {
 		instance := amplitude.NewClient(config.AssignmentConfig.Config)
 		filter := newAssignmentFilter(config.AssignmentConfig.CacheCapacity)
-		client.assignmentService = &AssignmentService{
+		client.assignmentService = &assignmentService{
 			amplitude: &instance, filter: filter,
 		}
 	}
@@ -116,7 +116,7 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 				Payload: v.Variant.Payload,
 			}
 		}
-		if included || v.Type == FlagTypeMutualExclusionGroup || v.Type == FlagTypeHoldoutGroup {
+		if included || v.Type == flagTypeMutualExclusionGroup || v.Type == flagTypeHoldoutGroup {
 			assignmentResult[k] = v
 		}
 	}

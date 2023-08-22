@@ -5,16 +5,16 @@ import (
 	"github.com/amplitude/analytics-go/amplitude"
 )
 
-const DayMillis = 24 * 60 * 60 * 1000
-const FlagTypeMutualExclusionGroup = "mutual-exclusion-group"
-const FlagTypeHoldoutGroup = "mutual-holdout-group"
+const dayMillis = 24 * 60 * 60 * 1000
+const flagTypeMutualExclusionGroup = "mutual-exclusion-group"
+const flagTypeHoldoutGroup = "mutual-holdout-group"
 
-type AssignmentService struct {
+type assignmentService struct {
 	amplitude *amplitude.Client
 	filter    *assignmentFilter
 }
 
-func (s *AssignmentService) Track(assignment *assignment) {
+func (s *assignmentService) Track(assignment *assignment) {
 	if s.filter.shouldTrack(assignment) {
 		(*s.amplitude).Track(toEvent(assignment))
 	}
@@ -40,7 +40,7 @@ func toEvent(assignment *assignment) amplitude.Event {
 
 	// Loop to set user_properties
 	for resultsKey, result := range *assignment.results {
-		if result.Type == FlagTypeMutualExclusionGroup {
+		if result.Type == flagTypeMutualExclusionGroup {
 			continue
 		} else if result.IsDefaultVariant {
 			unset[fmt.Sprintf("[Experiment] %s", resultsKey)] = "-"
@@ -52,6 +52,6 @@ func toEvent(assignment *assignment) amplitude.Event {
 	event.UserProperties["$set"] = set
 	event.UserProperties["$unset"] = unset
 
-	event.InsertID = fmt.Sprintf("%s %s %d %d", event.UserID, event.DeviceID, hashCode(assignment.Canonicalize()), assignment.timestamp/DayMillis)
+	event.InsertID = fmt.Sprintf("%s %s %d %d", event.UserID, event.DeviceID, hashCode(assignment.Canonicalize()), assignment.timestamp/dayMillis)
 	return event
 }

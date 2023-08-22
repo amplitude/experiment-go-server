@@ -30,7 +30,7 @@ func TestToEvent(t *testing.T) {
 	assignment := newAssignment(user, results)
 	event := toEvent(assignment)
 	canonicalization := "user device flag-key-1 on flag-key-2 control "
-	expectedInsertID := fmt.Sprintf("user device %d %d", hashCode(canonicalization), assignment.timestamp/DayMillis)
+	expectedInsertID := fmt.Sprintf("user device %d %d", hashCode(canonicalization), assignment.timestamp/dayMillis)
 	if event.UserID != "user" {
 		t.Errorf("UserID was %s, expected %s", event.UserID, "user")
 	}
