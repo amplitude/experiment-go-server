@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/amplitude/experiment-go-server/compare/v1.1.3...v1.2.0) (2023-08-25)
+
+
+### Features
+
+* Automatic assignment Tracking ([#13](https://github.com/amplitude/experiment-go-server/issues/13)) ([96438e5](https://github.com/amplitude/experiment-go-server/commit/96438e5ac0fc091ea322aec02a4058829c859cc2))
+
 ## [1.1.3](https://github.com/amplitude/experiment-go-server/compare/v1.1.2...v1.1.3) (2023-08-04)
 
 
