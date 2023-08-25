@@ -23,7 +23,7 @@ func (s *assignmentService) Track(assignment *assignment) {
 func toEvent(assignment *assignment) amplitude.Event {
 
 	event := amplitude.Event{
-		EventType:       "[Experiment] assignment",
+		EventType:       "[Experiment] Assignment",
 		UserID:          assignment.user.UserId,
 		DeviceID:        assignment.user.DeviceId,
 		EventProperties: make(map[string]interface{}),

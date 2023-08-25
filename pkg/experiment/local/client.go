@@ -48,7 +48,8 @@ func Initialize(apiKey string, config *Config) *Client {
 		client.log.Debug("config: %v", *config)
 	}
 	// create assignment service if apikey is provided
-	if config.AssignmentConfig != nil && config.AssignmentConfig.IsValid() {
+	print(config.AssignmentConfig.Config.IsValid())
+	if config.AssignmentConfig != nil && config.AssignmentConfig.Config.IsValid() {
 		instance := amplitude.NewClient(config.AssignmentConfig.Config)
 		filter := newAssignmentFilter(config.AssignmentConfig.CacheCapacity)
 		client.assignmentService = &assignmentService{
