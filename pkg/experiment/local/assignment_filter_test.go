@@ -1,7 +1,6 @@
 package local
 
 import (
-	"github.com/amplitude/analytics-go/amplitude"
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"testing"
 	"time"
@@ -319,18 +318,4 @@ func TestTTLBasedEviction(t *testing.T) {
 	if filter.shouldTrack(assignment2) {
 		t.Errorf("Assignment2 should not be tracked")
 	}
-}
-
-func TestAssignmentTracking(t *testing.T) {
-	ampc := amplitude.NewConfig("a6dd847b9d2f03c816d4f3f8458cdc1d")
-	ampc.FlushInterval = 1000
-	ampc.FlushQueueSize = 3
-	ac := &AssignmentConfig{ampc, 10}
-	config := fillConfigDefaults(nil)
-	config.AssignmentConfig = ac
-	client := Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz", config)
-	client.Start()
-	user := &experiment.User{UserId: "tim.yiu@amplitude.com"}
-	client.Evaluate(user, nil)
-	time.Sleep(2 * time.Second)
 }
