@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/amplitude/analytics-go/amplitude"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -20,12 +21,13 @@ var clients = map[string]*Client{}
 var initMutex = sync.Mutex{}
 
 type Client struct {
-	log    *logger.Log
-	apiKey string
-	config *Config
-	client *http.Client
-	poller *poller
-	flags  map[string]interface{}
+	log               *logger.Log
+	apiKey            string
+	config            *Config
+	client            *http.Client
+	poller            *poller
+	flags             map[string]interface{}
+	assignmentService *assignmentService
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -44,6 +46,15 @@ func Initialize(apiKey string, config *Config) *Client {
 			poller: newPoller(),
 		}
 		client.log.Debug("config: %v", *config)
+	}
+	// create assignment service if apikey is provided
+	print(config.AssignmentConfig.Config.IsValid())
+	if config.AssignmentConfig != nil && config.AssignmentConfig.Config.IsValid() {
+		instance := amplitude.NewClient(config.AssignmentConfig.Config)
+		filter := newAssignmentFilter(config.AssignmentConfig.CacheCapacity)
+		client.assignmentService = &assignmentService{
+			amplitude: &instance, filter: filter,
+		}
 	}
 	initMutex.Unlock()
 	return client
@@ -95,15 +106,23 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 		return nil, fmt.Errorf("evaluation resulted in error: %v", *interopResult.Error)
 	}
 	result := interopResult.Result
+	assignmentResult := evaluationResult{}
+
 	filter := len(flagKeys) != 0
 	for k, v := range *result {
-		if v.IsDefaultVariant || (filter && !contains(flagKeys, k)) {
-			continue
+		included := !filter || contains(flagKeys, k)
+		if !v.IsDefaultVariant && included {
+			variants[k] = experiment.Variant{
+				Value:   v.Variant.Key,
+				Payload: v.Variant.Payload,
+			}
 		}
-		variants[k] = experiment.Variant{
-			Value:   v.Variant.Key,
-			Payload: v.Variant.Payload,
+		if included || v.Type == flagTypeMutualExclusionGroup || v.Type == flagTypeHoldoutGroup {
+			assignmentResult[k] = v
 		}
+	}
+	if c.assignmentService != nil {
+		(*c.assignmentService).Track(newAssignment(user, &assignmentResult))
 	}
 	return variants, nil
 }
