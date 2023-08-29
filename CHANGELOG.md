@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/amplitude/experiment-go-server/compare/v1.2.0...v1.2.1) (2023-08-29)
+
+
+### Bug Fixes
+
+* remove unused logging ([#16](https://github.com/amplitude/experiment-go-server/issues/16)) ([1b2153e](https://github.com/amplitude/experiment-go-server/commit/1b2153ee4cd0c2d68be8f5c51c5f9e658a7840b0))
+
 # [1.2.0](https://github.com/amplitude/experiment-go-server/compare/v1.1.3...v1.2.0) (2023-08-25)
 
 
