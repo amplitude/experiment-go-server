@@ -168,13 +168,13 @@ func TestEmptyResult(t *testing.T) {
 	assignment3 := newAssignment(user2, results)
 	filter := newAssignmentFilter(100)
 	if filter.shouldTrack(assignment1) {
-		t.Errorf("Assignment1 should be tracked")
+		t.Errorf("Assignment1 should not be tracked")
 	}
 	if filter.shouldTrack(assignment2) {
 		t.Errorf("Assignment2 should not be tracked")
 	}
 	if filter.shouldTrack(assignment3) {
-		t.Errorf("Assignment3 should be tracked")
+		t.Errorf("Assignment3 should not be tracked")
 	}
 }
 
