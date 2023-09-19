@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/amplitude/experiment-go-server/compare/v1.2.1...v1.2.2) (2023-09-19)
+
+
+### Bug Fixes
+
+* Do not track empty assignment events ([#17](https://github.com/amplitude/experiment-go-server/issues/17)) ([fcb0102](https://github.com/amplitude/experiment-go-server/commit/fcb01021f7cf6e86d40f32ec542c0508f1d5efec))
+
 ## [1.2.1](https://github.com/amplitude/experiment-go-server/compare/v1.2.0...v1.2.1) (2023-08-29)
 
 
