@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/amplitude/analytics-go/amplitude"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -29,6 +30,7 @@ type Client struct {
 	flags  map[string]*evaluation.Flag
 	flagsMutex *sync.RWMutex
 	engine *evaluation.Engine
+	assignmentService *assignmentService
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -51,6 +53,14 @@ func Initialize(apiKey string, config *Config) *Client {
 			engine: evaluation.NewEngine(log),
 		}
 		client.log.Debug("config: %v", *config)
+	}
+	// create assignment service if apikey is provided
+	if config.AssignmentConfig != nil && config.AssignmentConfig.Config.IsValid() {
+		instance := amplitude.NewClient(config.AssignmentConfig.Config)
+		filter := newAssignmentFilter(config.AssignmentConfig.CacheCapacity)
+		client.assignmentService = &assignmentService{
+			amplitude: &instance, filter: filter,
+		}
 	}
 	initMutex.Unlock()
 	return client
@@ -111,6 +121,9 @@ func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[strin
 			Payload: result.Payload,
 			Metadata: result.Metadata,
 		}
+	}
+	if c.assignmentService != nil {
+		c.assignmentService.Track(newAssignment(user, variants))
 	}
 	return variants, nil
 }

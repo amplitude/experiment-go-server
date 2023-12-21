@@ -1,3 +1,31 @@
+## [1.2.2](https://github.com/amplitude/experiment-go-server/compare/v1.2.1...v1.2.2) (2023-09-19)
+
+
+### Bug Fixes
+
+* Do not track empty assignment events ([#17](https://github.com/amplitude/experiment-go-server/issues/17)) ([fcb0102](https://github.com/amplitude/experiment-go-server/commit/fcb01021f7cf6e86d40f32ec542c0508f1d5efec))
+
+## [1.2.1](https://github.com/amplitude/experiment-go-server/compare/v1.2.0...v1.2.1) (2023-08-29)
+
+
+### Bug Fixes
+
+* remove unused logging ([#16](https://github.com/amplitude/experiment-go-server/issues/16)) ([1b2153e](https://github.com/amplitude/experiment-go-server/commit/1b2153ee4cd0c2d68be8f5c51c5f9e658a7840b0))
+
+# [1.2.0](https://github.com/amplitude/experiment-go-server/compare/v1.1.3...v1.2.0) (2023-08-25)
+
+
+### Features
+
+* Automatic assignment Tracking ([#13](https://github.com/amplitude/experiment-go-server/issues/13)) ([96438e5](https://github.com/amplitude/experiment-go-server/commit/96438e5ac0fc091ea322aec02a4058829c859cc2))
+
+## [1.1.3](https://github.com/amplitude/experiment-go-server/compare/v1.1.2...v1.1.3) (2023-08-04)
+
+
+### Bug Fixes
+
+* evaluate specific flags, topo sort before evaluate ([#14](https://github.com/amplitude/experiment-go-server/issues/14)) ([6b00979](https://github.com/amplitude/experiment-go-server/commit/6b00979857a5bf772d097d838aa581bd3b324eec))
+
 ## [1.1.2](https://github.com/amplitude/experiment-go-server/compare/v1.1.1...v1.1.2) (2023-07-19)
 
 
