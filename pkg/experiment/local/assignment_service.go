@@ -31,8 +31,13 @@ func toEvent(assignment *assignment) amplitude.Event {
 
 	// Loop to set event_properties
 	for resultsKey, result := range assignment.results {
+		version, _ := result.Metadata["version"].(int)
+		segmentName, _ := result.Metadata["segmentName"].(string)
 		event.EventProperties[fmt.Sprintf("%s.variant", resultsKey)] = result.Key
-		// TODO add details
+		if version != 0 && len(segmentName) > 0 {
+			details := fmt.Sprintf("v%v rule:%v", version, segmentName)
+			event.EventProperties[fmt.Sprintf("%s.details", resultsKey)] = details
+		}
 	}
 
 	set := make(map[string]interface{})

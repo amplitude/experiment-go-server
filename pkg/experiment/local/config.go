@@ -26,7 +26,7 @@ var DefaultConfig = &Config{
 }
 
 var DefaultAssignmentConfig = &AssignmentConfig{
-	CacheCapacity: 65536,
+	CacheCapacity: 524288,
 }
 
 func fillConfigDefaults(c *Config) *Config {
