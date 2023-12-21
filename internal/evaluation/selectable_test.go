@@ -69,12 +69,12 @@ func TestUnstructuredJson(t *testing.T) {
 		t.Fatalf("unexpected value %v", arrayValue)
 	}
 	if !reflect.DeepEqual(objectValue, map[string]interface{}{
-		"null": nil,
-		"string": "value",
-		"int": float64(13),
-		"double": 13.12,
+		"null":    nil,
+		"string":  "value",
+		"int":     float64(13),
+		"double":  13.12,
 		"boolean": true,
-		"array": []interface{}{nil, "value", float64(13), 13.12, true},
+		"array":   []interface{}{nil, "value", float64(13), 13.12, true},
 		"object": map[string]interface{}{
 			"null":    nil,
 			"string":  "value",
@@ -117,10 +117,10 @@ func TestUnstructuredJson(t *testing.T) {
 		t.Fatalf("unexpected value %v", nestedArrayValue)
 	}
 	if !reflect.DeepEqual(nestedObjectValue, map[string]interface{}{
-		"null": nil,
-		"string": "value",
-		"int": float64(13),
-		"double": 13.12,
+		"null":    nil,
+		"string":  "value",
+		"int":     float64(13),
+		"double":  13.12,
 		"boolean": true,
 	}) {
 		t.Fatalf("unexpected value %v", nestedObjectValue)
@@ -152,4 +152,3 @@ func TestUnstructuredJson(t *testing.T) {
 		t.Fatalf("unexpected value %v", nestedBooleanValue2)
 	}
 }
-

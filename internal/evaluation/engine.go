@@ -139,8 +139,8 @@ func (e *Engine) bucket(target *target, segment *Segment) string {
 		allocationEnd := allocation.Range[1]
 		if allocationValue >= allocationStart && allocationValue < allocationEnd {
 			for _, distribution := range allocation.Distributions {
-				distributionStart := distribution.Range[0];
-				distributionEnd := distribution.Range[1];
+				distributionStart := distribution.Range[0]
+				distributionEnd := distribution.Range[1]
 				if distributionValue >= distributionStart && distributionValue < distributionEnd {
 					e.log.Verbose("Bucketing hit allocation and distribution, returning variant %v", distribution.Variant)
 					return distribution.Variant
@@ -169,9 +169,9 @@ func matchNull(op string, filterValues []string) bool {
 	containsNone := containsNone(filterValues)
 	switch op {
 	case OpIs, OpContains, OpLessThan, OpLessThanEquals, OpGreaterThan,
-	OpGreaterThanEquals, OpVersionLessThan, OpVersionLessThanEquals,
-	OpVersionGreaterThan, OpVersionGreaterThanEquals, OpSetIs, OpSetContains,
-	OpSetContainsAny:
+		OpGreaterThanEquals, OpVersionLessThan, OpVersionLessThanEquals,
+		OpVersionGreaterThan, OpVersionGreaterThanEquals, OpSetIs, OpSetContains,
+		OpSetContainsAny:
 		return containsNone
 	case OpIsNot, OpDoesNotContain, OpSetDoesNotContain, OpSetDoesNotContainAny:
 		return !containsNone
@@ -186,30 +186,44 @@ func matchNull(op string, filterValues []string) bool {
 
 func matchSet(propValues []string, op string, filterValues []string) bool {
 	switch op {
-	case OpSetIs:return matchesSetIs(propValues, filterValues)
-	case OpSetIsNot:return !matchesSetIs(propValues, filterValues)
-	case OpSetContains:return matchesSetContainsAll(propValues, filterValues)
-	case OpSetDoesNotContain:return !matchesSetContainsAll(propValues, filterValues)
-	case OpSetContainsAny:return matchesSetContainsAny(propValues, filterValues)
-	case OpSetDoesNotContainAny:return !matchesSetContainsAny(propValues, filterValues)
-	default:return false
+	case OpSetIs:
+		return matchesSetIs(propValues, filterValues)
+	case OpSetIsNot:
+		return !matchesSetIs(propValues, filterValues)
+	case OpSetContains:
+		return matchesSetContainsAll(propValues, filterValues)
+	case OpSetDoesNotContain:
+		return !matchesSetContainsAll(propValues, filterValues)
+	case OpSetContainsAny:
+		return matchesSetContainsAny(propValues, filterValues)
+	case OpSetDoesNotContainAny:
+		return !matchesSetContainsAny(propValues, filterValues)
+	default:
+		return false
 	}
 }
 
 func matchString(propValue string, op string, filterValues []string) bool {
 	switch op {
-	case OpIs: return matchesIs(propValue, filterValues)
-	case OpIsNot: return !matchesIs(propValue, filterValues)
-	case OpContains: return matchesContains(propValue, filterValues)
-	case OpDoesNotContain: return !matchesContains(propValue, filterValues)
+	case OpIs:
+		return matchesIs(propValue, filterValues)
+	case OpIsNot:
+		return !matchesIs(propValue, filterValues)
+	case OpContains:
+		return matchesContains(propValue, filterValues)
+	case OpDoesNotContain:
+		return !matchesContains(propValue, filterValues)
 	case OpLessThan, OpLessThanEquals, OpGreaterThan, OpGreaterThanEquals:
 		return compare(propValue, op, filterValues)
 	case OpVersionLessThan, OpVersionLessThanEquals, OpVersionGreaterThan,
-	OpVersionGreaterThanEquals:
+		OpVersionGreaterThanEquals:
 		return compareVersion(propValue, op, filterValues)
-	case OpRegexMatch: return matchesRegex(propValue, filterValues)
-	case OpRegexDoesNotMatch: return !matchesRegex(propValue, filterValues)
-	default: return false
+	case OpRegexMatch:
+		return matchesRegex(propValue, filterValues)
+	case OpRegexDoesNotMatch:
+		return !matchesRegex(propValue, filterValues)
+	default:
+		return false
 	}
 }
 
@@ -267,7 +281,7 @@ func matchesSetIs(propValues, filterValues []string) bool {
 	if len(m1) != len(m2) {
 		return false
 	}
-	for k,_ := range m1 {
+	for k, _ := range m1 {
 		if _, ok := m2[k]; !ok {
 			return false
 		}
@@ -341,11 +355,16 @@ func compareVersion(propValue string, op string, filterValues []string) bool {
 		compareResult := versionCompare(*propValueVersion, filterValueVersion)
 		var result bool
 		switch op {
-		case OpVersionLessThan: result = compareResult < 0
-		case OpVersionLessThanEquals: result = compareResult <= 0
-		case OpVersionGreaterThan: result = compareResult > 0
-		case OpVersionGreaterThanEquals: result = compareResult >= 0
-		default: result = false
+		case OpVersionLessThan:
+			result = compareResult < 0
+		case OpVersionLessThanEquals:
+			result = compareResult <= 0
+		case OpVersionGreaterThan:
+			result = compareResult > 0
+		case OpVersionGreaterThanEquals:
+			result = compareResult >= 0
+		default:
+			result = false
 		}
 		if result {
 			return true
@@ -358,11 +377,16 @@ func compareString(propValue string, op string, filterValues []string) bool {
 	for _, filterValue := range filterValues {
 		var result bool
 		switch op {
-		case OpLessThan: result = propValue < filterValue
-		case OpLessThanEquals: result = propValue <= filterValue
-		case OpGreaterThan: result = propValue > filterValue
-		case OpGreaterThanEquals: result = propValue >= filterValue
-		default: result = false
+		case OpLessThan:
+			result = propValue < filterValue
+		case OpLessThanEquals:
+			result = propValue <= filterValue
+		case OpGreaterThan:
+			result = propValue > filterValue
+		case OpGreaterThanEquals:
+			result = propValue >= filterValue
+		default:
+			result = false
 		}
 		if result {
 			return true
@@ -375,11 +399,16 @@ func compareNumber(propValue float64, op string, filterValues []float64) bool {
 	for _, filterValue := range filterValues {
 		var result bool
 		switch op {
-		case OpLessThan: result = propValue < filterValue
-		case OpLessThanEquals: result = propValue <= filterValue
-		case OpGreaterThan: result = propValue > filterValue
-		case OpGreaterThanEquals: result = propValue >= filterValue
-		default: result = false
+		case OpLessThan:
+			result = propValue < filterValue
+		case OpLessThanEquals:
+			result = propValue <= filterValue
+		case OpGreaterThan:
+			result = propValue > filterValue
+		case OpGreaterThanEquals:
+			result = propValue >= filterValue
+		default:
+			result = false
 		}
 		if result {
 			return true
@@ -417,10 +446,6 @@ func containsBooleans(filterValues []string) bool {
 	return false
 }
 
-func parseFloat64(value string) (float64, error) {
-	return strconv.ParseFloat(value, 64)
-}
-
 func coerceString(value interface{}) *string {
 	if value == nil {
 		return nil
@@ -443,7 +468,7 @@ func coerceStringList(value interface{}) ([]string, error) {
 	if ok {
 		return value.([]string), nil
 	}
- 	// Fall back to reflection for slices with unexpected value types
+	// Fall back to reflection for slices with unexpected value types
 	kind := reflect.TypeOf(value).Kind()
 	if kind == reflect.Slice || kind == reflect.Array {
 		var stringList []string
@@ -472,7 +497,9 @@ func coerceStringList(value interface{}) ([]string, error) {
 func isSetOperator(op string) bool {
 	switch op {
 	case OpSetIs, OpSetIsNot, OpSetContains, OpSetDoesNotContain,
-	OpSetContainsAny, OpSetDoesNotContainAny: return true
-	default: return false
+		OpSetContainsAny, OpSetDoesNotContainAny:
+		return true
+	default:
+		return false
 	}
 }

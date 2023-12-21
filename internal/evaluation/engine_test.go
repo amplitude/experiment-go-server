@@ -33,7 +33,7 @@ func init() {
 
 func TestOff(t *testing.T) {
 	user := userContext(map[string]interface{}{
-		"user_id": "user_id",
+		"user_id":   "user_id",
 		"device_id": "device_id",
 	})
 	result := engine.Evaluate(user, flags)["test-off"]
@@ -44,7 +44,7 @@ func TestOff(t *testing.T) {
 
 func TestOn(t *testing.T) {
 	user := userContext(map[string]interface{}{
-		"user_id": "user_id",
+		"user_id":   "user_id",
 		"device_id": "device_id",
 	})
 	result := engine.Evaluate(user, flags)["test-on"]
@@ -98,7 +98,7 @@ func TestIndividualInclusionsMatch(t *testing.T) {
 
 func TestFlagDependenciesOn(t *testing.T) {
 	user := userContext(map[string]interface{}{
-		"user_id": "user_id",
+		"user_id":   "user_id",
 		"device_id": "device_id",
 	})
 	result := engine.Evaluate(user, flags)["test-flag-dependencies-on"]
@@ -109,7 +109,7 @@ func TestFlagDependenciesOn(t *testing.T) {
 
 func TestFlagDependenciesOff(t *testing.T) {
 	user := userContext(map[string]interface{}{
-		"user_id": "user_id",
+		"user_id":   "user_id",
 		"device_id": "device_id",
 	})
 	result := engine.Evaluate(user, flags)["test-flag-dependencies-off"]
@@ -124,7 +124,7 @@ func TestFlagDependenciesOff(t *testing.T) {
 func TestStickyBucketing(t *testing.T) {
 	// On
 	user := userContext(map[string]interface{}{
-		"user_id": "user_id",
+		"user_id":   "user_id",
 		"device_id": "device_id",
 		"user_properties": map[string]interface{}{
 			"[Experiment] test-sticky-bucketing": "on",
@@ -140,7 +140,7 @@ func TestStickyBucketing(t *testing.T) {
 	}
 	// Off
 	user = userContext(map[string]interface{}{
-		"user_id": "user_id",
+		"user_id":   "user_id",
 		"device_id": "device_id",
 		"user_properties": map[string]interface{}{
 			"[Experiment] test-sticky-bucketing": "off",
@@ -155,7 +155,7 @@ func TestStickyBucketing(t *testing.T) {
 	}
 	// Non-variant
 	user = userContext(map[string]interface{}{
-		"user_id": "user_id",
+		"user_id":   "user_id",
 		"device_id": "device_id",
 		"user_properties": map[string]interface{}{
 			"[Experiment] test-sticky-bucketing": "not-a-variant",
@@ -174,7 +174,7 @@ func TestStickyBucketing(t *testing.T) {
 
 func TestExperiment(t *testing.T) {
 	user := userContext(map[string]interface{}{
-		"user_id": "user_id",
+		"user_id":   "user_id",
 		"device_id": "device_id",
 	})
 	result := engine.Evaluate(user, flags)["test-experiment"]
@@ -188,14 +188,14 @@ func TestExperiment(t *testing.T) {
 
 func TestFlag(t *testing.T) {
 	user := userContext(map[string]interface{}{
-		"user_id": "user_id",
+		"user_id":   "user_id",
 		"device_id": "device_id",
 	})
 	result := engine.Evaluate(user, flags)["test-flag"]
 	if result.Key != "on" {
 		t.Fatalf("unexpected evaluation result %v", result.Key)
 	}
-	if result.Metadata["experimentKey"]  != nil {
+	if result.Metadata["experimentKey"] != nil {
 		t.Fatalf("unexpected experiment key result %v", result.Metadata["experimentKey"])
 	}
 }
@@ -276,7 +276,7 @@ func TestGroupPropertyTargeting(t *testing.T) {
 	user := groupContext(map[string]interface{}{
 		"org name": map[string]interface{}{
 			"group_name": "amplitude",
-			"group_properties":map[string]interface{}{
+			"group_properties": map[string]interface{}{
 				"org plan": "enterprise2",
 			},
 		},
@@ -347,7 +347,7 @@ func TestGroupPropertyBucketing(t *testing.T) {
 	user := groupContext(map[string]interface{}{
 		"org name": map[string]interface{}{
 			"group_name": "amplitude",
-			"group_properties":map[string]interface{}{
+			"group_properties": map[string]interface{}{
 				"org plan": "enterprise2",
 			},
 		},
@@ -419,9 +419,12 @@ func Test1PercentDistribution(t *testing.T) {
 		})
 		result := engine.Evaluate(user, flags)["test-1-percent-distribution"]
 		switch result.Key {
-		case "control": control++
-		case "treatment": treatment++
-		default: t.Fatalf("unexpected variant %v", result.Key)
+		case "control":
+			control++
+		case "treatment":
+			treatment++
+		default:
+			t.Fatalf("unexpected variant %v", result.Key)
 		}
 	}
 	if control != 106 {
@@ -441,9 +444,12 @@ func Test50PercentDistribution(t *testing.T) {
 		})
 		result := engine.Evaluate(user, flags)["test-50-percent-distribution"]
 		switch result.Key {
-		case "control": control++
-		case "treatment": treatment++
-		default: t.Fatalf("unexpected variant %v", result.Key)
+		case "control":
+			control++
+		case "treatment":
+			treatment++
+		default:
+			t.Fatalf("unexpected variant %v", result.Key)
 		}
 	}
 	if control != 4990 {
@@ -463,9 +469,12 @@ func Test99PercentDistribution(t *testing.T) {
 		})
 		result := engine.Evaluate(user, flags)["test-99-percent-distribution"]
 		switch result.Key {
-		case "control": control++
-		case "treatment": treatment++
-		default: t.Fatalf("unexpected variant %v", result.Key)
+		case "control":
+			control++
+		case "treatment":
+			treatment++
+		default:
+			t.Fatalf("unexpected variant %v", result.Key)
 		}
 	}
 	if control != 9909 {
@@ -487,11 +496,16 @@ func TestMultipleDistributions(t *testing.T) {
 		})
 		result := engine.Evaluate(user, flags)["test-multiple-distributions"]
 		switch result.Key {
-		case "a": a++
-		case "b": b++
-		case "c": c++
-		case "d": d++
-		default: t.Fatalf("unexpected variant %v", result.Key)
+		case "a":
+			a++
+		case "b":
+			b++
+		case "c":
+			c++
+		case "d":
+			d++
+		default:
+			t.Fatalf("unexpected variant %v", result.Key)
 		}
 	}
 	if a != 2444 {
@@ -743,7 +757,7 @@ func TestGlobDoesNotMatch(t *testing.T) {
 func TestIsWithBooleans(t *testing.T) {
 	user := userContext(map[string]interface{}{
 		"user_properties": map[string]interface{}{
-			"true": "TRUE",
+			"true":  "TRUE",
 			"false": "FALSE",
 		},
 	})
@@ -753,7 +767,7 @@ func TestIsWithBooleans(t *testing.T) {
 	}
 	user = userContext(map[string]interface{}{
 		"user_properties": map[string]interface{}{
-			"true": "True",
+			"true":  "True",
 			"false": "False",
 		},
 	})
@@ -763,7 +777,7 @@ func TestIsWithBooleans(t *testing.T) {
 	}
 	user = userContext(map[string]interface{}{
 		"user_properties": map[string]interface{}{
-			"true": "true",
+			"true":  "true",
 			"false": "false",
 		},
 	})
@@ -780,7 +794,7 @@ func userContext(u map[string]interface{}) map[string]interface{} {
 }
 
 func groupContext(g map[string]interface{}) map[string]interface{} {
-	return map[string]interface{}{"groups":g}
+	return map[string]interface{}{"groups": g}
 }
 
 func getFlagConfigsRaw() ([]byte, error) {
@@ -791,7 +805,7 @@ func getFlagConfigsRaw() ([]byte, error) {
 	}
 	endpoint.Path = "sdk/v2/flags"
 	endpoint.RawQuery = "eval_mode=remote"
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	req, err := http.NewRequest("GET", endpoint.String(), nil)
 	if err != nil {

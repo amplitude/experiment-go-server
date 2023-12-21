@@ -22,14 +22,14 @@ var clients = map[string]*Client{}
 var initMutex = sync.Mutex{}
 
 type Client struct {
-	log    *logger.Log
-	apiKey string
-	config *Config
-	client *http.Client
-	poller *poller
-	flags  map[string]*evaluation.Flag
-	flagsMutex *sync.RWMutex
-	engine *evaluation.Engine
+	log               *logger.Log
+	apiKey            string
+	config            *Config
+	client            *http.Client
+	poller            *poller
+	flags             map[string]*evaluation.Flag
+	flagsMutex        *sync.RWMutex
+	engine            *evaluation.Engine
 	assignmentService *assignmentService
 }
 
@@ -43,14 +43,14 @@ func Initialize(apiKey string, config *Config) *Client {
 		config = fillConfigDefaults(config)
 		log := logger.New(config.Debug)
 		client = &Client{
-			log:    log,
-			apiKey: apiKey,
-			config: config,
-			client: &http.Client{},
-			poller: newPoller(),
-			flags: make(map[string]*evaluation.Flag),
+			log:        log,
+			apiKey:     apiKey,
+			config:     config,
+			client:     &http.Client{},
+			poller:     newPoller(),
+			flags:      make(map[string]*evaluation.Flag),
 			flagsMutex: &sync.RWMutex{},
-			engine: evaluation.NewEngine(log),
+			engine:     evaluation.NewEngine(log),
 		}
 		client.log.Debug("config: %v", *config)
 	}
@@ -116,9 +116,9 @@ func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[strin
 	variants := make(map[string]experiment.Variant)
 	for key, result := range results {
 		variants[key] = experiment.Variant{
-			Key: result.Key,
-			Value: coerceString(result.Value),
-			Payload: result.Payload,
+			Key:      result.Key,
+			Value:    coerceString(result.Value),
+			Payload:  result.Payload,
 			Metadata: result.Metadata,
 		}
 	}

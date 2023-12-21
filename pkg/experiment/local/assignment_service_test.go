@@ -17,7 +17,7 @@ func TestToEvent(t *testing.T) {
 			Key: "on",
 		},
 		"flag-key-2": {
-			Key: "control",
+			Key:      "control",
 			Metadata: map[string]interface{}{"default": true},
 		},
 	}

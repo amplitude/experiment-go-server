@@ -146,7 +146,6 @@ func flags() {
 	println(*flags)
 }
 
-
 func evaluate() {
 	evaluateCmd := flag.NewFlagSet("evaluate", flag.ExitOnError)
 	apiKey := evaluateCmd.String("k", "", "Server api key for authorization, or use EXPERIMENT_KEY env var.")

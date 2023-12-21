@@ -17,7 +17,7 @@ func TestSingleAssignment(t *testing.T) {
 			Key: "on",
 		},
 		"flag-key-2": {
-			Key: "control",
+			Key:      "control",
 			Metadata: map[string]interface{}{"default": true},
 		},
 	}
@@ -40,7 +40,7 @@ func TestDuplicateAssignment(t *testing.T) {
 			Key: "on",
 		},
 		"flag-key-2": {
-			Key: "control",
+			Key:      "control",
 			Metadata: map[string]interface{}{"default": true},
 		},
 	}
@@ -67,14 +67,14 @@ func TestSameUserDifferentResults(t *testing.T) {
 			Key: "on",
 		},
 		"flag-key-2": {
-			Key: "control",
+			Key:      "control",
 			Metadata: map[string]interface{}{"default": true},
 		},
 	}
 
 	results2 := map[string]experiment.Variant{
 		"flag-key-1": {
-			Key: "control",
+			Key:      "control",
 			Metadata: map[string]interface{}{"default": true},
 		},
 		"flag-key-2": {
@@ -109,7 +109,7 @@ func TestSameResultsDifferentUser(t *testing.T) {
 			Key: "on",
 		},
 		"flag-key-2": {
-			Key: "control",
+			Key:      "control",
 			Metadata: map[string]interface{}{"default": true},
 		},
 	}
@@ -164,14 +164,14 @@ func TestDuplicateAssignmentsWithDifferentResultOrder(t *testing.T) {
 			Key: "on",
 		},
 		"flag-key-2": {
-			Key: "control",
+			Key:      "control",
 			Metadata: map[string]interface{}{"default": true},
 		},
 	}
 
 	results2 := map[string]experiment.Variant{
 		"flag-key-2": {
-			Key: "control",
+			Key:      "control",
 			Metadata: map[string]interface{}{"default": true},
 		},
 		"flag-key-1": {
@@ -211,7 +211,7 @@ func TestLRUReplacement(t *testing.T) {
 			Key: "on",
 		},
 		"flag-key-2": {
-			Key: "control",
+			Key:      "control",
 			Metadata: map[string]interface{}{"default": true},
 		},
 	}
@@ -250,7 +250,7 @@ func TestTTLBasedEviction(t *testing.T) {
 			Key: "on",
 		},
 		"flag-key-2": {
-			Key: "control",
+			Key:      "control",
 			Metadata: map[string]interface{}{"default": true},
 		},
 	}

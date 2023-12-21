@@ -22,8 +22,8 @@ type User struct {
 }
 
 type Variant struct {
-	Value   string      `json:"value,omitempty"`
-	Payload interface{} `json:"payload,omitempty"`
-	Key string 			`json:"key,omitempty"`
+	Value    string                 `json:"value,omitempty"`
+	Payload  interface{}            `json:"payload,omitempty"`
+	Key      string                 `json:"key,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }

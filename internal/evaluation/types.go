@@ -3,7 +3,7 @@ package evaluation
 type Flag struct {
 	Key          string                 `json:"key,omitempty"`
 	Variants     map[string]*Variant    `json:"variants,omitempty"`
-	Segments     []*Segment              `json:"segments,omitempty"`
+	Segments     []*Segment             `json:"segments,omitempty"`
 	Dependencies []string               `json:"dependencies,omitempty"`
 	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 }
@@ -17,14 +17,14 @@ type Variant struct {
 
 type Segment struct {
 	Bucket     *Bucket                `json:"bucket,omitempty"`
-	Conditions [][]*Condition          `json:"conditions,omitempty"`
-	Variant    string               `json:"variant,omitempty"`
+	Conditions [][]*Condition         `json:"conditions,omitempty"`
+	Variant    string                 `json:"variant,omitempty"`
 	Metadata   map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type Bucket struct {
-	Selector    []string     `json:"selector,omitempty"`
-	Salt        string       `json:"salt,omitempty"`
+	Selector    []string      `json:"selector,omitempty"`
+	Salt        string        `json:"salt,omitempty"`
 	Allocations []*Allocation `json:"allocations,omitempty"`
 }
 
@@ -35,7 +35,7 @@ type Condition struct {
 }
 
 type Allocation struct {
-	Range         []uint64       `json:"range,omitempty"`
+	Range         []uint64        `json:"range,omitempty"`
 	Distributions []*Distribution `json:"distributions,omitempty"`
 }
 
@@ -52,9 +52,9 @@ const (
 	OpLessThan                 = "less"
 	OpLessThanEquals           = "less or equal"
 	OpGreaterThan              = "greater"
-	OpGreaterThanEquals     = "greater or equal"
-	OpVersionLessThan       = "version less"
-	OpVersionLessThanEquals = "version less or equal"
+	OpGreaterThanEquals        = "greater or equal"
+	OpVersionLessThan          = "version less"
+	OpVersionLessThanEquals    = "version less or equal"
 	OpVersionGreaterThan       = "version greater"
 	OpVersionGreaterThanEquals = "version greater or equal"
 	OpSetIs                    = "set is"

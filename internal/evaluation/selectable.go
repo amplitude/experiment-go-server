@@ -8,19 +8,27 @@ type selectable interface {
 
 func (t target) Select(selector string) interface{} {
 	switch selector {
-	case "context": return t.context
-	case "result": return t.result
-	default: return nil
+	case "context":
+		return t.context
+	case "result":
+		return t.result
+	default:
+		return nil
 	}
 }
 
 func (v Variant) Select(selector string) interface{} {
 	switch selector {
-	case "key": return v.Key
-	case "value": return v.Value
-	case "payload": return v.Payload
-	case "metadata": return v.Metadata
-	default: return nil
+	case "key":
+		return v.Key
+	case "value":
+		return v.Value
+	case "payload":
+		return v.Payload
+	case "metadata":
+		return v.Metadata
+	default:
+		return nil
 	}
 }
 
