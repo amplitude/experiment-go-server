@@ -1,12 +1,15 @@
 package local
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/amplitude/experiment-go-server/internal/evaluation"
+)
 
-func topologicalSort(flags map[string]interface{}, flagKeys []string) ([]interface{}, error) {
-	result := make([]interface{}, 0)
+func topologicalSort(flags map[string]*evaluation.Flag, flagKeys []string) ([]*evaluation.Flag, error) {
+	result := make([]*evaluation.Flag, 0)
 	// Extract keys and copy flags map
 	keys := make([]string, 0)
-	available := make(map[string]interface{})
+	available := make(map[string]*evaluation.Flag)
 	for k, v := range flags {
 		keys = append(keys, k)
 		available[k] = v
@@ -31,18 +34,18 @@ func topologicalSort(flags map[string]interface{}, flagKeys []string) ([]interfa
 	return result, nil
 }
 
-func parentTraversal(flagKey string, available map[string]interface{}, path []string) ([]interface{}, error) {
+func parentTraversal(flagKey string, available map[string]*evaluation.Flag, path []string) ([]*evaluation.Flag, error) {
 	flag := available[flagKey]
 	if flag == nil {
 		return nil, nil
 	}
-	dependencies := extractDependencies(flag)
+	dependencies := flag.Dependencies
 	if len(dependencies) == 0 {
 		delete(available, flagKey)
-		return []interface{}{flag}, nil
+		return []*evaluation.Flag{flag}, nil
 	}
 	path = append(path, flagKey)
-	result := make([]interface{}, 0)
+	result := make([]*evaluation.Flag, 0)
 	for _, parentKey := range dependencies {
 		if contains(path, parentKey) {
 			return nil, fmt.Errorf("detected a cycle between flags %v", path)
@@ -58,30 +61,4 @@ func parentTraversal(flagKey string, available map[string]interface{}, path []st
 	result = append(result, flag)
 	delete(available, flagKey)
 	return result, nil
-}
-
-func extractDependencies(flag interface{}) []string {
-	switch f := flag.(type) {
-	case map[string]interface{}:
-		parentDependenciesAny := f["parentDependencies"]
-		if parentDependenciesAny == nil {
-			return nil
-		}
-		switch parentDependencies := parentDependenciesAny.(type) {
-		case map[string]interface{}:
-			flagsAny := parentDependencies["flags"]
-			if flagsAny == nil {
-				return nil
-			}
-			switch flags := flagsAny.(type) {
-			case map[string]interface{}:
-				result := make([]string, 0)
-				for k := range flags {
-					result = append(result, k)
-				}
-				return result
-			}
-		}
-	}
-	return nil
 }

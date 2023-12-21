@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
@@ -19,7 +18,6 @@ func main() {
 		fmt.Printf("Available commands:\n" +
 			"  fetch\n" +
 			"  flags\n" +
-			"  rules\n" +
 			"  evaluate\n")
 		return
 	}
@@ -28,8 +26,6 @@ func main() {
 		fetch()
 	case "flags":
 		flags()
-	case "rules":
-		rules()
 	case "evaluate":
 		evaluate()
 	default:
@@ -150,51 +146,6 @@ func flags() {
 	println(*flags)
 }
 
-func rules() {
-	rulesCmd := flag.NewFlagSet("rules", flag.ExitOnError)
-	apiKey := rulesCmd.String("k", "", "Api key for authorization, or use EXPERIMENT_KEY env var.")
-	url := rulesCmd.String("url", "", "The server url to use to fetch variants from.")
-	debug := rulesCmd.Bool("debug", false, "Log additional debug output to std out.")
-	staging := rulesCmd.Bool("staging", false, "Use skylab staging environment.")
-	_ = rulesCmd.Parse(os.Args[2:])
-
-	if len(os.Args) == 3 && os.Args[1] == "--help" {
-		rulesCmd.Usage()
-		return
-	}
-
-	if apiKey == nil || *apiKey == "" {
-		envKey := os.Getenv("EXPERIMENT_KEY")
-		if envKey == "" {
-			rulesCmd.Usage()
-			fmt.Printf("error: must set experiment api key using cli flag or EXPERIMENT_KEY env var\n")
-			os.Exit(1)
-			return
-		}
-		apiKey = &envKey
-	}
-
-	config := &local.Config{
-		Debug: *debug,
-	}
-
-	if *url != "" {
-		config.ServerUrl = *url
-	} else if *staging {
-		config.ServerUrl = "https://skylab-api.staging.amplitude.com"
-	}
-
-	client := local.Initialize(*apiKey, config)
-	variants, err := client.Rules()
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-		os.Exit(1)
-		return
-	}
-	b, _ := json.Marshal(variants)
-	st, _ := strconv.Unquote(string(b))
-	fmt.Println(st)
-}
 
 func evaluate() {
 	evaluateCmd := flag.NewFlagSet("evaluate", flag.ExitOnError)
@@ -270,7 +221,7 @@ func evaluate() {
 	//	fmt.Println(duration)
 	//}
 
-	variants, err := client.Evaluate(user, nil)
+	variants, err := client.EvaluateV2(user, nil)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		os.Exit(1)

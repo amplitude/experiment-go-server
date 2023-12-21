@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
 	"sync"
 
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
@@ -25,7 +26,9 @@ type Client struct {
 	config *Config
 	client *http.Client
 	poller *poller
-	flags  map[string]interface{}
+	flags  map[string]*evaluation.Flag
+	flagsMutex *sync.RWMutex
+	engine *evaluation.Engine
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -36,12 +39,16 @@ func Initialize(apiKey string, config *Config) *Client {
 			panic("api key must be set")
 		}
 		config = fillConfigDefaults(config)
+		log := logger.New(config.Debug)
 		client = &Client{
-			log:    logger.New(config.Debug),
+			log:    log,
 			apiKey: apiKey,
 			config: config,
 			client: &http.Client{},
 			poller: newPoller(),
+			flags: make(map[string]*evaluation.Flag),
+			flagsMutex: &sync.RWMutex{},
+			engine: evaluation.NewEngine(log),
 		}
 		client.log.Debug("config: %v", *config)
 	}
@@ -50,13 +57,13 @@ func Initialize(apiKey string, config *Config) *Client {
 }
 
 func (c *Client) Start() error {
-	result, err := c.doFlags()
+	result, err := c.doFlagsV2()
 	if err != nil {
 		return err
 	}
 	c.flags = result
 	c.poller.Poll(c.config.FlagConfigPollerInterval, func() {
-		result, err := c.doFlags()
+		result, err := c.doFlagsV2()
 		if err != nil {
 			return
 		}
@@ -65,51 +72,104 @@ func (c *Client) Start() error {
 	return nil
 }
 
+// Deprecated: Use EvaluateV2
 func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
-	variants := make(map[string]experiment.Variant)
-	if len(c.flags) == 0 {
-		c.log.Debug("evaluate: no flags")
-		return variants, nil
-	}
-	userJson, err := json.Marshal(user)
+	variants, err := c.EvaluateV2(user, flagKeys)
 	if err != nil {
 		return nil, err
 	}
+	results := make(map[string]experiment.Variant)
+	for key, variant := range variants {
+		isDefault, ok := variant.Metadata["default"].(bool)
+		if !ok {
+			isDefault = false
+		}
+		isDeployed, ok := variant.Metadata["deployed"].(bool)
+		if !ok {
+			isDeployed = true
+		}
+		if !isDefault && isDeployed {
+			results[key] = variant
+		}
+	}
+	return results, nil
+}
+
+func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
+	userContext := evaluation.UserToContext(user)
 	sortedFlags, err := topologicalSort(c.flags, flagKeys)
 	if err != nil {
 		return nil, err
 	}
-	flagsJson, err := json.Marshal(sortedFlags)
-	if err != nil {
-		return nil, err
-	}
-	c.log.Debug("evaluate:\n\t- user: %v\n\t- rules: %v\n", string(userJson), string(flagsJson))
-	resultJson := evaluation.Evaluate(string(flagsJson), string(userJson))
-	c.log.Debug("evaluate result: %v\n", resultJson)
-	var interopResult *interopResult
-	err = json.Unmarshal([]byte(resultJson), &interopResult)
-	if err != nil {
-		return nil, err
-	}
-	if interopResult.Error != nil {
-		return nil, fmt.Errorf("evaluation resulted in error: %v", *interopResult.Error)
-	}
-	result := interopResult.Result
-	filter := len(flagKeys) != 0
-	for k, v := range *result {
-		if v.IsDefaultVariant || (filter && !contains(flagKeys, k)) {
-			continue
-		}
-		variants[k] = experiment.Variant{
-			Value:   v.Variant.Key,
-			Payload: v.Variant.Payload,
+	c.log.Debug("evaluate:\n\t- user: %v\n\t- flags: %v\n", user, sortedFlags)
+	results := c.engine.Evaluate(userContext, sortedFlags)
+	variants := make(map[string]experiment.Variant)
+	for key, result := range results {
+		variants[key] = experiment.Variant{
+			Key: result.Key,
+			Value: coerceString(result.Value),
+			Payload: result.Payload,
+			Metadata: result.Metadata,
 		}
 	}
 	return variants, nil
 }
 
+func (c *Client) FlagsV2() (string, error) {
+	flags, err := c.doFlagsV2()
+	if err != nil {
+		return "", err
+	}
+	flagsJson, err := json.Marshal(flags)
+	if err != nil {
+		return "", err
+	}
+	flagsString := string(flagsJson)
+	return flagsString, nil
+}
+
+func (c *Client) doFlagsV2() (map[string]*evaluation.Flag, error) {
+	client := &http.Client{}
+	endpoint, err := url.Parse("https://api.lab.amplitude.com/")
+	if err != nil {
+		return nil, err
+	}
+	endpoint.Path = "sdk/v2/flags"
+	endpoint.RawQuery = "v=0"
+	ctx, cancel := context.WithTimeout(context.Background(), c.config.FlagConfigPollerRequestTimeout)
+	defer cancel()
+	req, err := http.NewRequest("GET", endpoint.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	req.Header.Set("Authorization", fmt.Sprintf("Api-Key %s", c.apiKey))
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+	req.Header.Set("X-Amp-Exp-Library", fmt.Sprintf("experiment-go-server/%v", experiment.VERSION))
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var flagsArray []*evaluation.Flag
+	err = json.Unmarshal(body, &flagsArray)
+	if err != nil {
+		return nil, err
+	}
+	flags := make(map[string]*evaluation.Flag)
+	for _, flag := range flags {
+		flags[flag.Key] = flag
+	}
+	return flags, nil
+}
+
+// Deprecated: This function returns an old data model that is no longer used.
 func (c *Client) Rules() (map[string]interface{}, error) {
-	return c.doRules()
+	return c.doFlags()
 }
 
 func (c *Client) doRules() (map[string]interface{}, error) {
@@ -152,6 +212,7 @@ func (c *Client) doRules() (map[string]interface{}, error) {
 	return result, nil
 }
 
+// Deprecated: This function returns an old data model that is no longer used.
 func (c *Client) Flags() (*string, error) {
 	flags, err := c.doFlags()
 	if err != nil {
@@ -217,4 +278,18 @@ func contains(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+func coerceString(value interface{}) string {
+	if value == nil {
+		return ""
+	}
+	kind := reflect.TypeOf(value).Kind()
+	if kind == reflect.Map || kind == reflect.Slice || kind == reflect.Array {
+		b, err := json.Marshal(value)
+		if err == nil {
+			return string(b)
+		}
+	}
+	return fmt.Sprintf("%v", value)
 }
