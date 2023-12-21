@@ -12,18 +12,13 @@ func TestSingleAssignment(t *testing.T) {
 		DeviceId: "device",
 	}
 
-	results := &evaluationResult{
-		"flag-key-1": flagResult{
-			Variant: evaluationVariant{
-				Key: "on",
-			},
-			IsDefaultVariant: false,
+	results := map[string]experiment.Variant{
+		"flag-key-1": {
+			Key: "on",
 		},
-		"flag-key-2": flagResult{
-			Variant: evaluationVariant{
-				Key: "control",
-			},
-			IsDefaultVariant: true,
+		"flag-key-2": {
+			Key:      "control",
+			Metadata: map[string]interface{}{"default": true},
 		},
 	}
 
@@ -40,18 +35,13 @@ func TestDuplicateAssignment(t *testing.T) {
 		DeviceId: "device",
 	}
 
-	results := &evaluationResult{
-		"flag-key-1": flagResult{
-			Variant: evaluationVariant{
-				Key: "on",
-			},
-			IsDefaultVariant: false,
+	results := map[string]experiment.Variant{
+		"flag-key-1": {
+			Key: "on",
 		},
-		"flag-key-2": flagResult{
-			Variant: evaluationVariant{
-				Key: "control",
-			},
-			IsDefaultVariant: true,
+		"flag-key-2": {
+			Key:      "control",
+			Metadata: map[string]interface{}{"default": true},
 		},
 	}
 
@@ -72,33 +62,23 @@ func TestSameUserDifferentResults(t *testing.T) {
 		DeviceId: "device",
 	}
 
-	results1 := &evaluationResult{
-		"flag-key-1": flagResult{
-			Variant: evaluationVariant{
-				Key: "on",
-			},
-			IsDefaultVariant: false,
+	results1 := map[string]experiment.Variant{
+		"flag-key-1": {
+			Key: "on",
 		},
-		"flag-key-2": flagResult{
-			Variant: evaluationVariant{
-				Key: "control",
-			},
-			IsDefaultVariant: true,
+		"flag-key-2": {
+			Key:      "control",
+			Metadata: map[string]interface{}{"default": true},
 		},
 	}
 
-	results2 := &evaluationResult{
-		"flag-key-1": flagResult{
-			Variant: evaluationVariant{
-				Key: "control",
-			},
-			IsDefaultVariant: true,
+	results2 := map[string]experiment.Variant{
+		"flag-key-1": {
+			Key:      "control",
+			Metadata: map[string]interface{}{"default": true},
 		},
-		"flag-key-2": flagResult{
-			Variant: evaluationVariant{
-				Key: "on",
-			},
-			IsDefaultVariant: false,
+		"flag-key-2": {
+			Key: "on",
 		},
 	}
 
@@ -124,18 +104,13 @@ func TestSameResultsDifferentUser(t *testing.T) {
 		DeviceId: "different-device",
 	}
 
-	results := &evaluationResult{
-		"flag-key-1": flagResult{
-			Variant: evaluationVariant{
-				Key: "on",
-			},
-			IsDefaultVariant: false,
+	results := map[string]experiment.Variant{
+		"flag-key-1": {
+			Key: "on",
 		},
-		"flag-key-2": flagResult{
-			Variant: evaluationVariant{
-				Key: "control",
-			},
-			IsDefaultVariant: true,
+		"flag-key-2": {
+			Key:      "control",
+			Metadata: map[string]interface{}{"default": true},
 		},
 	}
 
@@ -161,7 +136,7 @@ func TestEmptyResult(t *testing.T) {
 		DeviceId: "different-device",
 	}
 
-	results := &evaluationResult{}
+	results := map[string]experiment.Variant{}
 
 	assignment1 := newAssignment(user1, results)
 	assignment2 := newAssignment(user1, results)
@@ -184,33 +159,23 @@ func TestDuplicateAssignmentsWithDifferentResultOrder(t *testing.T) {
 		DeviceId: "device",
 	}
 
-	results1 := &evaluationResult{
-		"flag-key-1": flagResult{
-			Variant: evaluationVariant{
-				Key: "on",
-			},
-			IsDefaultVariant: false,
+	results1 := map[string]experiment.Variant{
+		"flag-key-1": {
+			Key: "on",
 		},
-		"flag-key-2": flagResult{
-			Variant: evaluationVariant{
-				Key: "control",
-			},
-			IsDefaultVariant: true,
+		"flag-key-2": {
+			Key:      "control",
+			Metadata: map[string]interface{}{"default": true},
 		},
 	}
 
-	results2 := &evaluationResult{
-		"flag-key-2": flagResult{
-			Variant: evaluationVariant{
-				Key: "control",
-			},
-			IsDefaultVariant: true,
+	results2 := map[string]experiment.Variant{
+		"flag-key-2": {
+			Key:      "control",
+			Metadata: map[string]interface{}{"default": true},
 		},
-		"flag-key-1": flagResult{
-			Variant: evaluationVariant{
-				Key: "on",
-			},
-			IsDefaultVariant: false,
+		"flag-key-1": {
+			Key: "on",
 		},
 	}
 
@@ -241,18 +206,13 @@ func TestLRUReplacement(t *testing.T) {
 		DeviceId: "device",
 	}
 
-	results := &evaluationResult{
-		"flag-key-1": flagResult{
-			Variant: evaluationVariant{
-				Key: "on",
-			},
-			IsDefaultVariant: false,
+	results := map[string]experiment.Variant{
+		"flag-key-1": {
+			Key: "on",
 		},
-		"flag-key-2": flagResult{
-			Variant: evaluationVariant{
-				Key: "control",
-			},
-			IsDefaultVariant: true,
+		"flag-key-2": {
+			Key:      "control",
+			Metadata: map[string]interface{}{"default": true},
 		},
 	}
 
@@ -285,18 +245,13 @@ func TestTTLBasedEviction(t *testing.T) {
 		DeviceId: "different-device",
 	}
 
-	results := &evaluationResult{
-		"flag-key-1": flagResult{
-			Variant: evaluationVariant{
-				Key: "on",
-			},
-			IsDefaultVariant: false,
+	results := map[string]experiment.Variant{
+		"flag-key-1": {
+			Key: "on",
 		},
-		"flag-key-2": flagResult{
-			Variant: evaluationVariant{
-				Key: "control",
-			},
-			IsDefaultVariant: true,
+		"flag-key-2": {
+			Key:      "control",
+			Metadata: map[string]interface{}{"default": true},
 		},
 	}
 

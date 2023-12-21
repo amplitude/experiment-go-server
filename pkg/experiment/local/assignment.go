@@ -9,15 +9,15 @@ import (
 
 type assignment struct {
 	user      *experiment.User
-	results   *evaluationResult
-	timestamp int
+	results   map[string]experiment.Variant
+	timestamp int64
 }
 
-func newAssignment(user *experiment.User, results *evaluationResult) *assignment {
+func newAssignment(user *experiment.User, results map[string]experiment.Variant) *assignment {
 	assignment := &assignment{
 		user:      user,
 		results:   results,
-		timestamp: int(time.Now().UnixNano() / int64(time.Millisecond)),
+		timestamp: time.Now().UnixMilli(),
 	}
 
 	return assignment
@@ -33,14 +33,14 @@ func (a *assignment) Canonicalize() string {
 		sb.WriteString(" ")
 	}
 
-	keys := make([]string, 0, len(*a.results))
-	for key := range *a.results {
+	keys := make([]string, 0, len(a.results))
+	for key := range a.results {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
 
 	for _, key := range keys {
-		value := (*a.results)[key].Variant.Key
+		value := a.results[key].Key
 		sb.WriteString(key)
 		sb.WriteString(" ")
 		sb.WriteString(value)

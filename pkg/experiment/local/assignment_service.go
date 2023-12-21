@@ -7,7 +7,6 @@ import (
 
 const dayMillis = 24 * 60 * 60 * 1000
 const flagTypeMutualExclusionGroup = "mutual-exclusion-group"
-const flagTypeHoldoutGroup = "mutual-holdout-group"
 
 type assignmentService struct {
 	amplitude *amplitude.Client
@@ -31,21 +30,29 @@ func toEvent(assignment *assignment) amplitude.Event {
 	}
 
 	// Loop to set event_properties
-	for resultsKey, result := range *assignment.results {
-		event.EventProperties[fmt.Sprintf("%s.variant", resultsKey)] = result.Variant.Key
+	for resultsKey, result := range assignment.results {
+		version, _ := result.Metadata["version"].(int)
+		segmentName, _ := result.Metadata["segmentName"].(string)
+		event.EventProperties[fmt.Sprintf("%s.variant", resultsKey)] = result.Key
+		if version != 0 && len(segmentName) > 0 {
+			details := fmt.Sprintf("v%v rule:%v", version, segmentName)
+			event.EventProperties[fmt.Sprintf("%s.details", resultsKey)] = details
+		}
 	}
 
 	set := make(map[string]interface{})
 	unset := make(map[string]interface{})
 
 	// Loop to set user_properties
-	for resultsKey, result := range *assignment.results {
-		if result.Type == flagTypeMutualExclusionGroup {
+	for resultsKey, result := range assignment.results {
+		flagType, _ := result.Metadata["flagType"].(string)
+		isDefault, _ := result.Metadata["default"].(bool)
+		if flagType == flagTypeMutualExclusionGroup {
 			continue
-		} else if result.IsDefaultVariant {
+		} else if isDefault {
 			unset[fmt.Sprintf("[Experiment] %s", resultsKey)] = "-"
 		} else {
-			set[fmt.Sprintf("[Experiment] %s", resultsKey)] = result.Variant.Key
+			set[fmt.Sprintf("[Experiment] %s", resultsKey)] = result.Key
 		}
 	}
 

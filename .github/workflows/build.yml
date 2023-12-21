@@ -12,7 +12,7 @@ defaults:
 
 jobs:
   lint:
-    name: Lint files
+    name: Lint
     runs-on: 'ubuntu-latest'
     steps:
       - uses: actions/checkout@v3
@@ -24,36 +24,16 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: latest
-  
-  build:
-    name: Build binary
+  test:
     runs-on: 'ubuntu-latest'
-    strategy:
-      matrix:
-        goosarch:
-          - 'darwin/amd64'
-          - 'darwin/arm64'
-          - 'linux/amd64'
-          - 'linux/arm'
-          - 'linux/arm64'
-         
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - name: Setup
+        uses: actions/setup-go@v3
         with:
           go-version: '1.17'
           check-latest: true
-      - name: Get OS and arch info
+      - name: Test
         run: |
-          GOOSARCH=${{matrix.goosarch}}
-          GOOS=${GOOSARCH%/*}
-          GOARCH=${GOOSARCH#*/}
-          BINARY_NAME=${{github.repository}}-$GOOS-$GOARCH
-          echo "BINARY_NAME=$BINARY_NAME" >> $GITHUB_ENV
-          echo "GOOS=$GOOS" >> $GITHUB_ENV
-          echo "GOARCH=$GOARCH" >> $GITHUB_ENV
-      - name: Build
-        run: |
-          cd pkg/experiment
-          go build -o "$BINARY_NAME" -v
+          go test ./...

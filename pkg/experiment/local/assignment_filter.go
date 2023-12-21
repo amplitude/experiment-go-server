@@ -19,7 +19,7 @@ func newAssignmentFilter(size int) *assignmentFilter {
 }
 
 func (f *assignmentFilter) shouldTrack(assignment *assignment) bool {
-	if len(*assignment.results) == 0 {
+	if len(assignment.results) == 0 {
 		return false
 	}
 	canonicalAssignment := assignment.Canonicalize()

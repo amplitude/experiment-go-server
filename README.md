@@ -13,17 +13,14 @@ The `xpmt` command-line interface tool allows you to make Experiment SDK calls f
 
 ### Build
 
-**Makefile currently only builds for macos (amd64 & x64), add a line to the `Makefile` to support your OS and Architecture.**
-
 ```
 make xpmt
 ```
 
 ### Run
 
-!!!warning Setting the deployment key
-      All examples below assume the `EXPERIMENT_KEY` environment variable has been set. Alternatively, use the `-k`
-      flag to set the key in the command.
+> **Warning** All examples below assume the `EXPERIMENT_KEY` environment variable has been set. Alternatively, use the `-k`
+flag to set the key in the command.
 
 #### Subcommands
   * `fetch`: fetch variants for a user from the server
