@@ -18,7 +18,7 @@ func TestToEvent(t *testing.T) {
 			Key: "on",
 			Metadata: map[string]interface{}{
 				"segmentName": "Segment",
-				"version": 13,
+				"flagVersion": float64(13),
 			},
 		},
 		"flag-key-2": {
@@ -26,7 +26,7 @@ func TestToEvent(t *testing.T) {
 			Metadata: map[string]interface{}{
 				"default": true,
 				"segmentName": "All Other Users",
-				"version": 12,
+				"flagVersion": float64(12),
 			},
 		},
 	}

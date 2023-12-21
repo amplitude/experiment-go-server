@@ -43,7 +43,7 @@ func Initialize(apiKey string, config *Config) *Client {
 		config = fillConfigDefaults(config)
 		log := logger.New(config.Debug)
 		var as *assignmentService
-		if config.AssignmentConfig != nil && config.AssignmentConfig.Config.IsValid() {
+		if config.AssignmentConfig != nil && config.AssignmentConfig.APIKey != ""  {
 			amplitudeClient := amplitude.NewClient(config.AssignmentConfig.Config)
 			as = &assignmentService{
 				amplitude: &amplitudeClient,
