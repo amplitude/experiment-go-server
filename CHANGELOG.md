@@ -1,3 +1,15 @@
+# [1.3.0](https://github.com/amplitude/experiment-go-server/compare/v1.2.2...v1.3.0) (2023-12-21)
+
+
+### Bug Fixes
+
+* assignment track defaults and details ([#19](https://github.com/amplitude/experiment-go-server/issues/19)) ([b46239f](https://github.com/amplitude/experiment-go-server/commit/b46239f94b1abfe1e9bcbe5f37acd7b77e70fb55))
+
+
+### Features
+
+* Golang Local Evaluation V2 ([#18](https://github.com/amplitude/experiment-go-server/issues/18)) ([f0d4504](https://github.com/amplitude/experiment-go-server/commit/f0d4504fb2099287ad5f579630aaaf74b060055d))
+
 ## [1.2.2](https://github.com/amplitude/experiment-go-server/compare/v1.2.1...v1.2.2) (2023-09-19)
 
 
