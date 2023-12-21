@@ -40,13 +40,13 @@ func selectEach(s interface{}, selector []string) interface{} {
 		if s == nil {
 			return nil
 		}
-		switch s.(type) {
+		switch t := s.(type) {
 		case selectable:
-			s = s.(selectable).Select(selectorElement)
+			s = t.Select(selectorElement)
 		case map[string]interface{}:
-			s = s.(map[string]interface{})[selectorElement]
+			s = t[selectorElement]
 		case map[string]Variant:
-			s = s.(map[string]Variant)[selectorElement]
+			s = t[selectorElement]
 		default:
 			// Fall back to reflection for maps with unexpected value types
 			isMap := reflect.TypeOf(s).Kind() == reflect.Map

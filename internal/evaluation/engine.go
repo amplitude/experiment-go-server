@@ -281,7 +281,7 @@ func matchesSetIs(propValues, filterValues []string) bool {
 	if len(m1) != len(m2) {
 		return false
 	}
-	for k, _ := range m1 {
+	for k := range m1 {
 		if _, ok := m2[k]; !ok {
 			return false
 		}

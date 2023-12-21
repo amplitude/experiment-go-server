@@ -7,7 +7,6 @@ import (
 
 const dayMillis = 24 * 60 * 60 * 1000
 const flagTypeMutualExclusionGroup = "mutual-exclusion-group"
-const flagTypeHoldoutGroup = "mutual-holdout-group"
 
 type assignmentService struct {
 	amplitude *amplitude.Client

@@ -137,13 +137,13 @@ func flags() {
 	}
 
 	client := local.Initialize(*apiKey, config)
-	flags, err := client.Flags()
+	flags, err := client.FlagsV2()
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		os.Exit(1)
 		return
 	}
-	println(*flags)
+	println(flags)
 }
 
 func evaluate() {

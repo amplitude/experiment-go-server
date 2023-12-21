@@ -182,7 +182,7 @@ func (c *Client) doFlagsV2() (map[string]*evaluation.Flag, error) {
 
 // Deprecated: This function returns an old data model that is no longer used.
 func (c *Client) Rules() (map[string]interface{}, error) {
-	return c.doFlags()
+	return c.doRules()
 }
 
 func (c *Client) doRules() (map[string]interface{}, error) {

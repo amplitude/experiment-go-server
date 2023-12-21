@@ -27,6 +27,9 @@ func init() {
 		panic(err)
 	}
 	err = json.Unmarshal(rawFlags, &flags)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Basic Tests
