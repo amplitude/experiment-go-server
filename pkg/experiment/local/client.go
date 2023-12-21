@@ -42,6 +42,14 @@ func Initialize(apiKey string, config *Config) *Client {
 		}
 		config = fillConfigDefaults(config)
 		log := logger.New(config.Debug)
+		var as *assignmentService
+		if config.AssignmentConfig != nil && config.AssignmentConfig.Config.IsValid() {
+			amplitudeClient := amplitude.NewClient(config.AssignmentConfig.Config)
+			as = &assignmentService{
+				amplitude: &amplitudeClient,
+				filter: newAssignmentFilter(config.AssignmentConfig.CacheCapacity),
+			}
+		}
 		client = &Client{
 			log:        log,
 			apiKey:     apiKey,
@@ -51,16 +59,10 @@ func Initialize(apiKey string, config *Config) *Client {
 			flags:      make(map[string]*evaluation.Flag),
 			flagsMutex: &sync.RWMutex{},
 			engine:     evaluation.NewEngine(log),
+			assignmentService: as,
 		}
 		client.log.Debug("config: %v", *config)
-	}
-	// create assignment service if apikey is provided
-	if config.AssignmentConfig != nil && config.AssignmentConfig.Config.IsValid() {
-		instance := amplitude.NewClient(config.AssignmentConfig.Config)
-		filter := newAssignmentFilter(config.AssignmentConfig.CacheCapacity)
-		client.assignmentService = &assignmentService{
-			amplitude: &instance, filter: filter,
-		}
+		clients[apiKey] = client
 	}
 	initMutex.Unlock()
 	return client
@@ -77,7 +79,9 @@ func (c *Client) Start() error {
 		if err != nil {
 			return
 		}
+		c.flagsMutex.Lock()
 		c.flags = result
+		c.flagsMutex.Unlock()
 	})
 	return nil
 }
@@ -107,7 +111,9 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 
 func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
 	userContext := evaluation.UserToContext(user)
+	c.flagsMutex.RLock()
 	sortedFlags, err := topologicalSort(c.flags, flagKeys)
+	c.flagsMutex.RUnlock()
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +180,7 @@ func (c *Client) doFlagsV2() (map[string]*evaluation.Flag, error) {
 		return nil, err
 	}
 	flags := make(map[string]*evaluation.Flag)
-	for _, flag := range flags {
+	for _, flag := range flagsArray {
 		flags[flag.Key] = flag
 	}
 	return flags, nil
