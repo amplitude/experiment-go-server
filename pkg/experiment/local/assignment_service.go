@@ -31,7 +31,7 @@ func toEvent(assignment *assignment) amplitude.Event {
 
 	// Loop to set event_properties
 	for resultsKey, result := range assignment.results {
-		version, _ := result.Metadata["version"].(int)
+		version, _ := result.Metadata["flagVersion"].(float64)
 		segmentName, _ := result.Metadata["segmentName"].(string)
 		event.EventProperties[fmt.Sprintf("%s.variant", resultsKey)] = result.Key
 		if version != 0 && len(segmentName) > 0 {
