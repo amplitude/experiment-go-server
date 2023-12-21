@@ -33,6 +33,7 @@ func toEvent(assignment *assignment) amplitude.Event {
 	// Loop to set event_properties
 	for resultsKey, result := range assignment.results {
 		event.EventProperties[fmt.Sprintf("%s.variant", resultsKey)] = result.Key
+		// TODO add details
 	}
 
 	set := make(map[string]interface{})
