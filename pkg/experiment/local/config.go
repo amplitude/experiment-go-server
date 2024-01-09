@@ -42,7 +42,7 @@ func fillConfigDefaults(c *Config) *Config {
 	if c.FlagConfigPollerRequestTimeout == 0 {
 		c.FlagConfigPollerRequestTimeout = DefaultConfig.FlagConfigPollerRequestTimeout
 	}
-	if c.AssignmentConfig.CacheCapacity == 0 {
+	if c.AssignmentConfig != nil && c.AssignmentConfig.CacheCapacity == 0 {
 		c.AssignmentConfig.CacheCapacity = DefaultAssignmentConfig.CacheCapacity
 	}
 	return c
