@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/amplitude/experiment-go-server/compare/v1.3.0...v1.3.1) (2024-01-09)
+
+
+### Bug Fixes
+
+* add nil check when merging local evaluation config ([eedf3e0](https://github.com/amplitude/experiment-go-server/commit/eedf3e0914916901fbd382ba5c9a12807f9e8962))
+
 # [1.3.0](https://github.com/amplitude/experiment-go-server/compare/v1.2.2...v1.3.0) (2023-12-21)
 
 
