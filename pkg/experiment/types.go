@@ -1,5 +1,7 @@
 package experiment
 
+import "fmt"
+
 const VERSION = "1.3.1"
 
 type User struct {
@@ -26,4 +28,13 @@ type Variant struct {
 	Payload  interface{}            `json:"payload,omitempty"`
 	Key      string                 `json:"key,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
+
+type FetchError struct {
+	StatusCode int
+	Message    string
+}
+
+func (e *FetchError) Error() string {
+	return fmt.Sprintf("Message: %s", e.Message)
 }
