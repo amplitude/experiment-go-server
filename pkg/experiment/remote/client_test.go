@@ -51,7 +51,10 @@ func TestClient_FetchRetryWithDifferentResponseCodes(t *testing.T) {
 			} else if requestCount == 2 {
 				// For the second request, return a 200 response
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("{}"))
+				_, err := w.Write([]byte("{}"))
+				if err != nil {
+					return
+				}
 			}
 		}))
 
