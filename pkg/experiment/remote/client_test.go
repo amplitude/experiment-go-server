@@ -20,7 +20,7 @@ func TestClient_FetchRetryWithDifferentResponseCodes(t *testing.T) {
 		fetchCalls   int
 	}{
 		{300, "Fetch Exception 300", 2},
-		{400, "Fetch Exception 400", 2},
+		{400, "Fetch Exception 400", 1},
 		{429, "Fetch Exception 429", 2},
 		{500, "Fetch Exception 500", 2},
 		{0, "Other Exception", 2},
