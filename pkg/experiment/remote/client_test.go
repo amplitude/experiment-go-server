@@ -70,10 +70,7 @@ func TestClient_FetchRetryWithDifferentResponseCodes(t *testing.T) {
 		fmt.Printf("%d %s\n", data.responseCode, data.errorMessage)
 
 		// Perform the fetch and catch the exception
-		_, err := client.Fetch(&experiment.User{UserId: "test_user"})
-		if err != nil {
-			// catch exception
-		}
+		client.Fetch(&experiment.User{UserId: "test_user"})
 
 		// Close the server
 		server.Close()
