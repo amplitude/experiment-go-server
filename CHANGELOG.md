@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/amplitude/experiment-go-server/compare/v1.3.1...v1.3.2) (2024-01-29)
+
+
+### Bug Fixes
+
+* Improve remote evaluation fetch retry logic ([#20](https://github.com/amplitude/experiment-go-server/issues/20)) ([f844a3c](https://github.com/amplitude/experiment-go-server/commit/f844a3c2b1a3358256516708a6b3e1c3b52a1f09))
+
 ## [1.3.1](https://github.com/amplitude/experiment-go-server/compare/v1.3.0...v1.3.1) (2024-01-09)
 
 
