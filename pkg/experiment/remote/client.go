@@ -51,7 +51,7 @@ func (c *Client) Fetch(user *experiment.User) (map[string]experiment.Variant, er
 	variants, err := c.doFetch(user, c.config.FetchTimeout)
 	if err != nil {
 		c.log.Error("fetch error: %v", err)
-		if c.config.RetryBackoff.FetchRetries > 0 {
+		if c.config.RetryBackoff.FetchRetries > 0 && shouldRetryFetch(err) {
 			return c.retryFetch(user)
 		} else {
 			return nil, err
@@ -92,7 +92,7 @@ func (c *Client) doFetch(user *experiment.User, timeout time.Duration) (map[stri
 	defer resp.Body.Close()
 	c.log.Debug("fetch response: %v", *resp)
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetch request resulted in error response %v", resp.StatusCode)
+		return nil, &fetchError{StatusCode: resp.StatusCode, Message: resp.Status}
 	}
 	return c.parseResponse(resp)
 }
@@ -164,4 +164,11 @@ func randStringRunes(n int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
+}
+
+func shouldRetryFetch(err error) bool {
+	if err, ok := err.(*fetchError); ok {
+		return err.StatusCode < 400 || err.StatusCode >= 500 || err.StatusCode == 429
+	}
+	return true
 }
