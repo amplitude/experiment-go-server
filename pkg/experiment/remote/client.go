@@ -29,15 +29,21 @@ type Client struct {
 
 func Initialize(apiKey string, config *Config) *Client {
 	initMutex.Lock()
-	client := clients[apiKey]
+	var usedKey string
+	if config.DeploymentKey == "" {
+		usedKey = apiKey
+	} else {
+		usedKey = config.DeploymentKey
+	}
+	client := clients[usedKey]
 	if client == nil {
-		if apiKey == "" {
-			panic("api key must be set")
+		if usedKey == "" {
+			panic("project api key or experiment deployment key must be set")
 		}
 		config = fillConfigDefaults(config)
 		client = &Client{
 			log:    logger.New(config.Debug),
-			apiKey: apiKey,
+			apiKey: usedKey,
 			config: config,
 			client: &http.Client{},
 		}

@@ -35,34 +35,40 @@ type Client struct {
 
 func Initialize(apiKey string, config *Config) *Client {
 	initMutex.Lock()
-	client := clients[apiKey]
+	var usedKey string
+	if config.DeploymentKey == "" {
+		usedKey = apiKey
+	} else {
+		usedKey = config.DeploymentKey
+	}
+	client := clients[usedKey]
 	if client == nil {
-		if apiKey == "" {
+		if usedKey == "" {
 			panic("api key must be set")
 		}
 		config = fillConfigDefaults(config)
 		log := logger.New(config.Debug)
 		var as *assignmentService
-		if config.AssignmentConfig != nil && config.AssignmentConfig.APIKey != ""  {
+		if config.AssignmentConfig != nil && config.AssignmentConfig.APIKey != "" {
 			amplitudeClient := amplitude.NewClient(config.AssignmentConfig.Config)
 			as = &assignmentService{
 				amplitude: &amplitudeClient,
-				filter: newAssignmentFilter(config.AssignmentConfig.CacheCapacity),
+				filter:    newAssignmentFilter(config.AssignmentConfig.CacheCapacity),
 			}
 		}
 		client = &Client{
-			log:        log,
-			apiKey:     apiKey,
-			config:     config,
-			client:     &http.Client{},
-			poller:     newPoller(),
-			flags:      make(map[string]*evaluation.Flag),
-			flagsMutex: &sync.RWMutex{},
-			engine:     evaluation.NewEngine(log),
+			log:               log,
+			apiKey:            usedKey,
+			config:            config,
+			client:            &http.Client{},
+			poller:            newPoller(),
+			flags:             make(map[string]*evaluation.Flag),
+			flagsMutex:        &sync.RWMutex{},
+			engine:            evaluation.NewEngine(log),
 			assignmentService: as,
 		}
 		client.log.Debug("config: %v", *config)
-		clients[apiKey] = client
+		clients[usedKey] = client
 	}
 	initMutex.Unlock()
 	return client

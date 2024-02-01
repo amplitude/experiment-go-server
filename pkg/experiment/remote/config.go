@@ -3,10 +3,11 @@ package remote
 import "time"
 
 type Config struct {
-	Debug        bool
-	ServerUrl    string
-	FetchTimeout time.Duration
-	RetryBackoff *RetryBackoff
+	Debug         bool
+	ServerUrl     string
+	FetchTimeout  time.Duration
+	RetryBackoff  *RetryBackoff
+	DeploymentKey string
 }
 
 var DefaultConfig = &Config{
