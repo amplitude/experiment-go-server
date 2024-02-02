@@ -44,7 +44,7 @@ func Initialize(apiKey string, config *Config) *Client {
 	client := clients[usedKey]
 	if client == nil {
 		if usedKey == "" {
-			panic("api key must be set")
+			panic("project api key or experiment deployment key must be set")
 		}
 		config = fillConfigDefaults(config)
 		log := logger.New(config.Debug)
