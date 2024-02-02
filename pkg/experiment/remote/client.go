@@ -30,7 +30,7 @@ type Client struct {
 func Initialize(apiKey string, config *Config) *Client {
 	initMutex.Lock()
 	var usedKey string
-	if config.DeploymentKey == "" {
+	if config == nil || config.DeploymentKey == "" {
 		usedKey = apiKey
 	} else {
 		usedKey = config.DeploymentKey
