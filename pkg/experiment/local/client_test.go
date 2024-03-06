@@ -143,3 +143,17 @@ func TestEvaluateV2UnknownFlagKey(t *testing.T) {
 		t.Fatalf("Unexpected variant %v", variant)
 	}
 }
+
+func TestFlagMetadataUnknownFlagKey(t *testing.T) {
+	md := client.FlagMetadata("does-not-exist")
+	if md != nil {
+		t.Fatalf("Unexpected metadata %v", md)
+	}
+}
+
+func TestFlagMetadataLocalFlagKey(t *testing.T) {
+	md := client.FlagMetadata("sdk-local-evaluation-ci-test")
+	if md["evaluationMode"] != "local" {
+		t.Fatalf("Unexpected metadata %v", md)
+	}
+}

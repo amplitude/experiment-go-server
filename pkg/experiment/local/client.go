@@ -147,6 +147,23 @@ func (c *Client) FlagsV2() (string, error) {
 	return flagsString, nil
 }
 
+// FlagMetadata returns a copy of the flag's metadata. If the flag is not found then nil is returned.
+func (c *Client) FlagMetadata(flagKey string) map[string]interface{} {
+	c.flagsMutex.RLock()
+	f := c.flags[flagKey]
+	c.flagsMutex.RUnlock()
+	if f == nil {
+		return nil
+	}
+
+	metadata := make(map[string]interface{})
+	for k, v := range f.Metadata {
+		metadata[k] = v
+	}
+
+	return metadata
+}
+
 func (c *Client) doFlagsV2() (map[string]*evaluation.Flag, error) {
 	client := &http.Client{}
 	endpoint, err := url.Parse("https://api.lab.amplitude.com/")
