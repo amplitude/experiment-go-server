@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/amplitude/experiment-go-server/compare/v1.3.2...v1.4.0) (2024-03-07)
+
+
+### Features
+
+* add method to access flag metadata ([#22](https://github.com/amplitude/experiment-go-server/issues/22)) ([72ae711](https://github.com/amplitude/experiment-go-server/commit/72ae7116a5d54a30e3ef2abe01a09775c8e616f1))
+
 ## [1.3.2](https://github.com/amplitude/experiment-go-server/compare/v1.3.1...v1.3.2) (2024-01-29)
 
 
