@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     environment: Jira
     name: SDK Bot Jira Issue Creation
     steps:
@@ -29,8 +29,8 @@ jobs:
           description: |
             ${{ github.event.issue.html_url }}
           fields: '{
-            "labels": ["experiment-go-server"]
+            "labels": ["experiment-go-server", "sdk-backlog-grooming", "github"]
           }'
 
       - name: Log created issue
-        run: echo "Issue AMP-${{ steps.create.outputs.issue }} was created"
+        run: echo "Issue SKY-${{ steps.create.outputs.issue }} was created"
