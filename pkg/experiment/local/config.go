@@ -11,6 +11,7 @@ type Config struct {
 	FlagConfigPollerInterval       time.Duration
 	FlagConfigPollerRequestTimeout time.Duration
 	AssignmentConfig               *AssignmentConfig
+	DeploymentKey                  string
 }
 
 type AssignmentConfig struct {
