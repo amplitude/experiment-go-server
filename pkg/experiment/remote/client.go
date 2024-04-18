@@ -49,14 +49,9 @@ func Initialize(apiKey string, config *Config) *Client {
 
 // Deprecated: Use FetchV2
 func (c *Client) Fetch(user *experiment.User) (map[string]experiment.Variant, error) {
-	variants, err := c.doFetch(user, c.config.FetchTimeout)
+	variants, err := c.FetchV2(user)
 	if err != nil {
-		c.log.Error("fetch error: %v", err)
-		if c.config.RetryBackoff.FetchRetries > 0 && shouldRetryFetch(err) {
-			return c.retryFetch(user)
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 	results := filterDefaultVariants(variants)
 	return results, nil
