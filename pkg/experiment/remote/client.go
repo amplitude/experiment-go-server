@@ -1,8 +1,8 @@
 package remote
 
 import (
-	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -47,7 +47,24 @@ func Initialize(apiKey string, config *Config) *Client {
 	return client
 }
 
+// Deprecated: Use FetchV2
 func (c *Client) Fetch(user *experiment.User) (map[string]experiment.Variant, error) {
+	variants, err := c.doFetch(user, c.config.FetchTimeout)
+	if err != nil {
+		c.log.Error("fetch error: %v", err)
+		if c.config.RetryBackoff.FetchRetries > 0 && shouldRetryFetch(err) {
+			return c.retryFetch(user)
+		} else {
+			return nil, err
+		}
+	}
+	results := filterDefaultVariants(variants)
+	return results, nil
+}
+
+// FetchV2 fetches variants for a user from the remote evaluation service.
+// Unlike Fetch, this method returns all variants, including default variants.
+func (c *Client) FetchV2(user *experiment.User) (map[string]experiment.Variant, error) {
 	variants, err := c.doFetch(user, c.config.FetchTimeout)
 	if err != nil {
 		c.log.Error("fetch error: %v", err)
@@ -66,7 +83,7 @@ func (c *Client) doFetch(user *experiment.User, timeout time.Duration) (map[stri
 	if err != nil {
 		return nil, err
 	}
-	endpoint.Path = "sdk/vardata"
+	endpoint.Path = "sdk/v2/vardata"
 	if c.config.Debug {
 		endpoint.RawQuery = fmt.Sprintf("d=%s", randStringRunes(5))
 	}
@@ -77,13 +94,13 @@ func (c *Client) doFetch(user *experiment.User, timeout time.Duration) (map[stri
 	c.log.Debug("fetch variants for user %s", string(jsonBytes))
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	req, err := http.NewRequest("POST", endpoint.String(), bytes.NewBuffer(jsonBytes))
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
 	req.Header.Set("Authorization", fmt.Sprintf("Api-Key %s", c.apiKey))
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+	req.Header.Set("X-Amp-Exp-User", base64.StdEncoding.EncodeToString(jsonBytes))
 	c.log.Debug("fetch request: %v", req)
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -122,23 +139,10 @@ func (c *Client) retryFetch(user *experiment.User) (map[string]experiment.Varian
 }
 
 func (c *Client) parseResponse(resp *http.Response) (map[string]experiment.Variant, error) {
-	interop := make(interopVariants)
-	err := json.NewDecoder(resp.Body).Decode(&interop)
+	variants := make(map[string]experiment.Variant)
+	err := json.NewDecoder(resp.Body).Decode(&variants)
 	if err != nil {
 		return nil, err
-	}
-	variants := make(map[string]experiment.Variant)
-	for k, iv := range interop {
-		var value string
-		if iv.Value != "" {
-			value = iv.Value
-		} else if iv.Key != "" {
-			value = iv.Key
-		}
-		variants[k] = experiment.Variant{
-			Value:   value,
-			Payload: iv.Payload,
-		}
 	}
 	c.log.Debug("parsed variants from response: %v", variants)
 	return variants, nil
@@ -171,4 +175,22 @@ func shouldRetryFetch(err error) bool {
 		return err.StatusCode < 400 || err.StatusCode >= 500 || err.StatusCode == 429
 	}
 	return true
+}
+
+func filterDefaultVariants(variants map[string]experiment.Variant) map[string]experiment.Variant {
+	results := make(map[string]experiment.Variant)
+	for key, variant := range variants {
+		isDefault, ok := variant.Metadata["default"].(bool)
+		if !ok {
+			isDefault = false
+		}
+		isDeployed, ok := variant.Metadata["deployed"].(bool)
+		if !ok {
+			isDeployed = true
+		}
+		if !isDefault && isDeployed {
+			results[key] = variant
+		}
+	}
+	return results
 }

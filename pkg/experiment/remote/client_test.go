@@ -12,6 +12,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestClient_Fetch_DoesNotReturnDefaultVariants(t *testing.T) {
+	client := Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz", nil)
+	user := &experiment.User{}
+	result, err := client.Fetch(user)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	variant := result["sdk-ci-test"]
+	require.Empty(t, variant)
+}
+
+
+func TestClient_FetchV2_ReturnsDefaultVariants(t *testing.T) {
+	client := Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz", nil)
+	user := &experiment.User{}
+	result, err := client.FetchV2(user)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	variant := result["sdk-ci-test"]
+	require.NotNil(t, variant)
+	require.Equal(t, "off", variant.Key)
+}
+
 func TestClient_FetchRetryWithDifferentResponseCodes(t *testing.T) {
 	// Test data: Response code, error message, and expected number of fetch calls
 	testData := []struct {
