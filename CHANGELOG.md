@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/amplitude/experiment-go-server/compare/v1.4.0...v1.5.0) (2024-04-19)
+
+
+### Features
+
+* fetch v2 for remote eval client ([#26](https://github.com/amplitude/experiment-go-server/issues/26)) ([7f7b073](https://github.com/amplitude/experiment-go-server/commit/7f7b0739ebc952533c4832bfdb7659cbd8b2eaa4))
+
 # [1.4.0](https://github.com/amplitude/experiment-go-server/compare/v1.3.2...v1.4.0) (2024-03-07)
 
 
