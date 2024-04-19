@@ -90,7 +90,7 @@ func fetch() {
 
 	client := remote.Initialize(*apiKey, config)
 	start := time.Now()
-	variants, err := client.Fetch(user)
+	variants, err := client.FetchV2(user)
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		os.Exit(1)
