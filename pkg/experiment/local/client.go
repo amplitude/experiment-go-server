@@ -61,8 +61,8 @@ func Initialize(apiKey string, config *Config) *Client {
 		if config.CohortSyncConfig != nil {
 			cohortDownloadApi := NewDirectCohortDownloadApi(config.CohortSyncConfig.ApiKey, config.CohortSyncConfig.SecretKey, config.CohortSyncConfig.MaxCohortSize, config.CohortSyncConfig.CohortRequestDelayMillis, config.CohortSyncConfig.CohortServerUrl, config.Debug)
 			cohortLoader = NewCohortLoader(cohortDownloadApi, cohortStorage)
-			deploymentRunner = NewDeploymentRunner(config, NewFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout), flagConfigStorage, cohortStorage, cohortLoader)
 		}
+		deploymentRunner = NewDeploymentRunner(config, NewFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout), flagConfigStorage, cohortStorage, cohortLoader)
 		client = &Client{
 			log:               log,
 			apiKey:            apiKey,
@@ -86,20 +86,10 @@ func Initialize(apiKey string, config *Config) *Client {
 }
 
 func (c *Client) Start() error {
-	result, err := c.doFlagsV2()
+	err := c.deploymentRunner.Start()
 	if err != nil {
 		return err
 	}
-	c.flags = result
-	c.poller.Poll(c.config.FlagConfigPollerInterval, func() {
-		result, err := c.doFlagsV2()
-		if err != nil {
-			return
-		}
-		c.flagsMutex.Lock()
-		c.flags = result
-		c.flagsMutex.Unlock()
-	})
 	return nil
 }
 
@@ -131,7 +121,7 @@ func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[strin
 	enrichedUser, err := c.enrichUser(user, flagConfigs)
 	userContext := evaluation.UserToContext(enrichedUser)
 	c.flagsMutex.RLock()
-	sortedFlags, err := topologicalSort(c.flags, flagKeys)
+	sortedFlags, err := topologicalSort(flagConfigs, flagKeys)
 	c.flagsMutex.RUnlock()
 	if err != nil {
 		return nil, err
@@ -349,17 +339,17 @@ func coerceString(value interface{}) string {
 	return fmt.Sprintf("%v", value)
 }
 
-func (c *Client) enrichUser(user *experiment.User, flagConfigs map[string]evaluation.Flag) (*experiment.User, error) {
+func (c *Client) enrichUser(user *experiment.User, flagConfigs map[string]*evaluation.Flag) (*experiment.User, error) {
 	flagConfigSlice := make([]*evaluation.Flag, 0, len(flagConfigs))
 
 	for _, value := range flagConfigs {
-		flagConfigSlice = append(flagConfigSlice, &value)
+		flagConfigSlice = append(flagConfigSlice, value)
 	}
 	groupedCohortIDs := getGroupedCohortIDsFromFlags(flagConfigSlice)
 
 	if cohortIDs, ok := groupedCohortIDs[userGroupType]; ok {
 		if len(cohortIDs) > 0 && user.UserId != "" {
-			user.CohortIDs = c.cohortStorage.GetCohortsForUser(user.UserId, cohortIDs)
+			user.CohortIds = c.cohortStorage.GetCohortsForUser(user.UserId, cohortIDs)
 		}
 	}
 

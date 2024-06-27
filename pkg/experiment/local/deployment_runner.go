@@ -78,7 +78,7 @@ func (dr *DeploymentRunner) refresh() error {
 		flagKeys[flag.Key] = struct{}{}
 	}
 
-	dr.flagConfigStorage.RemoveIf(func(f evaluation.Flag) bool {
+	dr.flagConfigStorage.RemoveIf(func(f *evaluation.Flag) bool {
 		_, exists := flagKeys[f.Key]
 		return !exists
 	})
@@ -87,7 +87,7 @@ func (dr *DeploymentRunner) refresh() error {
 		cohortIDs := getAllCohortIDsFromFlag(flagConfig)
 		if dr.cohortLoader == nil || len(cohortIDs) == 0 {
 			dr.logger.Printf("Putting non-cohort flag %s", flagConfig.Key)
-			dr.flagConfigStorage.PutFlagConfig(*flagConfig)
+			dr.flagConfigStorage.PutFlagConfig(flagConfig)
 			continue
 		}
 
@@ -100,7 +100,7 @@ func (dr *DeploymentRunner) refresh() error {
 			return err
 		}
 
-		dr.flagConfigStorage.PutFlagConfig(*flagConfig)
+		dr.flagConfigStorage.PutFlagConfig(flagConfig)
 		dr.logger.Printf("Stored flag config %s", flagConfig.Key)
 	}
 
@@ -135,7 +135,7 @@ func (dr *DeploymentRunner) loadCohorts(flagConfig evaluation.Flag, cohortIDs ma
 func (dr *DeploymentRunner) deleteUnusedCohorts() {
 	flagCohortIDs := make(map[string]struct{})
 	for _, flag := range dr.flagConfigStorage.GetFlagConfigs() {
-		for cohortID := range getAllCohortIDsFromFlag(&flag) {
+		for cohortID := range getAllCohortIDsFromFlag(flag) {
 			flagCohortIDs[cohortID] = struct{}{}
 		}
 	}

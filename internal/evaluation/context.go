@@ -8,6 +8,7 @@ func UserToContext(user *experiment.User) map[string]interface{} {
 	}
 	context := make(map[string]interface{})
 	userMap := make(map[string]interface{})
+
 	if len(user.UserId) != 0 {
 		userMap["user_id"] = user.UserId
 	}
@@ -56,6 +57,44 @@ func UserToContext(user *experiment.User) map[string]interface{} {
 	if len(user.UserProperties) != 0 {
 		userMap["user_properties"] = user.UserProperties
 	}
+
 	context["user"] = userMap
+
+	if user.Groups == nil {
+		return context
+	}
+
+	groups := make(map[string]interface{})
+	for groupType, groupNames := range user.Groups {
+		if len(groupNames) > 0 {
+			groupName := groupNames[0]
+			groupNameMap := map[string]interface{}{
+				"group_name": groupName,
+			}
+
+			if user.GroupProperties != nil {
+				if groupPropertiesType, ok := user.GroupProperties[groupType]; ok {
+					if groupPropertiesName, ok := groupPropertiesType[groupName]; ok {
+						groupNameMap["group_properties"] = groupPropertiesName
+					}
+				}
+			}
+
+			if user.GroupCohortIds != nil {
+				if groupCohortIdsType, ok := user.GroupCohortIds[groupType]; ok {
+					if groupCohortIdsName, ok := groupCohortIdsType[groupName]; ok {
+						groupNameMap["cohort_ids"] = groupCohortIdsName
+					}
+				}
+			}
+
+			groups[groupType] = groupNameMap
+		}
+	}
+
+	if len(groups) > 0 {
+		context["groups"] = groups
+	}
+
 	return context
 }
