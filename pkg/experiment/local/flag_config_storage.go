@@ -1,57 +1,51 @@
 package local
 
 import (
+	"github.com/amplitude/experiment-go-server/internal/evaluation"
 	"sync"
 )
 
-// FlagConfigStorage defines an interface for managing flag configurations.
 type FlagConfigStorage interface {
-	GetFlagConfig(key string) map[string]interface{}
-	GetFlagConfigs() map[string]map[string]interface{}
-	PutFlagConfig(flagConfig map[string]interface{})
-	RemoveIf(condition func(map[string]interface{}) bool)
+	GetFlagConfig(key string) evaluation.Flag
+	GetFlagConfigs() map[string]evaluation.Flag
+	PutFlagConfig(flagConfig evaluation.Flag)
+	RemoveIf(condition func(evaluation.Flag) bool)
 }
 
-// InMemoryFlagConfigStorage is an in-memory implementation of FlagConfigStorage.
 type InMemoryFlagConfigStorage struct {
-	flagConfigs     map[string]map[string]interface{}
+	flagConfigs     map[string]evaluation.Flag
 	flagConfigsLock sync.Mutex
 }
 
-// NewInMemoryFlagConfigStorage creates a new instance of InMemoryFlagConfigStorage.
 func NewInMemoryFlagConfigStorage() *InMemoryFlagConfigStorage {
 	return &InMemoryFlagConfigStorage{
-		flagConfigs: make(map[string]map[string]interface{}),
+		flagConfigs: make(map[string]evaluation.Flag),
 	}
 }
 
-// GetFlagConfig retrieves a flag configuration by key.
-func (storage *InMemoryFlagConfigStorage) GetFlagConfig(key string) map[string]interface{} {
+func (storage *InMemoryFlagConfigStorage) GetFlagConfig(key string) evaluation.Flag {
 	storage.flagConfigsLock.Lock()
 	defer storage.flagConfigsLock.Unlock()
 	return storage.flagConfigs[key]
 }
 
-// GetFlagConfigs retrieves all flag configurations.
-func (storage *InMemoryFlagConfigStorage) GetFlagConfigs() map[string]map[string]interface{} {
+func (storage *InMemoryFlagConfigStorage) GetFlagConfigs() map[string]evaluation.Flag {
 	storage.flagConfigsLock.Lock()
 	defer storage.flagConfigsLock.Unlock()
-	copyFlagConfigs := make(map[string]map[string]interface{})
+	copyFlagConfigs := make(map[string]evaluation.Flag)
 	for key, value := range storage.flagConfigs {
 		copyFlagConfigs[key] = value
 	}
 	return copyFlagConfigs
 }
 
-// PutFlagConfig stores a flag configuration.
-func (storage *InMemoryFlagConfigStorage) PutFlagConfig(flagConfig map[string]interface{}) {
+func (storage *InMemoryFlagConfigStorage) PutFlagConfig(flagConfig evaluation.Flag) {
 	storage.flagConfigsLock.Lock()
 	defer storage.flagConfigsLock.Unlock()
-	storage.flagConfigs[flagConfig["key"].(string)] = flagConfig
+	storage.flagConfigs[flagConfig.Key] = flagConfig
 }
 
-// RemoveIf removes flag configurations based on a condition.
-func (storage *InMemoryFlagConfigStorage) RemoveIf(condition func(map[string]interface{}) bool) {
+func (storage *InMemoryFlagConfigStorage) RemoveIf(condition func(evaluation.Flag) bool) {
 	storage.flagConfigsLock.Lock()
 	defer storage.flagConfigsLock.Unlock()
 	for key, value := range storage.flagConfigs {

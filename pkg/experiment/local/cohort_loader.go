@@ -5,7 +5,6 @@ import (
 	"sync/atomic"
 )
 
-// CohortLoader handles the loading of cohorts using CohortDownloadApi and CohortStorage.
 type CohortLoader struct {
 	cohortDownloadApi CohortDownloadApi
 	cohortStorage     CohortStorage
@@ -14,7 +13,6 @@ type CohortLoader struct {
 	lockJobs          sync.Mutex
 }
 
-// NewCohortLoader creates a new instance of CohortLoader.
 func NewCohortLoader(cohortDownloadApi CohortDownloadApi, cohortStorage CohortStorage) *CohortLoader {
 	return &CohortLoader{
 		cohortDownloadApi: cohortDownloadApi,
@@ -27,7 +25,6 @@ func NewCohortLoader(cohortDownloadApi CohortDownloadApi, cohortStorage CohortSt
 	}
 }
 
-// LoadCohort initiates the loading of a cohort.
 func (cl *CohortLoader) LoadCohort(cohortID string) *CohortLoaderTask {
 	cl.lockJobs.Lock()
 	defer cl.lockJobs.Unlock()
@@ -43,12 +40,10 @@ func (cl *CohortLoader) LoadCohort(cohortID string) *CohortLoaderTask {
 	return task.(*CohortLoaderTask)
 }
 
-// removeJob removes a job from the jobs map.
 func (cl *CohortLoader) removeJob(cohortID string) {
 	cl.jobs.Delete(cohortID)
 }
 
-// CohortLoaderTask represents a task for loading a cohort.
 type CohortLoaderTask struct {
 	loader   *CohortLoader
 	cohortID string
@@ -57,7 +52,6 @@ type CohortLoaderTask struct {
 	err      error
 }
 
-// init initializes a CohortLoaderTask.
 func (task *CohortLoaderTask) init(loader *CohortLoader, cohortID string) {
 	task.loader = loader
 	task.cohortID = cohortID
@@ -66,7 +60,6 @@ func (task *CohortLoaderTask) init(loader *CohortLoader, cohortID string) {
 	task.err = nil
 }
 
-// run executes the task of loading a cohort.
 func (task *CohortLoaderTask) run() {
 	defer task.loader.executor.Put(task)
 
@@ -82,28 +75,12 @@ func (task *CohortLoaderTask) run() {
 	close(task.doneChan)
 }
 
-// Wait waits for the task to complete.
 func (task *CohortLoaderTask) Wait() error {
 	<-task.doneChan
 	return task.err
 }
 
-// downloadCohort downloads a cohort.
 func (cl *CohortLoader) downloadCohort(cohortID string) (*Cohort, error) {
 	cohort := cl.cohortStorage.GetCohort(cohortID)
 	return cl.cohortDownloadApi.GetCohort(cohortID, cohort)
-}
-
-type CohortDownloadApiImpl struct{}
-
-// GetCohort gets a cohort.
-func (api *CohortDownloadApiImpl) GetCohort(cohortID string, cohort *Cohort) (*Cohort, error) {
-	// Placeholder implementation
-	return &Cohort{
-		ID:           cohortID,
-		LastModified: 0,
-		Size:         0,
-		MemberIDs:    make(map[string]struct{}),
-		GroupType:    "example",
-	}, nil
 }

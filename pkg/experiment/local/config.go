@@ -25,6 +25,7 @@ type CohortSyncConfig struct {
 	SecretKey                string
 	MaxCohortSize            int
 	CohortRequestDelayMillis int
+	CohortServerUrl          string
 }
 
 var DefaultConfig = &Config{
@@ -41,6 +42,7 @@ var DefaultAssignmentConfig = &AssignmentConfig{
 var DefaultCohortSyncConfig = &CohortSyncConfig{
 	MaxCohortSize:            15000,
 	CohortRequestDelayMillis: 5000,
+	CohortServerUrl:          "https://cohort-v2.lab.amplitude.com",
 }
 
 func fillConfigDefaults(c *Config) *Config {
@@ -66,6 +68,10 @@ func fillConfigDefaults(c *Config) *Config {
 
 	if c.CohortSyncConfig != nil && c.CohortSyncConfig.CohortRequestDelayMillis == 0 {
 		c.CohortSyncConfig.CohortRequestDelayMillis = DefaultCohortSyncConfig.CohortRequestDelayMillis
+	}
+
+	if c.CohortSyncConfig != nil && c.CohortSyncConfig.CohortServerUrl == "" {
+		c.CohortSyncConfig.CohortServerUrl = DefaultCohortSyncConfig.CohortServerUrl
 	}
 
 	return c

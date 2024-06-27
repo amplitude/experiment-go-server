@@ -4,8 +4,8 @@ import (
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
 )
 
-// IsCohortFilter checks if the condition is a cohort filter.
-func IsCohortFilter(condition *evaluation.Condition) bool {
+// isCohortFilter checks if the condition is a cohort filter.
+func isCohortFilter(condition *evaluation.Condition) bool {
 	op := condition.Op
 	selector := condition.Selector
 	if len(selector) > 0 && selector[len(selector)-1] == "cohort_ids" {
@@ -14,16 +14,16 @@ func IsCohortFilter(condition *evaluation.Condition) bool {
 	return false
 }
 
-// GetGroupedCohortConditionIDs extracts grouped cohort condition IDs from a segment.
-func GetGroupedCohortConditionIDs(segment *evaluation.Segment) map[string]map[string]bool {
-	cohortIDs := make(map[string]map[string]bool)
+// getGroupedCohortConditionIDs extracts grouped cohort condition IDs from a segment.
+func getGroupedCohortConditionIDs(segment *evaluation.Segment) map[string]map[string]struct{} {
+	cohortIDs := make(map[string]map[string]struct{})
 	if segment == nil {
 		return cohortIDs
 	}
 
 	for _, outer := range segment.Conditions {
 		for _, condition := range outer {
-			if IsCohortFilter(condition) {
+			if isCohortFilter(condition) {
 				selector := condition.Selector
 				if len(selector) > 2 {
 					contextSubtype := selector[1]
@@ -36,9 +36,9 @@ func GetGroupedCohortConditionIDs(segment *evaluation.Segment) map[string]map[st
 						continue
 					}
 					values := condition.Values
-					cohortIDs[groupType] = make(map[string]bool)
+					cohortIDs[groupType] = make(map[string]struct{})
 					for _, value := range values {
-						cohortIDs[groupType][value] = true
+						cohortIDs[groupType][value] = struct{}{}
 					}
 				}
 			}
@@ -47,56 +47,56 @@ func GetGroupedCohortConditionIDs(segment *evaluation.Segment) map[string]map[st
 	return cohortIDs
 }
 
-// GetGroupedCohortIDsFromFlag extracts grouped cohort IDs from a flag.
-func GetGroupedCohortIDsFromFlag(flag *evaluation.Flag) map[string]map[string]bool {
-	cohortIDs := make(map[string]map[string]bool)
+// getGroupedCohortIDsFromFlag extracts grouped cohort IDs from a flag.
+func getGroupedCohortIDsFromFlag(flag *evaluation.Flag) map[string]map[string]struct{} {
+	cohortIDs := make(map[string]map[string]struct{})
 	for _, segment := range flag.Segments {
-		for key, values := range GetGroupedCohortConditionIDs(segment) {
+		for key, values := range getGroupedCohortConditionIDs(segment) {
 			if _, exists := cohortIDs[key]; !exists {
-				cohortIDs[key] = make(map[string]bool)
+				cohortIDs[key] = make(map[string]struct{})
 			}
 			for id := range values {
-				cohortIDs[key][id] = true
+				cohortIDs[key][id] = struct{}{}
 			}
 		}
 	}
 	return cohortIDs
 }
 
-// GetAllCohortIDsFromFlag extracts all cohort IDs from a flag.
-func GetAllCohortIDsFromFlag(flag *evaluation.Flag) map[string]bool {
-	cohortIDs := make(map[string]bool)
-	groupedIDs := GetGroupedCohortIDsFromFlag(flag)
+// getAllCohortIDsFromFlag extracts all cohort IDs from a flag.
+func getAllCohortIDsFromFlag(flag *evaluation.Flag) map[string]struct{} {
+	cohortIDs := make(map[string]struct{})
+	groupedIDs := getGroupedCohortIDsFromFlag(flag)
 	for _, values := range groupedIDs {
 		for id := range values {
-			cohortIDs[id] = true
+			cohortIDs[id] = struct{}{}
 		}
 	}
 	return cohortIDs
 }
 
-// GetGroupedCohortIDsFromFlags extracts grouped cohort IDs from multiple flags.
-func GetGroupedCohortIDsFromFlags(flags []*evaluation.Flag) map[string]map[string]bool {
-	cohortIDs := make(map[string]map[string]bool)
+// getGroupedCohortIDsFromFlags extracts grouped cohort IDs from multiple flags.
+func getGroupedCohortIDsFromFlags(flags []*evaluation.Flag) map[string]map[string]struct{} {
+	cohortIDs := make(map[string]map[string]struct{})
 	for _, flag := range flags {
-		for key, values := range GetGroupedCohortIDsFromFlag(flag) {
+		for key, values := range getGroupedCohortIDsFromFlag(flag) {
 			if _, exists := cohortIDs[key]; !exists {
-				cohortIDs[key] = make(map[string]bool)
+				cohortIDs[key] = make(map[string]struct{})
 			}
 			for id := range values {
-				cohortIDs[key][id] = true
+				cohortIDs[key][id] = struct{}{}
 			}
 		}
 	}
 	return cohortIDs
 }
 
-// GetAllCohortIDsFromFlags extracts all cohort IDs from multiple flags.
-func GetAllCohortIDsFromFlags(flags []*evaluation.Flag) map[string]bool {
-	cohortIDs := make(map[string]bool)
+// getAllCohortIDsFromFlags extracts all cohort IDs from multiple flags.
+func getAllCohortIDsFromFlags(flags []*evaluation.Flag) map[string]struct{} {
+	cohortIDs := make(map[string]struct{})
 	for _, flag := range flags {
-		for id := range GetAllCohortIDsFromFlag(flag) {
-			cohortIDs[id] = true
+		for id := range getAllCohortIDsFromFlag(flag) {
+			cohortIDs[id] = struct{}{}
 		}
 	}
 	return cohortIDs

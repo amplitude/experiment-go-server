@@ -31,6 +31,10 @@ type Client struct {
 	flagsMutex        *sync.RWMutex
 	engine            *evaluation.Engine
 	assignmentService *assignmentService
+	cohortStorage     CohortStorage
+	flagConfigStorage FlagConfigStorage
+	cohortLoader      *CohortLoader
+	deploymentRunner  *DeploymentRunner
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -43,23 +47,36 @@ func Initialize(apiKey string, config *Config) *Client {
 		config = fillConfigDefaults(config)
 		log := logger.New(config.Debug)
 		var as *assignmentService
-		if config.AssignmentConfig != nil && config.AssignmentConfig.APIKey != ""  {
+		if config.AssignmentConfig != nil && config.AssignmentConfig.APIKey != "" {
 			amplitudeClient := amplitude.NewClient(config.AssignmentConfig.Config)
 			as = &assignmentService{
 				amplitude: &amplitudeClient,
-				filter: newAssignmentFilter(config.AssignmentConfig.CacheCapacity),
+				filter:    newAssignmentFilter(config.AssignmentConfig.CacheCapacity),
 			}
 		}
+		cohortStorage := NewInMemoryCohortStorage()
+		flagConfigStorage := NewInMemoryFlagConfigStorage()
+		var cohortLoader *CohortLoader
+		var deploymentRunner *DeploymentRunner
+		if config.CohortSyncConfig != nil {
+			cohortDownloadApi := NewDirectCohortDownloadApi(config.CohortSyncConfig.ApiKey, config.CohortSyncConfig.SecretKey, config.CohortSyncConfig.MaxCohortSize, config.CohortSyncConfig.CohortRequestDelayMillis, config.CohortSyncConfig.CohortServerUrl, config.Debug)
+			cohortLoader = NewCohortLoader(cohortDownloadApi, cohortStorage)
+			deploymentRunner = NewDeploymentRunner(config, NewFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout), flagConfigStorage, cohortStorage, cohortLoader)
+		}
 		client = &Client{
-			log:        log,
-			apiKey:     apiKey,
-			config:     config,
-			client:     &http.Client{},
-			poller:     newPoller(),
-			flags:      make(map[string]*evaluation.Flag),
-			flagsMutex: &sync.RWMutex{},
-			engine:     evaluation.NewEngine(log),
+			log:               log,
+			apiKey:            apiKey,
+			config:            config,
+			client:            &http.Client{},
+			poller:            newPoller(),
+			flags:             make(map[string]*evaluation.Flag),
+			flagsMutex:        &sync.RWMutex{},
+			engine:            evaluation.NewEngine(log),
 			assignmentService: as,
+			cohortStorage:     cohortStorage,
+			flagConfigStorage: flagConfigStorage,
+			cohortLoader:      cohortLoader,
+			deploymentRunner:  deploymentRunner,
 		}
 		client.log.Debug("config: %v", *config)
 		clients[apiKey] = client
@@ -328,4 +345,35 @@ func coerceString(value interface{}) string {
 		}
 	}
 	return fmt.Sprintf("%v", value)
+}
+
+func (c *Client) enrichUser(user *experiment.User, flagConfigs map[string]evaluation.Flag) (*experiment.User, error) {
+	flagConfigSlice := make([]*evaluation.Flag, 0, len(flagConfigs))
+
+	for _, value := range flagConfigs {
+		flagConfigSlice = append(flagConfigSlice, &value)
+	}
+	groupedCohortIDs := getGroupedCohortIDsFromFlags(flagConfigSlice)
+
+	if cohortIDs, ok := groupedCohortIDs[userGroupType]; ok {
+		if len(cohortIDs) > 0 && user.UserId != "" {
+			user.CohortIDs = c.cohortStorage.GetCohortsForUser(user.UserId, cohortIDs)
+		}
+	}
+
+	if user.Groups != nil {
+		for groupType, groupNames := range user.Groups {
+			groupName := ""
+			if len(groupNames) > 0 {
+				groupName = groupNames[0]
+			}
+			if groupName == "" {
+				continue
+			}
+			if cohortIDs, ok := groupedCohortIDs[groupType]; ok {
+				user.AddGroupCohortIDs(groupType, groupName, c.cohortStorage.GetCohortsForGroup(groupType, groupName, cohortIDs))
+			}
+		}
+	}
+	return user, nil
 }

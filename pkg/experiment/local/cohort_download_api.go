@@ -47,16 +47,18 @@ type DirectCohortDownloadApi struct {
 	SecretKey                string
 	MaxCohortSize            int
 	CohortRequestDelayMillis int
+	ServerUrl                string
 	Debug                    bool
 	Logger                   *log.Logger
 }
 
-func NewDirectCohortDownloadApi(apiKey, secretKey string, maxCohortSize, cohortRequestDelayMillis int, debug bool) *DirectCohortDownloadApi {
+func NewDirectCohortDownloadApi(apiKey, secretKey string, maxCohortSize, cohortRequestDelayMillis int, serverUrl string, debug bool) *DirectCohortDownloadApi {
 	api := &DirectCohortDownloadApi{
 		ApiKey:                   apiKey,
 		SecretKey:                secretKey,
 		MaxCohortSize:            maxCohortSize,
 		CohortRequestDelayMillis: cohortRequestDelayMillis,
+		ServerUrl:                serverUrl,
 		Debug:                    debug,
 		Logger:                   log.New(log.Writer(), "Amplitude: ", log.LstdFlags),
 	}
@@ -85,7 +87,7 @@ func (api *DirectCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (
 
 		if response.StatusCode == http.StatusOK {
 			var cohortInfo struct {
-				CohortId     string   `json:"cohortId"`
+				CohortId     string   `json:"Id"`
 				LastModified int64    `json:"lastModified"`
 				Size         int      `json:"size"`
 				MemberIds    []string `json:"memberIds"`
@@ -94,17 +96,18 @@ func (api *DirectCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (
 			if err := json.NewDecoder(response.Body).Decode(&cohortInfo); err != nil {
 				return nil, err
 			}
-			memberIDs := make(map[string]struct{}, len(cohortInfo.MemberIds))
-			for _, id := range cohortInfo.MemberIds {
-				memberIDs[id] = struct{}{}
-			}
 			api.Logger.Printf("getCohortMembers(%s): end - resultSize=%d", cohortID, cohortInfo.Size)
 			return &Cohort{
 				ID:           cohortInfo.CohortId,
 				LastModified: cohortInfo.LastModified,
 				Size:         cohortInfo.Size,
-				MemberIDs:    memberIDs,
-				GroupType:    cohortInfo.GroupType,
+				MemberIDs:    cohortInfo.MemberIds,
+				GroupType: func() string {
+					if cohortInfo.GroupType == "" {
+						return userGroupType
+					}
+					return cohortInfo.GroupType
+				}(),
 			}, nil
 		} else if response.StatusCode == http.StatusNoContent {
 			return nil, &CohortNotModifiedException{Message: "Cohort not modified"}
@@ -140,7 +143,7 @@ func (api *DirectCohortDownloadApi) getBasicAuth() string {
 }
 
 func (api *DirectCohortDownloadApi) buildCohortURL(cohortID string, cohort *Cohort) string {
-	url := CdnCohortSyncUrl + "/sdk/v1/cohort/" + cohortID + "?maxCohortSize=" + strconv.Itoa(api.MaxCohortSize)
+	url := api.ServerUrl + "/sdk/v1/cohort/" + cohortID + "?maxCohortSize=" + strconv.Itoa(api.MaxCohortSize)
 	if cohort != nil {
 		url += "&lastModified=" + strconv.FormatInt(cohort.LastModified, 10)
 	}

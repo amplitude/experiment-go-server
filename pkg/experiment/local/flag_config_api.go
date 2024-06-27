@@ -12,19 +12,16 @@ import (
 	"time"
 )
 
-// FlagConfigApi defines an interface for retrieving flag configurations.
 type FlagConfigApi interface {
-	GetFlagConfigs() []interface{}
+	GetFlagConfigs() (map[string]*evaluation.Flag, error)
 }
 
-// FlagConfigApiV2 is an implementation of the FlagConfigApi interface for version 2 of the API.
 type FlagConfigApiV2 struct {
 	DeploymentKey                        string
 	ServerURL                            string
 	FlagConfigPollerRequestTimeoutMillis time.Duration
 }
 
-// NewFlagConfigApiV2 creates a new instance of FlagConfigApiV2.
 func NewFlagConfigApiV2(deploymentKey, serverURL string, flagConfigPollerRequestTimeoutMillis time.Duration) *FlagConfigApiV2 {
 	return &FlagConfigApiV2{
 		DeploymentKey:                        deploymentKey,
