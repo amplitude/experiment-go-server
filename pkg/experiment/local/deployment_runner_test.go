@@ -48,7 +48,7 @@ func TestStartThrowsIfFirstCohortLoadFails(t *testing.T) {
 	cohortLoader := NewCohortLoader(cohortDownloadAPI, cohortStorage)
 
 	runner := NewDeploymentRunner(
-		&Config{},
+		DefaultConfig,
 		flagAPI,
 		flagConfigStorage,
 		cohortStorage,
@@ -61,8 +61,6 @@ func TestStartThrowsIfFirstCohortLoadFails(t *testing.T) {
 		t.Error("Expected error but got nil")
 	}
 }
-
-// Mock implementations for interfaces used in tests
 
 type mockFlagConfigApi struct {
 	getFlagConfigsFunc func() (map[string]*evaluation.Flag, error)

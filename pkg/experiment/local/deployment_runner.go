@@ -39,7 +39,6 @@ func NewDeploymentRunner(
 	return dr
 }
 
-// Start begins the deployment runner's periodic refresh.
 func (dr *DeploymentRunner) Start() error {
 	dr.lock.Lock()
 	defer dr.lock.Unlock()
@@ -98,7 +97,7 @@ func (dr *DeploymentRunner) refresh() error {
 		if err != nil {
 			dr.logger.Printf("Failed to load all cohorts for flag %s. Using the old flag config.", flagConfig.Key)
 			dr.flagConfigStorage.PutFlagConfig(oldFlagConfig)
-			continue
+			return err
 		}
 
 		dr.flagConfigStorage.PutFlagConfig(*flagConfig)

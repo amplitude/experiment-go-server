@@ -28,7 +28,7 @@ func TestCohortDownloadApi(t *testing.T) {
 	api := NewDirectCohortDownloadApi("api", "secret", 15000, 100, "https://server.amplitude.com", false)
 
 	t.Run("test_cohort_download_success", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
+		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}, GroupType: userGroupType}
 		response := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
 
 		httpmock.RegisterResponder("GET", api.buildCohortURL("1234", cohort),
@@ -47,7 +47,7 @@ func TestCohortDownloadApi(t *testing.T) {
 	})
 
 	t.Run("test_cohort_download_many_202s_success", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
+		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}, GroupType: userGroupType}
 		response := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
 
 		for i := 0; i < 9; i++ {
@@ -71,7 +71,7 @@ func TestCohortDownloadApi(t *testing.T) {
 	})
 
 	t.Run("test_cohort_request_status_with_two_failures_succeeds", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
+		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}, GroupType: userGroupType}
 		response := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
 
 		httpmock.RegisterResponder("GET", api.buildCohortURL("1234", cohort),
@@ -96,7 +96,7 @@ func TestCohortDownloadApi(t *testing.T) {
 	})
 
 	t.Run("test_cohort_request_status_429s_keep_retrying", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
+		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}, GroupType: userGroupType}
 		response := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
 
 		for i := 0; i < 9; i++ {
