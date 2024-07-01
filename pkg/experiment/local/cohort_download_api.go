@@ -9,35 +9,6 @@ import (
 	"time"
 )
 
-type HTTPErrorResponseException struct {
-	StatusCode int
-	Message    string
-}
-
-func (e *HTTPErrorResponseException) Error() string {
-	return e.Message
-}
-
-type CohortTooLargeException struct {
-	Message string
-}
-
-func (e *CohortTooLargeException) Error() string {
-	return e.Message
-}
-
-type CohortNotModifiedException struct {
-	Message string
-}
-
-func (e *CohortNotModifiedException) Error() string {
-	return e.Message
-}
-
-type CohortDownloadApi interface {
-	GetCohort(cohortID string, cohort *Cohort) (*Cohort, error)
-}
-
 type DirectCohortDownloadApi struct {
 	ApiKey                   string
 	SecretKey                string
@@ -74,7 +45,14 @@ func (api *DirectCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (
 		if err != nil {
 			api.Logger.Printf("getCohortMembers(%s): request-status error %d - %v", cohortID, errors, err)
 			errors++
-			if errors >= 3 || isSpecificError(err) {
+			if errors >= 3 || func(err error) bool {
+				switch err.(type) {
+				case *CohortNotModifiedException, *CohortTooLargeException:
+					return true
+				default:
+					return false
+				}
+			}(err) {
 				return nil, err
 			}
 			time.Sleep(time.Duration(api.CohortRequestDelayMillis) * time.Millisecond)
@@ -112,15 +90,6 @@ func (api *DirectCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (
 		} else {
 			return nil, &HTTPErrorResponseException{StatusCode: response.StatusCode, Message: "Unexpected response code"}
 		}
-	}
-}
-
-func isSpecificError(err error) bool {
-	switch err.(type) {
-	case *CohortNotModifiedException, *CohortTooLargeException:
-		return true
-	default:
-		return false
 	}
 }
 

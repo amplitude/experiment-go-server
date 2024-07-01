@@ -115,8 +115,11 @@ func (dr *DeploymentRunner) loadCohorts(flagConfig evaluation.Flag, cohortIDs ma
 			task := dr.cohortLoader.LoadCohort(cohortID)
 			err := task.Wait()
 			if err != nil {
-				dr.logger.Printf("Failed to load cohort %s for flag %s: %v", cohortID, flagConfig.Key, err)
-				return err
+				if _, ok := err.(*CohortNotModifiedException); !ok {
+					dr.logger.Printf("Failed to load cohort %s for flag %s: %v", cohortID, flagConfig.Key, err)
+					return err
+				}
+				continue
 			}
 			dr.logger.Printf("Cohort %s loaded for flag %s", cohortID, flagConfig.Key)
 		}

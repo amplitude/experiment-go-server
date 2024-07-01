@@ -2,12 +2,17 @@ package local
 
 import (
 	"github.com/amplitude/analytics-go/amplitude"
+	"strings"
 	"time"
 )
+
+const EUFlagServerUrl = "https://flag.lab.eu.amplitude.com"
+const EUCohortSyncUrl = "https://cohort-v2.lab.eu.amplitude.com"
 
 type Config struct {
 	Debug                          bool
 	ServerUrl                      string
+	ServerZone                     string
 	FlagConfigPollerInterval       time.Duration
 	FlagConfigPollerRequestTimeout time.Duration
 	AssignmentConfig               *AssignmentConfig
@@ -19,7 +24,6 @@ type AssignmentConfig struct {
 	CacheCapacity int
 }
 
-// CohortSyncConfig holds configuration for cohort synchronization.
 type CohortSyncConfig struct {
 	ApiKey                   string
 	SecretKey                string
@@ -31,6 +35,7 @@ type CohortSyncConfig struct {
 var DefaultConfig = &Config{
 	Debug:                          false,
 	ServerUrl:                      "https://api.lab.amplitude.com/",
+	ServerZone:                     "us",
 	FlagConfigPollerInterval:       30 * time.Second,
 	FlagConfigPollerRequestTimeout: 10 * time.Second,
 }
@@ -49,9 +54,17 @@ func fillConfigDefaults(c *Config) *Config {
 	if c == nil {
 		return DefaultConfig
 	}
-	if c.ServerUrl == "" {
-		c.ServerUrl = DefaultConfig.ServerUrl
+	if c.ServerZone == "" {
+		c.ServerZone = DefaultConfig.ServerZone
 	}
+	if c.ServerUrl == "" {
+		if strings.ToLower(c.ServerZone) == DefaultConfig.ServerZone {
+			c.ServerUrl = DefaultConfig.ServerUrl
+		} else if strings.ToLower(c.ServerZone) == "eu" {
+			c.ServerUrl = EUFlagServerUrl
+		}
+	}
+
 	if c.FlagConfigPollerInterval == 0 {
 		c.FlagConfigPollerInterval = DefaultConfig.FlagConfigPollerInterval
 	}
@@ -71,7 +84,11 @@ func fillConfigDefaults(c *Config) *Config {
 	}
 
 	if c.CohortSyncConfig != nil && c.CohortSyncConfig.CohortServerUrl == "" {
-		c.CohortSyncConfig.CohortServerUrl = DefaultCohortSyncConfig.CohortServerUrl
+		if strings.ToLower(c.ServerZone) == DefaultConfig.ServerZone {
+			c.CohortSyncConfig.CohortServerUrl = DefaultCohortSyncConfig.CohortServerUrl
+		} else if strings.ToLower(c.ServerZone) == "eu" {
+			c.CohortSyncConfig.CohortServerUrl = EUCohortSyncUrl
+		}
 	}
 
 	return c
