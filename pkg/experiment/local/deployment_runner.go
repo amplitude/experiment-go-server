@@ -2,7 +2,7 @@ package local
 
 import (
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
-	"log"
+	"github.com/amplitude/experiment-go-server/internal/logger"
 	"sync"
 )
 
@@ -14,7 +14,7 @@ type DeploymentRunner struct {
 	cohortLoader      *CohortLoader
 	lock              sync.Mutex
 	poller            *poller
-	logger            *log.Logger
+	log               *logger.Log
 }
 
 func NewDeploymentRunner(
@@ -30,10 +30,7 @@ func NewDeploymentRunner(
 		flagConfigStorage: flagConfigStorage,
 		cohortStorage:     cohortStorage,
 		cohortLoader:      cohortLoader,
-		logger:            log.New(log.Writer(), "Amplitude: ", log.LstdFlags),
-	}
-	if config.Debug {
-		dr.logger.SetFlags(log.LstdFlags | log.Lshortfile)
+		log:               logger.New(config.Debug),
 	}
 	dr.poller = newPoller()
 	return dr
@@ -44,13 +41,13 @@ func (dr *DeploymentRunner) Start() error {
 	defer dr.lock.Unlock()
 
 	if err := dr.refresh(); err != nil {
-		dr.logger.Printf("Initial refresh failed: %v", err)
+		dr.log.Error("Initial refresh failed: %v", err)
 		return err
 	}
 
 	dr.poller.Poll(dr.config.FlagConfigPollerInterval, func() {
 		if err := dr.periodicRefresh(); err != nil {
-			dr.logger.Printf("Periodic refresh failed: %v", err)
+			dr.log.Error("Periodic refresh failed: %v", err)
 		}
 	})
 	return nil
@@ -59,17 +56,17 @@ func (dr *DeploymentRunner) Start() error {
 func (dr *DeploymentRunner) periodicRefresh() error {
 	defer func() {
 		if r := recover(); r != nil {
-			dr.logger.Printf("Recovered in periodicRefresh: %v", r)
+			dr.log.Error("Recovered in periodicRefresh: %v", r)
 		}
 	}()
 	return dr.refresh()
 }
 
 func (dr *DeploymentRunner) refresh() error {
-	dr.logger.Println("Refreshing flag configs.")
+	dr.log.Debug("Refreshing flag configs.")
 	flagConfigs, err := dr.flagConfigApi.GetFlagConfigs()
 	if err != nil {
-		dr.logger.Printf("Failed to fetch flag configs: %v", err)
+		dr.log.Error("Failed to fetch flag configs: %v", err)
 		return err
 	}
 
@@ -86,7 +83,7 @@ func (dr *DeploymentRunner) refresh() error {
 	for _, flagConfig := range flagConfigs {
 		cohortIDs := getAllCohortIDsFromFlag(flagConfig)
 		if dr.cohortLoader == nil || len(cohortIDs) == 0 {
-			dr.logger.Printf("Putting non-cohort flag %s", flagConfig.Key)
+			dr.log.Debug("Putting non-cohort flag %s", flagConfig.Key)
 			dr.flagConfigStorage.PutFlagConfig(flagConfig)
 			continue
 		}
@@ -95,17 +92,17 @@ func (dr *DeploymentRunner) refresh() error {
 
 		err := dr.loadCohorts(*flagConfig, cohortIDs)
 		if err != nil {
-			dr.logger.Printf("Failed to load all cohorts for flag %s. Using the old flag config.", flagConfig.Key)
+			dr.log.Error("Failed to load all cohorts for flag %s. Using the old flag config.", flagConfig.Key)
 			dr.flagConfigStorage.PutFlagConfig(oldFlagConfig)
 			return err
 		}
 
 		dr.flagConfigStorage.PutFlagConfig(flagConfig)
-		dr.logger.Printf("Stored flag config %s", flagConfig.Key)
+		dr.log.Debug("Stored flag config %s", flagConfig.Key)
 	}
 
 	dr.deleteUnusedCohorts()
-	dr.logger.Printf("Refreshed %d flag configs.", len(flagConfigs))
+	dr.log.Debug("Refreshed %d flag configs.", len(flagConfigs))
 	return nil
 }
 
@@ -116,12 +113,12 @@ func (dr *DeploymentRunner) loadCohorts(flagConfig evaluation.Flag, cohortIDs ma
 			err := task.Wait()
 			if err != nil {
 				if _, ok := err.(*CohortNotModifiedException); !ok {
-					dr.logger.Printf("Failed to load cohort %s for flag %s: %v", cohortID, flagConfig.Key, err)
+					dr.log.Error("Failed to load cohort %s for flag %s: %v", cohortID, flagConfig.Key, err)
 					return err
 				}
 				continue
 			}
-			dr.logger.Printf("Cohort %s loaded for flag %s", cohortID, flagConfig.Key)
+			dr.log.Debug("Cohort %s loaded for flag %s", cohortID, flagConfig.Key)
 		}
 		return nil
 	}

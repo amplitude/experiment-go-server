@@ -3,7 +3,7 @@ package local
 import (
 	"encoding/base64"
 	"encoding/json"
-	"log"
+	"github.com/amplitude/experiment-go-server/internal/logger"
 	"net/http"
 	"strconv"
 	"time"
@@ -16,7 +16,7 @@ type DirectCohortDownloadApi struct {
 	CohortRequestDelayMillis int
 	ServerUrl                string
 	Debug                    bool
-	Logger                   *log.Logger
+	log                      *logger.Log
 }
 
 func NewDirectCohortDownloadApi(apiKey, secretKey string, maxCohortSize, cohortRequestDelayMillis int, serverUrl string, debug bool) *DirectCohortDownloadApi {
@@ -27,23 +27,20 @@ func NewDirectCohortDownloadApi(apiKey, secretKey string, maxCohortSize, cohortR
 		CohortRequestDelayMillis: cohortRequestDelayMillis,
 		ServerUrl:                serverUrl,
 		Debug:                    debug,
-		Logger:                   log.New(log.Writer(), "Amplitude: ", log.LstdFlags),
-	}
-	if debug {
-		api.Logger.SetFlags(log.LstdFlags | log.Lshortfile)
+		log:                      logger.New(debug),
 	}
 	return api
 }
 
 func (api *DirectCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (*Cohort, error) {
-	api.Logger.Printf("getCohortMembers(%s): start", cohortID)
+	api.log.Debug("getCohortMembers(%s): start", cohortID)
 	errors := 0
 	client := &http.Client{}
 
 	for {
 		response, err := api.getCohortMembersRequest(client, cohortID, cohort)
 		if err != nil {
-			api.Logger.Printf("getCohortMembers(%s): request-status error %d - %v", cohortID, errors, err)
+			api.log.Error("getCohortMembers(%s): request-status error %d - %v", cohortID, errors, err)
 			errors++
 			if errors >= 3 || func(err error) bool {
 				switch err.(type) {
@@ -70,7 +67,7 @@ func (api *DirectCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (
 			if err := json.NewDecoder(response.Body).Decode(&cohortInfo); err != nil {
 				return nil, err
 			}
-			api.Logger.Printf("getCohortMembers(%s): end - resultSize=%d", cohortID, cohortInfo.Size)
+			api.log.Debug("getCohortMembers(%s): end - resultSize=%d", cohortID, cohortInfo.Size)
 			return &Cohort{
 				ID:           cohortInfo.Id,
 				LastModified: cohortInfo.LastModified,
