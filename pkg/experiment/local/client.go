@@ -119,6 +119,9 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
 	flagConfigs := c.flagConfigStorage.GetFlagConfigs()
 	enrichedUser, err := c.enrichUser(user, flagConfigs)
+	if err != nil {
+		return nil, err
+	}
 	userContext := evaluation.UserToContext(enrichedUser)
 	c.flagsMutex.RLock()
 	sortedFlags, err := topologicalSort(flagConfigs, flagKeys)

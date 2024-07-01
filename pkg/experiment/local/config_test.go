@@ -54,7 +54,7 @@ func TestFillConfigDefaults_ServerZoneAndServerUrl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := fillConfigDefaults(tt.input)
-			if strings.ToLower(result.ServerZone) != strings.ToLower(tt.expectedZone) {
+			if !strings.EqualFold(result.ServerZone, tt.expectedZone) {
 				t.Errorf("expected ServerZone %s, got %s", tt.expectedZone, result.ServerZone)
 			}
 			if result.ServerUrl != tt.expectedUrl {

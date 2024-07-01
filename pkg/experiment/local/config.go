@@ -58,9 +58,9 @@ func fillConfigDefaults(c *Config) *Config {
 		c.ServerZone = DefaultConfig.ServerZone
 	}
 	if c.ServerUrl == "" {
-		if strings.ToLower(c.ServerZone) == DefaultConfig.ServerZone {
+		if strings.EqualFold(strings.ToLower(c.ServerZone), strings.ToLower(DefaultConfig.ServerZone)) {
 			c.ServerUrl = DefaultConfig.ServerUrl
-		} else if strings.ToLower(c.ServerZone) == "eu" {
+		} else if strings.EqualFold(strings.ToLower(c.ServerZone), "eu") {
 			c.ServerUrl = EUFlagServerUrl
 		}
 	}
@@ -84,9 +84,9 @@ func fillConfigDefaults(c *Config) *Config {
 	}
 
 	if c.CohortSyncConfig != nil && c.CohortSyncConfig.CohortServerUrl == "" {
-		if strings.ToLower(c.ServerZone) == DefaultConfig.ServerZone {
+		if strings.EqualFold(strings.ToLower(c.ServerZone), strings.ToLower(DefaultConfig.ServerZone)) {
 			c.CohortSyncConfig.CohortServerUrl = DefaultCohortSyncConfig.CohortServerUrl
-		} else if strings.ToLower(c.ServerZone) == "eu" {
+		} else if strings.EqualFold(strings.ToLower(c.ServerZone), "eu") {
 			c.CohortSyncConfig.CohortServerUrl = EUCohortSyncUrl
 		}
 	}

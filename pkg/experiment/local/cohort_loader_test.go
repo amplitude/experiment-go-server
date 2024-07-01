@@ -57,8 +57,15 @@ func TestFilterCohortsAlreadyComputed(t *testing.T) {
 	api.On("GetCohort", "a", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{ID: "a", LastModified: 0, Size: 0, MemberIDs: []string{}, GroupType: userGroupType}, nil)
 	api.On("GetCohort", "b", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{ID: "b", LastModified: 1, Size: 2, MemberIDs: []string{"1", "2"}, GroupType: userGroupType}, nil)
 
-	loader.LoadCohort("a").Wait()
-	loader.LoadCohort("b").Wait()
+	futureA := loader.LoadCohort("a")
+	futureB := loader.LoadCohort("b")
+
+	if err := futureA.Wait(); err != nil {
+		t.Errorf("futureA.Wait() returned error: %v", err)
+	}
+	if err := futureB.Wait(); err != nil {
+		t.Errorf("futureB.Wait() returned error: %v", err)
+	}
 
 	storageDescriptionA := storage.GetCohort("a")
 	storageDescriptionB := storage.GetCohort("b")
@@ -89,12 +96,20 @@ func TestLoadDownloadFailureThrows(t *testing.T) {
 	api.On("GetCohort", "b", mock.AnythingOfType("*local.Cohort")).Return(nil, errors.New("connection timed out"))
 	api.On("GetCohort", "c", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{ID: "c", LastModified: 0, Size: 1, MemberIDs: []string{"1"}, GroupType: userGroupType}, nil)
 
-	loader.LoadCohort("a").Wait()
+	futureA := loader.LoadCohort("a")
 	errB := loader.LoadCohort("b").Wait()
-	loader.LoadCohort("c").Wait()
+	futureC := loader.LoadCohort("c")
+
+	if err := futureA.Wait(); err != nil {
+		t.Errorf("futureA.Wait() returned error: %v", err)
+	}
 
 	if errB == nil || errB.Error() != "connection timed out" {
 		t.Errorf("futureB.Wait() expected 'Connection timed out' error, got: %v", errB)
+	}
+
+	if err := futureC.Wait(); err != nil {
+		t.Errorf("futureC.Wait() returned error: %v", err)
 	}
 
 	expectedCohorts := map[string]struct{}{"a": {}, "c": {}}
