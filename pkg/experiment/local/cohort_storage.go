@@ -59,7 +59,7 @@ func (s *InMemoryCohortStorage) GetCohortsForGroup(groupType, groupName string, 
 	for cohortID := range cohortIDs {
 		if _, exists := groupTypeCohorts[cohortID]; exists {
 			if cohort, found := s.cohortStore[cohortID]; found {
-				for _, memberID := range cohort.MemberIDs {
+				for _, memberID := range cohort.MemberIds {
 					if memberID == groupName {
 						result[cohortID] = struct{}{}
 						break
@@ -78,8 +78,8 @@ func (s *InMemoryCohortStorage) PutCohort(cohort *Cohort) {
 	if _, exists := s.groupToCohortStore[cohort.GroupType]; !exists {
 		s.groupToCohortStore[cohort.GroupType] = make(map[string]struct{})
 	}
-	s.groupToCohortStore[cohort.GroupType][cohort.ID] = struct{}{}
-	s.cohortStore[cohort.ID] = cohort
+	s.groupToCohortStore[cohort.GroupType][cohort.Id] = struct{}{}
+	s.cohortStore[cohort.Id] = cohort
 }
 
 func (s *InMemoryCohortStorage) DeleteCohort(groupType, cohortID string) {

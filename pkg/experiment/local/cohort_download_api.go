@@ -69,10 +69,10 @@ func (api *DirectCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (
 			}
 			api.log.Debug("getCohortMembers(%s): end - resultSize=%d", cohortID, cohortInfo.Size)
 			return &Cohort{
-				ID:           cohortInfo.Id,
+				Id:           cohortInfo.Id,
 				LastModified: cohortInfo.LastModified,
 				Size:         cohortInfo.Size,
-				MemberIDs:    cohortInfo.MemberIds,
+				MemberIds:    cohortInfo.MemberIds,
 				GroupType: func() string {
 					if cohortInfo.GroupType == "" {
 						return userGroupType

@@ -13,8 +13,8 @@ func TestLoadSuccess(t *testing.T) {
 	loader := NewCohortLoader(api, storage)
 
 	// Define mock behavior
-	api.On("GetCohort", "a", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{ID: "a", LastModified: 0, Size: 1, MemberIDs: []string{"1"}, GroupType: userGroupType}, nil)
-	api.On("GetCohort", "b", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{ID: "b", LastModified: 0, Size: 2, MemberIDs: []string{"1", "2"}, GroupType: userGroupType}, nil)
+	api.On("GetCohort", "a", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{Id: "a", LastModified: 0, Size: 1, MemberIds: []string{"1"}, GroupType: userGroupType}, nil)
+	api.On("GetCohort", "b", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{Id: "b", LastModified: 0, Size: 2, MemberIds: []string{"1", "2"}, GroupType: userGroupType}, nil)
 
 	futureA := loader.LoadCohort("a")
 	futureB := loader.LoadCohort("b")
@@ -28,8 +28,8 @@ func TestLoadSuccess(t *testing.T) {
 
 	storageDescriptionA := storage.GetCohort("a")
 	storageDescriptionB := storage.GetCohort("b")
-	expectedA := &Cohort{ID: "a", LastModified: 0, Size: 1, MemberIDs: []string{"1"}, GroupType: userGroupType}
-	expectedB := &Cohort{ID: "b", LastModified: 0, Size: 2, MemberIDs: []string{"1", "2"}, GroupType: userGroupType}
+	expectedA := &Cohort{Id: "a", LastModified: 0, Size: 1, MemberIds: []string{"1"}, GroupType: userGroupType}
+	expectedB := &Cohort{Id: "b", LastModified: 0, Size: 2, MemberIds: []string{"1", "2"}, GroupType: userGroupType}
 
 	if !CohortEquals(storageDescriptionA, expectedA) {
 		t.Errorf("Unexpected cohort A stored: %+v", storageDescriptionA)
@@ -50,12 +50,12 @@ func TestFilterCohortsAlreadyComputed(t *testing.T) {
 	storage := NewInMemoryCohortStorage()
 	loader := NewCohortLoader(api, storage)
 
-	storage.PutCohort(&Cohort{ID: "a", LastModified: 0, Size: 0, MemberIDs: []string{}})
-	storage.PutCohort(&Cohort{ID: "b", LastModified: 0, Size: 0, MemberIDs: []string{}})
+	storage.PutCohort(&Cohort{Id: "a", LastModified: 0, Size: 0, MemberIds: []string{}})
+	storage.PutCohort(&Cohort{Id: "b", LastModified: 0, Size: 0, MemberIds: []string{}})
 
 	// Define mock behavior
-	api.On("GetCohort", "a", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{ID: "a", LastModified: 0, Size: 0, MemberIDs: []string{}, GroupType: userGroupType}, nil)
-	api.On("GetCohort", "b", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{ID: "b", LastModified: 1, Size: 2, MemberIDs: []string{"1", "2"}, GroupType: userGroupType}, nil)
+	api.On("GetCohort", "a", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{Id: "a", LastModified: 0, Size: 0, MemberIds: []string{}, GroupType: userGroupType}, nil)
+	api.On("GetCohort", "b", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{Id: "b", LastModified: 1, Size: 2, MemberIds: []string{"1", "2"}, GroupType: userGroupType}, nil)
 
 	futureA := loader.LoadCohort("a")
 	futureB := loader.LoadCohort("b")
@@ -69,8 +69,8 @@ func TestFilterCohortsAlreadyComputed(t *testing.T) {
 
 	storageDescriptionA := storage.GetCohort("a")
 	storageDescriptionB := storage.GetCohort("b")
-	expectedA := &Cohort{ID: "a", LastModified: 0, Size: 0, MemberIDs: []string{}, GroupType: userGroupType}
-	expectedB := &Cohort{ID: "b", LastModified: 1, Size: 2, MemberIDs: []string{"1", "2"}, GroupType: userGroupType}
+	expectedA := &Cohort{Id: "a", LastModified: 0, Size: 0, MemberIds: []string{}, GroupType: userGroupType}
+	expectedB := &Cohort{Id: "b", LastModified: 1, Size: 2, MemberIds: []string{"1", "2"}, GroupType: userGroupType}
 
 	if !CohortEquals(storageDescriptionA, expectedA) {
 		t.Errorf("Unexpected cohort A stored: %+v", storageDescriptionA)
@@ -92,9 +92,9 @@ func TestLoadDownloadFailureThrows(t *testing.T) {
 	loader := NewCohortLoader(api, storage)
 
 	// Define mock behavior
-	api.On("GetCohort", "a", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{ID: "a", LastModified: 0, Size: 1, MemberIDs: []string{"1"}, GroupType: userGroupType}, nil)
+	api.On("GetCohort", "a", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{Id: "a", LastModified: 0, Size: 1, MemberIds: []string{"1"}, GroupType: userGroupType}, nil)
 	api.On("GetCohort", "b", mock.AnythingOfType("*local.Cohort")).Return(nil, errors.New("connection timed out"))
-	api.On("GetCohort", "c", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{ID: "c", LastModified: 0, Size: 1, MemberIDs: []string{"1"}, GroupType: userGroupType}, nil)
+	api.On("GetCohort", "c", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{Id: "c", LastModified: 0, Size: 1, MemberIds: []string{"1"}, GroupType: userGroupType}, nil)
 
 	futureA := loader.LoadCohort("a")
 	errB := loader.LoadCohort("b").Wait()

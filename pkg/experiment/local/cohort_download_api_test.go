@@ -13,6 +13,14 @@ type MockCohortDownloadApi struct {
 	mock.Mock
 }
 
+type cohortInfo struct {
+	Id           string   `json:"cohortId"`
+	LastModified int64    `json:"lastModified"`
+	Size         int      `json:"size"`
+	MemberIds    []string `json:"memberIds"`
+	GroupType    string   `json:"groupType"`
+}
+
 func (m *MockCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (*Cohort, error) {
 	args := m.Called(cohortID, cohort)
 	if args.Get(0) != nil {
@@ -28,8 +36,8 @@ func TestCohortDownloadApi(t *testing.T) {
 	api := NewDirectCohortDownloadApi("api", "secret", 15000, 100, "https://server.amplitude.com", false)
 
 	t.Run("test_cohort_download_success", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}, GroupType: userGroupType}
-		response := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
+		cohort := &Cohort{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"user"}, GroupType: "userGroupType"}
+		response := cohortInfo{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"user"}, GroupType: "userGroupType"}
 
 		httpmock.RegisterResponder("GET", api.buildCohortURL("1234", cohort),
 			func(req *http.Request) (*http.Response, error) {
@@ -43,12 +51,16 @@ func TestCohortDownloadApi(t *testing.T) {
 
 		resultCohort, err := api.GetCohort("1234", cohort)
 		assert.NoError(t, err)
-		assert.Equal(t, cohort, resultCohort)
+		assert.Equal(t, cohort.Id, resultCohort.Id)
+		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
+		assert.Equal(t, cohort.Size, resultCohort.Size)
+		assert.Equal(t, cohort.MemberIds, resultCohort.MemberIds)
+		assert.Equal(t, cohort.GroupType, resultCohort.GroupType)
 	})
 
 	t.Run("test_cohort_download_many_202s_success", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}, GroupType: userGroupType}
-		response := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
+		cohort := &Cohort{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"user"}, GroupType: "userGroupType"}
+		response := &cohortInfo{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"user"}, GroupType: "userGroupType"}
 
 		for i := 0; i < 9; i++ {
 			httpmock.RegisterResponder("GET", api.buildCohortURL("1234", cohort),
@@ -67,12 +79,16 @@ func TestCohortDownloadApi(t *testing.T) {
 
 		resultCohort, err := api.GetCohort("1234", cohort)
 		assert.NoError(t, err)
-		assert.Equal(t, cohort, resultCohort)
+		assert.Equal(t, cohort.Id, resultCohort.Id)
+		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
+		assert.Equal(t, cohort.Size, resultCohort.Size)
+		assert.Equal(t, cohort.MemberIds, resultCohort.MemberIds)
+		assert.Equal(t, cohort.GroupType, resultCohort.GroupType)
 	})
 
 	t.Run("test_cohort_request_status_with_two_failures_succeeds", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}, GroupType: userGroupType}
-		response := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
+		cohort := &Cohort{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"user"}, GroupType: "userGroupType"}
+		response := &cohortInfo{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"user"}, GroupType: "userGroupType"}
 
 		httpmock.RegisterResponder("GET", api.buildCohortURL("1234", cohort),
 			httpmock.NewStringResponder(503, ""),
@@ -92,12 +108,16 @@ func TestCohortDownloadApi(t *testing.T) {
 
 		resultCohort, err := api.GetCohort("1234", cohort)
 		assert.NoError(t, err)
-		assert.Equal(t, cohort, resultCohort)
+		assert.Equal(t, cohort.Id, resultCohort.Id)
+		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
+		assert.Equal(t, cohort.Size, resultCohort.Size)
+		assert.Equal(t, cohort.MemberIds, resultCohort.MemberIds)
+		assert.Equal(t, cohort.GroupType, resultCohort.GroupType)
 	})
 
 	t.Run("test_cohort_request_status_429s_keep_retrying", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}, GroupType: userGroupType}
-		response := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"user"}}
+		cohort := &Cohort{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"user"}, GroupType: "userGroupType"}
+		response := &cohortInfo{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"user"}, GroupType: "userGroupType"}
 
 		for i := 0; i < 9; i++ {
 			httpmock.RegisterResponder("GET", api.buildCohortURL("1234", cohort),
@@ -116,12 +136,16 @@ func TestCohortDownloadApi(t *testing.T) {
 
 		resultCohort, err := api.GetCohort("1234", cohort)
 		assert.NoError(t, err)
-		assert.Equal(t, cohort, resultCohort)
+		assert.Equal(t, cohort.Id, resultCohort.Id)
+		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
+		assert.Equal(t, cohort.Size, resultCohort.Size)
+		assert.Equal(t, cohort.MemberIds, resultCohort.MemberIds)
+		assert.Equal(t, cohort.GroupType, resultCohort.GroupType)
 	})
 
 	t.Run("test_group_cohort_download_success", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"group"}, GroupType: "org name"}
-		response := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"group"}, GroupType: "org name"}
+		cohort := &Cohort{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"group"}, GroupType: "org name"}
+		response := &cohortInfo{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"group"}, GroupType: "org name"}
 
 		httpmock.RegisterResponder("GET", api.buildCohortURL("1234", cohort),
 			func(req *http.Request) (*http.Response, error) {
@@ -135,12 +159,16 @@ func TestCohortDownloadApi(t *testing.T) {
 
 		resultCohort, err := api.GetCohort("1234", cohort)
 		assert.NoError(t, err)
-		assert.Equal(t, cohort, resultCohort)
+		assert.Equal(t, cohort.Id, resultCohort.Id)
+		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
+		assert.Equal(t, cohort.Size, resultCohort.Size)
+		assert.Equal(t, cohort.MemberIds, resultCohort.MemberIds)
+		assert.Equal(t, cohort.GroupType, resultCohort.GroupType)
 	})
 
 	t.Run("test_group_cohort_request_status_429s_keep_retrying", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"group"}, GroupType: "org name"}
-		response := &Cohort{ID: "1234", LastModified: 0, Size: 1, MemberIDs: []string{"group"}, GroupType: "org name"}
+		cohort := &Cohort{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"group"}, GroupType: "org name"}
+		response := &cohortInfo{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"group"}, GroupType: "org name"}
 
 		for i := 0; i < 9; i++ {
 			httpmock.RegisterResponder("GET", api.buildCohortURL("1234", cohort),
@@ -159,11 +187,15 @@ func TestCohortDownloadApi(t *testing.T) {
 
 		resultCohort, err := api.GetCohort("1234", cohort)
 		assert.NoError(t, err)
-		assert.Equal(t, cohort, resultCohort)
+		assert.Equal(t, cohort.Id, resultCohort.Id)
+		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
+		assert.Equal(t, cohort.Size, resultCohort.Size)
+		assert.Equal(t, cohort.MemberIds, resultCohort.MemberIds)
+		assert.Equal(t, cohort.GroupType, resultCohort.GroupType)
 	})
 
 	t.Run("test_cohort_size_too_large", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 0, Size: 16000, MemberIDs: []string{}}
+		cohort := &Cohort{Id: "1234", LastModified: 0, Size: 16000, MemberIds: []string{}}
 
 		httpmock.RegisterResponder("GET", api.buildCohortURL("1234", cohort),
 			httpmock.NewStringResponder(413, ""),
@@ -176,7 +208,7 @@ func TestCohortDownloadApi(t *testing.T) {
 	})
 
 	t.Run("test_cohort_not_modified_exception", func(t *testing.T) {
-		cohort := &Cohort{ID: "1234", LastModified: 1000, Size: 1, MemberIDs: []string{}}
+		cohort := &Cohort{Id: "1234", LastModified: 1000, Size: 1, MemberIds: []string{}}
 
 		httpmock.RegisterResponder("GET", api.buildCohortURL("1234", cohort),
 			httpmock.NewStringResponder(204, ""),
