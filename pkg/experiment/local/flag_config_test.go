@@ -28,7 +28,7 @@ func TestGetAllCohortIDsFromFlag(t *testing.T) {
 func TestGetGroupedCohortIDsFromFlag(t *testing.T) {
 	flags := getTestFlags()
 	expectedGroupedCohortIDs := map[string][]string{
-		"user":       {"cohort1", "cohort2", "cohort3", "cohort4", "cohort5", "cohort6"},
+		"User":       {"cohort1", "cohort2", "cohort3", "cohort4", "cohort5", "cohort6"},
 		"group_name": {"cohort7", "cohort8"},
 	}
 
@@ -66,7 +66,7 @@ func TestGetAllCohortIDsFromFlags(t *testing.T) {
 func TestGetGroupedCohortIDsFromFlags(t *testing.T) {
 	flags := getTestFlags()
 	expectedGroupedCohortIDs := map[string][]string{
-		"user":       {"cohort1", "cohort2", "cohort3", "cohort4", "cohort5", "cohort6"},
+		"User":       {"cohort1", "cohort2", "cohort3", "cohort4", "cohort5", "cohort6"},
 		"group_name": {"cohort7", "cohort8"},
 	}
 

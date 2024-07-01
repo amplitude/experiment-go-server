@@ -92,8 +92,10 @@ func (dr *DeploymentRunner) refresh() error {
 
 		err := dr.loadCohorts(*flagConfig, cohortIDs)
 		if err != nil {
-			dr.log.Error("Failed to load all cohorts for flag %s. Using the old flag config.", flagConfig.Key)
-			dr.flagConfigStorage.PutFlagConfig(oldFlagConfig)
+			if oldFlagConfig != nil {
+				dr.log.Error("Failed to load all cohorts for flag %s. Using the old flag config.", flagConfig.Key)
+				dr.flagConfigStorage.PutFlagConfig(oldFlagConfig)
+			}
 			return err
 		}
 
