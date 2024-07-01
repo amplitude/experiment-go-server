@@ -2,6 +2,7 @@ package local
 
 import (
 	"github.com/amplitude/analytics-go/amplitude"
+	"math"
 	"strings"
 	"time"
 )
@@ -45,7 +46,7 @@ var DefaultAssignmentConfig = &AssignmentConfig{
 }
 
 var DefaultCohortSyncConfig = &CohortSyncConfig{
-	MaxCohortSize:            15000,
+	MaxCohortSize:            math.MaxInt32,
 	CohortRequestDelayMillis: 5000,
 	CohortServerUrl:          "https://cohort-v2.lab.amplitude.com",
 }

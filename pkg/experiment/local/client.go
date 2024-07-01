@@ -27,7 +27,6 @@ type Client struct {
 	config            *Config
 	client            *http.Client
 	poller            *poller
-	flags             map[string]*evaluation.Flag
 	flagsMutex        *sync.RWMutex
 	engine            *evaluation.Engine
 	assignmentService *assignmentService
@@ -69,7 +68,6 @@ func Initialize(apiKey string, config *Config) *Client {
 			config:            config,
 			client:            &http.Client{},
 			poller:            newPoller(),
-			flags:             make(map[string]*evaluation.Flag),
 			flagsMutex:        &sync.RWMutex{},
 			engine:            evaluation.NewEngine(log),
 			assignmentService: as,
