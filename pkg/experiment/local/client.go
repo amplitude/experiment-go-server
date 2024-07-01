@@ -158,9 +158,7 @@ func (c *Client) FlagsV2() (string, error) {
 
 // FlagMetadata returns a copy of the flag's metadata. If the flag is not found then nil is returned.
 func (c *Client) FlagMetadata(flagKey string) map[string]interface{} {
-	c.flagsMutex.RLock()
-	f := c.flags[flagKey]
-	c.flagsMutex.RUnlock()
+	f := c.flagConfigStorage.GetFlagConfig(flagKey)
 	if f == nil {
 		return nil
 	}

@@ -9,10 +9,6 @@ import (
 	"time"
 )
 
-const (
-	CdnCohortSyncUrl = "https://cohort-v2.lab.amplitude.com"
-)
-
 type HTTPErrorResponseException struct {
 	StatusCode int
 	Message    string
@@ -87,7 +83,7 @@ func (api *DirectCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (
 
 		if response.StatusCode == http.StatusOK {
 			var cohortInfo struct {
-				CohortId     string   `json:"Id"`
+				Id           string   `json:"cohortId"`
 				LastModified int64    `json:"lastModified"`
 				Size         int      `json:"size"`
 				MemberIds    []string `json:"memberIds"`
@@ -98,7 +94,7 @@ func (api *DirectCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (
 			}
 			api.Logger.Printf("getCohortMembers(%s): end - resultSize=%d", cohortID, cohortInfo.Size)
 			return &Cohort{
-				ID:           cohortInfo.CohortId,
+				ID:           cohortInfo.Id,
 				LastModified: cohortInfo.LastModified,
 				Size:         cohortInfo.Size,
 				MemberIDs:    cohortInfo.MemberIds,

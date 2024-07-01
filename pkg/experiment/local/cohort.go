@@ -2,7 +2,7 @@ package local
 
 import "sort"
 
-const userGroupType = "user"
+const userGroupType = "User"
 
 type Cohort struct {
 	ID           string

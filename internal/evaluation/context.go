@@ -1,6 +1,8 @@
 package evaluation
 
-import "github.com/amplitude/experiment-go-server/pkg/experiment"
+import (
+	"github.com/amplitude/experiment-go-server/pkg/experiment"
+)
 
 func UserToContext(user *experiment.User) map[string]interface{} {
 	if user == nil {
@@ -57,6 +59,12 @@ func UserToContext(user *experiment.User) map[string]interface{} {
 	if len(user.UserProperties) != 0 {
 		userMap["user_properties"] = user.UserProperties
 	}
+	if len(user.Groups) != 0 {
+		userMap["groups"] = user.Groups
+	}
+	if len(user.CohortIds) != 0 {
+		userMap["cohort_ids"] = extractKeys(user.CohortIds)
+	}
 
 	context["user"] = userMap
 
@@ -83,7 +91,7 @@ func UserToContext(user *experiment.User) map[string]interface{} {
 			if user.GroupCohortIds != nil {
 				if groupCohortIdsType, ok := user.GroupCohortIds[groupType]; ok {
 					if groupCohortIdsName, ok := groupCohortIdsType[groupName]; ok {
-						groupNameMap["cohort_ids"] = groupCohortIdsName
+						groupNameMap["cohort_ids"] = extractKeys(groupCohortIdsName)
 					}
 				}
 			}
@@ -97,4 +105,12 @@ func UserToContext(user *experiment.User) map[string]interface{} {
 	}
 
 	return context
+}
+
+func extractKeys(m map[string]struct{}) []string {
+	keys := make([]string, 0, len(m))
+	for key := range m {
+		keys = append(keys, key)
+	}
+	return keys
 }
