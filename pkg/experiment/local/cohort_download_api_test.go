@@ -21,7 +21,7 @@ type cohortInfo struct {
 	GroupType    string   `json:"groupType"`
 }
 
-func (m *MockCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (*Cohort, error) {
+func (m *MockCohortDownloadApi) getCohort(cohortID string, cohort *Cohort) (*Cohort, error) {
 	args := m.Called(cohortID, cohort)
 	if args.Get(0) != nil {
 		return args.Get(0).(*Cohort), args.Error(1)
@@ -33,7 +33,7 @@ func TestCohortDownloadApi(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	api := NewDirectCohortDownloadApi("api", "secret", 15000, 100, "https://server.amplitude.com", false)
+	api := newDirectCohortDownloadApi("api", "secret", 15000, 100, "https://server.amplitude.com", false)
 
 	t.Run("test_cohort_download_success", func(t *testing.T) {
 		cohort := &Cohort{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"user"}, GroupType: "userGroupType"}
@@ -49,7 +49,7 @@ func TestCohortDownloadApi(t *testing.T) {
 			},
 		)
 
-		resultCohort, err := api.GetCohort("1234", cohort)
+		resultCohort, err := api.getCohort("1234", cohort)
 		assert.NoError(t, err)
 		assert.Equal(t, cohort.Id, resultCohort.Id)
 		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
@@ -77,7 +77,7 @@ func TestCohortDownloadApi(t *testing.T) {
 			},
 		)
 
-		resultCohort, err := api.GetCohort("1234", cohort)
+		resultCohort, err := api.getCohort("1234", cohort)
 		assert.NoError(t, err)
 		assert.Equal(t, cohort.Id, resultCohort.Id)
 		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
@@ -106,7 +106,7 @@ func TestCohortDownloadApi(t *testing.T) {
 			},
 		)
 
-		resultCohort, err := api.GetCohort("1234", cohort)
+		resultCohort, err := api.getCohort("1234", cohort)
 		assert.NoError(t, err)
 		assert.Equal(t, cohort.Id, resultCohort.Id)
 		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
@@ -134,7 +134,7 @@ func TestCohortDownloadApi(t *testing.T) {
 			},
 		)
 
-		resultCohort, err := api.GetCohort("1234", cohort)
+		resultCohort, err := api.getCohort("1234", cohort)
 		assert.NoError(t, err)
 		assert.Equal(t, cohort.Id, resultCohort.Id)
 		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
@@ -157,7 +157,7 @@ func TestCohortDownloadApi(t *testing.T) {
 			},
 		)
 
-		resultCohort, err := api.GetCohort("1234", cohort)
+		resultCohort, err := api.getCohort("1234", cohort)
 		assert.NoError(t, err)
 		assert.Equal(t, cohort.Id, resultCohort.Id)
 		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
@@ -185,7 +185,7 @@ func TestCohortDownloadApi(t *testing.T) {
 			},
 		)
 
-		resultCohort, err := api.GetCohort("1234", cohort)
+		resultCohort, err := api.getCohort("1234", cohort)
 		assert.NoError(t, err)
 		assert.Equal(t, cohort.Id, resultCohort.Id)
 		assert.Equal(t, cohort.LastModified, resultCohort.LastModified)
@@ -201,7 +201,7 @@ func TestCohortDownloadApi(t *testing.T) {
 			httpmock.NewStringResponder(413, ""),
 		)
 
-		_, err := api.GetCohort("1234", cohort)
+		_, err := api.getCohort("1234", cohort)
 		assert.Error(t, err)
 		_, isCohortTooLargeException := err.(*CohortTooLargeException)
 		assert.True(t, isCohortTooLargeException)
@@ -214,7 +214,7 @@ func TestCohortDownloadApi(t *testing.T) {
 			httpmock.NewStringResponder(204, ""),
 		)
 
-		_, err := api.GetCohort("1234", cohort)
+		_, err := api.getCohort("1234", cohort)
 		assert.Error(t, err)
 		_, isCohortNotModifiedException := err.(*CohortNotModifiedException)
 		assert.True(t, isCohortNotModifiedException)

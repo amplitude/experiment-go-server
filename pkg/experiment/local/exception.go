@@ -24,7 +24,3 @@ type CohortNotModifiedException struct {
 func (e *CohortNotModifiedException) Error() string {
 	return e.Message
 }
-
-type CohortDownloadApi interface {
-	GetCohort(cohortID string, cohort *Cohort) (*Cohort, error)
-}

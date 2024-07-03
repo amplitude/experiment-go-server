@@ -12,25 +12,25 @@ import (
 	"time"
 )
 
-type FlagConfigApi interface {
+type flagConfigApi interface {
 	GetFlagConfigs() (map[string]*evaluation.Flag, error)
 }
 
-type FlagConfigApiV2 struct {
+type flagConfigApiV2 struct {
 	DeploymentKey                        string
 	ServerURL                            string
 	FlagConfigPollerRequestTimeoutMillis time.Duration
 }
 
-func NewFlagConfigApiV2(deploymentKey, serverURL string, flagConfigPollerRequestTimeoutMillis time.Duration) *FlagConfigApiV2 {
-	return &FlagConfigApiV2{
+func newFlagConfigApiV2(deploymentKey, serverURL string, flagConfigPollerRequestTimeoutMillis time.Duration) *flagConfigApiV2 {
+	return &flagConfigApiV2{
 		DeploymentKey:                        deploymentKey,
 		ServerURL:                            serverURL,
 		FlagConfigPollerRequestTimeoutMillis: flagConfigPollerRequestTimeoutMillis,
 	}
 }
 
-func (a *FlagConfigApiV2) GetFlagConfigs() (map[string]*evaluation.Flag, error) {
+func (a *flagConfigApiV2) GetFlagConfigs() (map[string]*evaluation.Flag, error) {
 	client := &http.Client{}
 	endpoint, err := url.Parse("https://api.lab.amplitude.com/")
 	if err != nil {

@@ -9,7 +9,11 @@ import (
 	"time"
 )
 
-type DirectCohortDownloadApi struct {
+type cohortDownloadApi interface {
+	getCohort(cohortID string, cohort *Cohort) (*Cohort, error)
+}
+
+type directCohortDownloadApi struct {
 	ApiKey                   string
 	SecretKey                string
 	MaxCohortSize            int
@@ -19,8 +23,8 @@ type DirectCohortDownloadApi struct {
 	log                      *logger.Log
 }
 
-func NewDirectCohortDownloadApi(apiKey, secretKey string, maxCohortSize, cohortRequestDelayMillis int, serverUrl string, debug bool) *DirectCohortDownloadApi {
-	api := &DirectCohortDownloadApi{
+func newDirectCohortDownloadApi(apiKey, secretKey string, maxCohortSize, cohortRequestDelayMillis int, serverUrl string, debug bool) *directCohortDownloadApi {
+	api := &directCohortDownloadApi{
 		ApiKey:                   apiKey,
 		SecretKey:                secretKey,
 		MaxCohortSize:            maxCohortSize,
@@ -32,7 +36,7 @@ func NewDirectCohortDownloadApi(apiKey, secretKey string, maxCohortSize, cohortR
 	return api
 }
 
-func (api *DirectCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (*Cohort, error) {
+func (api *directCohortDownloadApi) getCohort(cohortID string, cohort *Cohort) (*Cohort, error) {
 	api.log.Debug("getCohortMembers(%s): start", cohortID)
 	errors := 0
 	client := &http.Client{}
@@ -90,7 +94,7 @@ func (api *DirectCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (
 	}
 }
 
-func (api *DirectCohortDownloadApi) getCohortMembersRequest(client *http.Client, cohortID string, cohort *Cohort) (*http.Response, error) {
+func (api *directCohortDownloadApi) getCohortMembersRequest(client *http.Client, cohortID string, cohort *Cohort) (*http.Response, error) {
 	req, err := http.NewRequest("GET", api.buildCohortURL(cohortID, cohort), nil)
 	if err != nil {
 		return nil, err
@@ -99,12 +103,12 @@ func (api *DirectCohortDownloadApi) getCohortMembersRequest(client *http.Client,
 	return client.Do(req)
 }
 
-func (api *DirectCohortDownloadApi) getBasicAuth() string {
+func (api *directCohortDownloadApi) getBasicAuth() string {
 	auth := api.ApiKey + ":" + api.SecretKey
 	return base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
-func (api *DirectCohortDownloadApi) buildCohortURL(cohortID string, cohort *Cohort) string {
+func (api *directCohortDownloadApi) buildCohortURL(cohortID string, cohort *Cohort) string {
 	url := api.ServerUrl + "/sdk/v1/cohort/" + cohortID + "?maxCohortSize=" + strconv.Itoa(api.MaxCohortSize)
 	if cohort != nil {
 		url += "&lastModified=" + strconv.FormatInt(cohort.LastModified, 10)

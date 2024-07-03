@@ -18,10 +18,10 @@ func TestStartThrowsIfFirstFlagConfigLoadFails(t *testing.T) {
 	}}
 	cohortDownloadAPI := &mockCohortDownloadApi{}
 	flagConfigStorage := NewInMemoryFlagConfigStorage()
-	cohortStorage := NewInMemoryCohortStorage()
-	cohortLoader := NewCohortLoader(cohortDownloadAPI, cohortStorage)
+	cohortStorage := newInMemoryCohortStorage()
+	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage)
 
-	runner := NewDeploymentRunner(
+	runner := newDeploymentRunner(
 		&Config{},
 		flagAPI,
 		flagConfigStorage,
@@ -29,7 +29,7 @@ func TestStartThrowsIfFirstFlagConfigLoadFails(t *testing.T) {
 		cohortLoader,
 	)
 
-	err := runner.Start()
+	err := runner.start()
 
 	if err == nil {
 		t.Error("Expected error but got nil")
@@ -44,10 +44,10 @@ func TestStartThrowsIfFirstCohortLoadFails(t *testing.T) {
 		return nil, errors.New("test")
 	}}
 	flagConfigStorage := NewInMemoryFlagConfigStorage()
-	cohortStorage := NewInMemoryCohortStorage()
-	cohortLoader := NewCohortLoader(cohortDownloadAPI, cohortStorage)
+	cohortStorage := newInMemoryCohortStorage()
+	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage)
 
-	runner := NewDeploymentRunner(
+	runner := newDeploymentRunner(
 		DefaultConfig,
 		flagAPI,
 		flagConfigStorage,
@@ -55,7 +55,7 @@ func TestStartThrowsIfFirstCohortLoadFails(t *testing.T) {
 		cohortLoader,
 	)
 
-	err := runner.Start()
+	err := runner.start()
 
 	if err == nil {
 		t.Error("Expected error but got nil")
@@ -77,7 +77,7 @@ type mockCohortDownloadApi struct {
 	getCohortFunc func(cohortID string, cohort *Cohort) (*Cohort, error)
 }
 
-func (m *mockCohortDownloadApi) GetCohort(cohortID string, cohort *Cohort) (*Cohort, error) {
+func (m *mockCohortDownloadApi) getCohort(cohortID string, cohort *Cohort) (*Cohort, error) {
 	if m.getCohortFunc != nil {
 		return m.getCohortFunc(cohortID, cohort)
 	}

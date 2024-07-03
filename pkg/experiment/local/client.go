@@ -31,9 +31,9 @@ type Client struct {
 	engine            *evaluation.Engine
 	assignmentService *assignmentService
 	cohortStorage     CohortStorage
-	flagConfigStorage FlagConfigStorage
-	cohortLoader      *CohortLoader
-	deploymentRunner  *DeploymentRunner
+	flagConfigStorage flagConfigStorage
+	cohortLoader      *cohortLoader
+	deploymentRunner  *deploymentRunner
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -53,15 +53,15 @@ func Initialize(apiKey string, config *Config) *Client {
 				filter:    newAssignmentFilter(config.AssignmentConfig.CacheCapacity),
 			}
 		}
-		cohortStorage := NewInMemoryCohortStorage()
+		cohortStorage := newInMemoryCohortStorage()
 		flagConfigStorage := NewInMemoryFlagConfigStorage()
-		var cohortLoader *CohortLoader
-		var deploymentRunner *DeploymentRunner
+		var cohortLoader *cohortLoader
+		var deploymentRunner *deploymentRunner
 		if config.CohortSyncConfig != nil {
-			cohortDownloadApi := NewDirectCohortDownloadApi(config.CohortSyncConfig.ApiKey, config.CohortSyncConfig.SecretKey, config.CohortSyncConfig.MaxCohortSize, config.CohortSyncConfig.CohortRequestDelayMillis, config.CohortSyncConfig.CohortServerUrl, config.Debug)
-			cohortLoader = NewCohortLoader(cohortDownloadApi, cohortStorage)
+			cohortDownloadApi := newDirectCohortDownloadApi(config.CohortSyncConfig.ApiKey, config.CohortSyncConfig.SecretKey, config.CohortSyncConfig.MaxCohortSize, config.CohortSyncConfig.CohortRequestDelayMillis, config.CohortSyncConfig.CohortServerUrl, config.Debug)
+			cohortLoader = newCohortLoader(cohortDownloadApi, cohortStorage)
 		}
-		deploymentRunner = NewDeploymentRunner(config, NewFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout), flagConfigStorage, cohortStorage, cohortLoader)
+		deploymentRunner = newDeploymentRunner(config, newFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout), flagConfigStorage, cohortStorage, cohortLoader)
 		client = &Client{
 			log:               log,
 			apiKey:            apiKey,
@@ -84,7 +84,7 @@ func Initialize(apiKey string, config *Config) *Client {
 }
 
 func (c *Client) Start() error {
-	err := c.deploymentRunner.Start()
+	err := c.deploymentRunner.start()
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 }
 
 func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
-	flagConfigs := c.flagConfigStorage.GetFlagConfigs()
+	flagConfigs := c.flagConfigStorage.getFlagConfigs()
 	enrichedUser, err := c.enrichUser(user, flagConfigs)
 	if err != nil {
 		return nil, err
@@ -159,7 +159,7 @@ func (c *Client) FlagsV2() (string, error) {
 
 // FlagMetadata returns a copy of the flag's metadata. If the flag is not found then nil is returned.
 func (c *Client) FlagMetadata(flagKey string) map[string]interface{} {
-	f := c.flagConfigStorage.GetFlagConfig(flagKey)
+	f := c.flagConfigStorage.getFlagConfig(flagKey)
 	if f == nil {
 		return nil
 	}
@@ -348,7 +348,7 @@ func (c *Client) enrichUser(user *experiment.User, flagConfigs map[string]*evalu
 
 	if cohortIDs, ok := groupedCohortIDs[userGroupType]; ok {
 		if len(cohortIDs) > 0 && user.UserId != "" {
-			user.CohortIds = c.cohortStorage.GetCohortsForUser(user.UserId, cohortIDs)
+			user.CohortIds = c.cohortStorage.getCohortsForUser(user.UserId, cohortIDs)
 		}
 	}
 
@@ -362,7 +362,7 @@ func (c *Client) enrichUser(user *experiment.User, flagConfigs map[string]*evalu
 				continue
 			}
 			if cohortIDs, ok := groupedCohortIDs[groupType]; ok {
-				user.AddGroupCohortIDs(groupType, groupName, c.cohortStorage.GetCohortsForGroup(groupType, groupName, cohortIDs))
+				user.AddGroupCohortIDs(groupType, groupName, c.cohortStorage.getCohortsForGroup(groupType, groupName, cohortIDs))
 			}
 		}
 	}

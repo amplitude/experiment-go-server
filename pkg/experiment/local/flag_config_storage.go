@@ -5,31 +5,31 @@ import (
 	"sync"
 )
 
-type FlagConfigStorage interface {
-	GetFlagConfig(key string) *evaluation.Flag
-	GetFlagConfigs() map[string]*evaluation.Flag
-	PutFlagConfig(flagConfig *evaluation.Flag)
-	RemoveIf(condition func(*evaluation.Flag) bool)
+type flagConfigStorage interface {
+	getFlagConfig(key string) *evaluation.Flag
+	getFlagConfigs() map[string]*evaluation.Flag
+	putFlagConfig(flagConfig *evaluation.Flag)
+	removeIf(condition func(*evaluation.Flag) bool)
 }
 
-type InMemoryFlagConfigStorage struct {
+type inMemoryFlagConfigStorage struct {
 	flagConfigs     map[string]*evaluation.Flag
 	flagConfigsLock sync.Mutex
 }
 
-func NewInMemoryFlagConfigStorage() *InMemoryFlagConfigStorage {
-	return &InMemoryFlagConfigStorage{
+func NewInMemoryFlagConfigStorage() *inMemoryFlagConfigStorage {
+	return &inMemoryFlagConfigStorage{
 		flagConfigs: make(map[string]*evaluation.Flag),
 	}
 }
 
-func (storage *InMemoryFlagConfigStorage) GetFlagConfig(key string) *evaluation.Flag {
+func (storage *inMemoryFlagConfigStorage) getFlagConfig(key string) *evaluation.Flag {
 	storage.flagConfigsLock.Lock()
 	defer storage.flagConfigsLock.Unlock()
 	return storage.flagConfigs[key]
 }
 
-func (storage *InMemoryFlagConfigStorage) GetFlagConfigs() map[string]*evaluation.Flag {
+func (storage *inMemoryFlagConfigStorage) getFlagConfigs() map[string]*evaluation.Flag {
 	storage.flagConfigsLock.Lock()
 	defer storage.flagConfigsLock.Unlock()
 	copyFlagConfigs := make(map[string]*evaluation.Flag)
@@ -39,13 +39,13 @@ func (storage *InMemoryFlagConfigStorage) GetFlagConfigs() map[string]*evaluatio
 	return copyFlagConfigs
 }
 
-func (storage *InMemoryFlagConfigStorage) PutFlagConfig(flagConfig *evaluation.Flag) {
+func (storage *inMemoryFlagConfigStorage) putFlagConfig(flagConfig *evaluation.Flag) {
 	storage.flagConfigsLock.Lock()
 	defer storage.flagConfigsLock.Unlock()
 	storage.flagConfigs[flagConfig.Key] = flagConfig
 }
 
-func (storage *InMemoryFlagConfigStorage) RemoveIf(condition func(*evaluation.Flag) bool) {
+func (storage *inMemoryFlagConfigStorage) removeIf(condition func(*evaluation.Flag) bool) {
 	storage.flagConfigsLock.Lock()
 	defer storage.flagConfigsLock.Unlock()
 	for key, value := range storage.flagConfigs {

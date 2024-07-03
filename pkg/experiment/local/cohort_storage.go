@@ -5,34 +5,35 @@ import (
 )
 
 type CohortStorage interface {
-	GetCohort(cohortID string) *Cohort
-	GetCohorts() map[string]*Cohort
-	GetCohortsForUser(userID string, cohortIDs map[string]struct{}) map[string]struct{}
-	GetCohortsForGroup(groupType, groupName string, cohortIDs map[string]struct{}) map[string]struct{}
-	PutCohort(cohort *Cohort)
-	DeleteCohort(groupType, cohortID string)
+	getCohort(cohortID string) *Cohort
+	getCohorts() map[string]*Cohort
+	getCohortsForUser(userID string, cohortIDs map[string]struct{}) map[string]struct{}
+	getCohortsForGroup(groupType, groupName string, cohortIDs map[string]struct{}) map[string]struct{}
+	putCohort(cohort *Cohort)
+	deleteCohort(groupType, cohortID string)
+	getCohortIds() map[string]struct{}
 }
 
-type InMemoryCohortStorage struct {
+type inMemoryCohortStorage struct {
 	lock               sync.RWMutex
 	groupToCohortStore map[string]map[string]struct{}
 	cohortStore        map[string]*Cohort
 }
 
-func NewInMemoryCohortStorage() *InMemoryCohortStorage {
-	return &InMemoryCohortStorage{
+func newInMemoryCohortStorage() *inMemoryCohortStorage {
+	return &inMemoryCohortStorage{
 		groupToCohortStore: make(map[string]map[string]struct{}),
 		cohortStore:        make(map[string]*Cohort),
 	}
 }
 
-func (s *InMemoryCohortStorage) GetCohort(cohortID string) *Cohort {
+func (s *inMemoryCohortStorage) getCohort(cohortID string) *Cohort {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	return s.cohortStore[cohortID]
 }
 
-func (s *InMemoryCohortStorage) GetCohorts() map[string]*Cohort {
+func (s *inMemoryCohortStorage) getCohorts() map[string]*Cohort {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	cohorts := make(map[string]*Cohort)
@@ -42,11 +43,11 @@ func (s *InMemoryCohortStorage) GetCohorts() map[string]*Cohort {
 	return cohorts
 }
 
-func (s *InMemoryCohortStorage) GetCohortsForUser(userID string, cohortIDs map[string]struct{}) map[string]struct{} {
-	return s.GetCohortsForGroup(userGroupType, userID, cohortIDs)
+func (s *inMemoryCohortStorage) getCohortsForUser(userID string, cohortIDs map[string]struct{}) map[string]struct{} {
+	return s.getCohortsForGroup(userGroupType, userID, cohortIDs)
 }
 
-func (s *InMemoryCohortStorage) GetCohortsForGroup(groupType, groupName string, cohortIDs map[string]struct{}) map[string]struct{} {
+func (s *inMemoryCohortStorage) getCohortsForGroup(groupType, groupName string, cohortIDs map[string]struct{}) map[string]struct{} {
 	result := make(map[string]struct{})
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -72,7 +73,7 @@ func (s *InMemoryCohortStorage) GetCohortsForGroup(groupType, groupName string, 
 	return result
 }
 
-func (s *InMemoryCohortStorage) PutCohort(cohort *Cohort) {
+func (s *inMemoryCohortStorage) putCohort(cohort *Cohort) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if _, exists := s.groupToCohortStore[cohort.GroupType]; !exists {
@@ -82,7 +83,7 @@ func (s *InMemoryCohortStorage) PutCohort(cohort *Cohort) {
 	s.cohortStore[cohort.Id] = cohort
 }
 
-func (s *InMemoryCohortStorage) DeleteCohort(groupType, cohortID string) {
+func (s *inMemoryCohortStorage) deleteCohort(groupType, cohortID string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if groupCohorts, exists := s.groupToCohortStore[groupType]; exists {
@@ -92,4 +93,14 @@ func (s *InMemoryCohortStorage) DeleteCohort(groupType, cohortID string) {
 		}
 	}
 	delete(s.cohortStore, cohortID)
+}
+
+func (s *inMemoryCohortStorage) getCohortIds() map[string]struct{} {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	cohortIds := make(map[string]struct{})
+	for id := range s.cohortStore {
+		cohortIds[id] = struct{}{}
+	}
+	return cohortIds
 }
