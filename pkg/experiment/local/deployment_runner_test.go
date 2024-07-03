@@ -17,7 +17,7 @@ func TestStartThrowsIfFirstFlagConfigLoadFails(t *testing.T) {
 		return nil, errors.New("test")
 	}}
 	cohortDownloadAPI := &mockCohortDownloadApi{}
-	flagConfigStorage := NewInMemoryFlagConfigStorage()
+	flagConfigStorage := newInMemoryFlagConfigStorage()
 	cohortStorage := newInMemoryCohortStorage()
 	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage)
 
@@ -43,7 +43,7 @@ func TestStartThrowsIfFirstCohortLoadFails(t *testing.T) {
 	cohortDownloadAPI := &mockCohortDownloadApi{getCohortFunc: func(cohortID string, cohort *Cohort) (*Cohort, error) {
 		return nil, errors.New("test")
 	}}
-	flagConfigStorage := NewInMemoryFlagConfigStorage()
+	flagConfigStorage := newInMemoryFlagConfigStorage()
 	cohortStorage := newInMemoryCohortStorage()
 	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage)
 
@@ -66,7 +66,7 @@ type mockFlagConfigApi struct {
 	getFlagConfigsFunc func() (map[string]*evaluation.Flag, error)
 }
 
-func (m *mockFlagConfigApi) GetFlagConfigs() (map[string]*evaluation.Flag, error) {
+func (m *mockFlagConfigApi) getFlagConfigs() (map[string]*evaluation.Flag, error) {
 	if m.getFlagConfigsFunc != nil {
 		return m.getFlagConfigsFunc()
 	}

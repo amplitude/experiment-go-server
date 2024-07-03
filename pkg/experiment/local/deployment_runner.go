@@ -73,7 +73,7 @@ func (dr *deploymentRunner) periodicRefresh() error {
 
 func (dr *deploymentRunner) updateFlagConfigs() error {
 	dr.log.Debug("Refreshing flag configs.")
-	flagConfigs, err := dr.flagConfigApi.GetFlagConfigs()
+	flagConfigs, err := dr.flagConfigApi.getFlagConfigs()
 	if err != nil {
 		dr.log.Error("Failed to fetch flag configs: %v", err)
 		return err

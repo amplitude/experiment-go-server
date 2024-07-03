@@ -28,7 +28,7 @@ type User struct {
 	lock               sync.Mutex
 }
 
-func (u *User) AddGroupCohortIDs(groupType, groupName string, cohortIDs map[string]struct{}) {
+func (u *User) AddGroupCohortIds(groupType, groupName string, cohortIds map[string]struct{}) {
 	u.lock.Lock()
 	defer u.lock.Unlock()
 
@@ -42,7 +42,7 @@ func (u *User) AddGroupCohortIDs(groupType, groupName string, cohortIDs map[stri
 		u.GroupCohortIds[groupType] = groupNames
 	}
 
-	groupNames[groupName] = cohortIDs
+	groupNames[groupName] = cohortIds
 }
 
 type Variant struct {

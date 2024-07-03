@@ -4,7 +4,6 @@ import (
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
 )
 
-// isCohortFilter checks if the condition is a cohort filter.
 func isCohortFilter(condition *evaluation.Condition) bool {
 	op := condition.Op
 	selector := condition.Selector
@@ -14,7 +13,6 @@ func isCohortFilter(condition *evaluation.Condition) bool {
 	return false
 }
 
-// getGroupedCohortConditionIDs extracts grouped cohort condition IDs from a segment.
 func getGroupedCohortConditionIDs(segment *evaluation.Segment) map[string]map[string]struct{} {
 	cohortIDs := make(map[string]map[string]struct{})
 	if segment == nil {
@@ -47,7 +45,6 @@ func getGroupedCohortConditionIDs(segment *evaluation.Segment) map[string]map[st
 	return cohortIDs
 }
 
-// getGroupedCohortIDsFromFlag extracts grouped cohort IDs from a flag.
 func getGroupedCohortIDsFromFlag(flag *evaluation.Flag) map[string]map[string]struct{} {
 	cohortIDs := make(map[string]map[string]struct{})
 	for _, segment := range flag.Segments {
@@ -63,7 +60,6 @@ func getGroupedCohortIDsFromFlag(flag *evaluation.Flag) map[string]map[string]st
 	return cohortIDs
 }
 
-// getAllCohortIDsFromFlag extracts all cohort IDs from a flag.
 func getAllCohortIDsFromFlag(flag *evaluation.Flag) map[string]struct{} {
 	cohortIDs := make(map[string]struct{})
 	groupedIDs := getGroupedCohortIDsFromFlag(flag)
@@ -75,7 +71,6 @@ func getAllCohortIDsFromFlag(flag *evaluation.Flag) map[string]struct{} {
 	return cohortIDs
 }
 
-// getGroupedCohortIDsFromFlags extracts grouped cohort IDs from multiple flags.
 func getGroupedCohortIDsFromFlags(flags []*evaluation.Flag) map[string]map[string]struct{} {
 	cohortIDs := make(map[string]map[string]struct{})
 	for _, flag := range flags {
@@ -91,7 +86,6 @@ func getGroupedCohortIDsFromFlags(flags []*evaluation.Flag) map[string]map[strin
 	return cohortIDs
 }
 
-// getAllCohortIDsFromFlags extracts all cohort IDs from multiple flags.
 func getAllCohortIDsFromFlags(flags []*evaluation.Flag) map[string]struct{} {
 	cohortIDs := make(map[string]struct{})
 	for _, flag := range flags {
@@ -102,7 +96,6 @@ func getAllCohortIDsFromFlags(flags []*evaluation.Flag) map[string]struct{} {
 	return cohortIDs
 }
 
-// helper function to check if selector contains groups
 func selectorContainsGroups(selector []string) bool {
 	for _, s := range selector {
 		if s == "groups" {

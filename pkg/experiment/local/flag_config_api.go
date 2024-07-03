@@ -13,7 +13,7 @@ import (
 )
 
 type flagConfigApi interface {
-	GetFlagConfigs() (map[string]*evaluation.Flag, error)
+	getFlagConfigs() (map[string]*evaluation.Flag, error)
 }
 
 type flagConfigApiV2 struct {
@@ -30,7 +30,7 @@ func newFlagConfigApiV2(deploymentKey, serverURL string, flagConfigPollerRequest
 	}
 }
 
-func (a *flagConfigApiV2) GetFlagConfigs() (map[string]*evaluation.Flag, error) {
+func (a *flagConfigApiV2) getFlagConfigs() (map[string]*evaluation.Flag, error) {
 	client := &http.Client{}
 	endpoint, err := url.Parse("https://api.lab.amplitude.com/")
 	if err != nil {

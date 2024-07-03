@@ -54,7 +54,7 @@ func Initialize(apiKey string, config *Config) *Client {
 			}
 		}
 		cohortStorage := newInMemoryCohortStorage()
-		flagConfigStorage := NewInMemoryFlagConfigStorage()
+		flagConfigStorage := newInMemoryFlagConfigStorage()
 		var cohortLoader *cohortLoader
 		var deploymentRunner *deploymentRunner
 		if config.CohortSyncConfig != nil {
@@ -362,7 +362,7 @@ func (c *Client) enrichUser(user *experiment.User, flagConfigs map[string]*evalu
 				continue
 			}
 			if cohortIDs, ok := groupedCohortIDs[groupType]; ok {
-				user.AddGroupCohortIDs(groupType, groupName, c.cohortStorage.getCohortsForGroup(groupType, groupName, cohortIDs))
+				user.AddGroupCohortIds(groupType, groupName, c.cohortStorage.getCohortsForGroup(groupType, groupName, cohortIDs))
 			}
 		}
 	}
