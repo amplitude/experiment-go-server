@@ -1,7 +1,5 @@
 package experiment
 
-import "sync"
-
 const VERSION = "1.5.0"
 
 type User struct {
@@ -25,13 +23,9 @@ type User struct {
 	Groups             map[string][]string                       `json:"groups,omitempty"`
 	CohortIds          map[string]struct{}                       `json:"cohort_ids,omitempty"`
 	GroupCohortIds     map[string]map[string]map[string]struct{} `json:"group_cohort_ids,omitempty"`
-	lock               sync.Mutex
 }
 
 func (u *User) AddGroupCohortIds(groupType, groupName string, cohortIds map[string]struct{}) {
-	u.lock.Lock()
-	defer u.lock.Unlock()
-
 	if u.GroupCohortIds == nil {
 		u.GroupCohortIds = make(map[string]map[string]map[string]struct{})
 	}
