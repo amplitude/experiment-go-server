@@ -172,9 +172,10 @@ func TestFlagMetadataLocalFlagKey(t *testing.T) {
 }
 
 func TestEvaluateV2Cohort(t *testing.T) {
-	user := &experiment.User{UserId: "12345"}
+	targetedUser := &experiment.User{UserId: "12345"}
+	nonTargetedUser := &experiment.User{UserId: "not_targeted"}
 	flagKeys := []string{"sdk-local-evaluation-user-cohort-ci-test"}
-	result, err := client.EvaluateV2(user, flagKeys)
+	result, err := client.EvaluateV2(targetedUser, flagKeys)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
@@ -185,17 +186,31 @@ func TestEvaluateV2Cohort(t *testing.T) {
 	if variant.Value != "on" {
 		t.Fatalf("Unexpected variant %v", variant)
 	}
+	result, err = client.EvaluateV2(nonTargetedUser, flagKeys)
+	if err != nil {
+		t.Fatalf("Unexpected error %v", err)
+	}
+	variant = result["sdk-local-evaluation-user-cohort-ci-test"]
+	if variant.Key != "off" {
+		t.Fatalf("Unexpected variant %v", variant)
+	}
 }
 
 func TestEvaluateV2GroupCohort(t *testing.T) {
-	user := &experiment.User{
+	targetedUser := &experiment.User{
 		UserId:   "12345",
 		DeviceId: "device_id",
 		Groups: map[string][]string{
 			"org id": {"1"},
 		}}
+	nonTargetedUser := &experiment.User{
+		UserId:   "12345",
+		DeviceId: "device_id",
+		Groups: map[string][]string{
+			"org id": {"not_targeted"},
+		}}
 	flagKeys := []string{"sdk-local-evaluation-group-cohort-ci-test"}
-	result, err := client.EvaluateV2(user, flagKeys)
+	result, err := client.EvaluateV2(targetedUser, flagKeys)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
@@ -204,6 +219,14 @@ func TestEvaluateV2GroupCohort(t *testing.T) {
 		t.Fatalf("Unexpected variant %v", variant)
 	}
 	if variant.Value != "on" {
+		t.Fatalf("Unexpected variant %v", variant)
+	}
+	result, err = client.EvaluateV2(nonTargetedUser, flagKeys)
+	if err != nil {
+		t.Fatalf("Unexpected error %v", err)
+	}
+	variant = result["sdk-local-evaluation-group-cohort-ci-test"]
+	if variant.Key != "off" {
 		t.Fatalf("Unexpected variant %v", variant)
 	}
 }

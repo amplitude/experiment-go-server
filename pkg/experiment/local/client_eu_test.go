@@ -30,9 +30,10 @@ func init() {
 }
 
 func TestEvaluateV2CohortEU(t *testing.T) {
-	user := &experiment.User{UserId: "1", DeviceId: "0"}
+	targetedUser := &experiment.User{UserId: "1", DeviceId: "0"}
+	nonTargetedUser := &experiment.User{UserId: "not_targeted", DeviceId: "0"}
 	flagKeys := []string{"sdk-local-evaluation-user-cohort"}
-	result, err := clientEU.EvaluateV2(user, flagKeys)
+	result, err := clientEU.EvaluateV2(targetedUser, flagKeys)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
@@ -41,6 +42,14 @@ func TestEvaluateV2CohortEU(t *testing.T) {
 		t.Fatalf("Unexpected variant %v", variant)
 	}
 	if variant.Value != "on" {
+		t.Fatalf("Unexpected variant %v", variant)
+	}
+	result, err = clientEU.EvaluateV2(nonTargetedUser, flagKeys)
+	if err != nil {
+		t.Fatalf("Unexpected error %v", err)
+	}
+	variant = result["sdk-local-evaluation-user-cohort"]
+	if variant.Key != "off" {
 		t.Fatalf("Unexpected variant %v", variant)
 	}
 }
