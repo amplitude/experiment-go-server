@@ -32,7 +32,7 @@ func newFlagConfigApiV2(deploymentKey, serverURL string, flagConfigPollerRequest
 
 func (a *flagConfigApiV2) getFlagConfigs() (map[string]*evaluation.Flag, error) {
 	client := &http.Client{}
-	endpoint, err := url.Parse("https://api.lab.amplitude.com/")
+	endpoint, err := url.Parse(a.ServerURL)
 	if err != nil {
 		return nil, err
 	}

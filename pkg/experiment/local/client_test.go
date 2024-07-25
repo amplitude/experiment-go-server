@@ -2,14 +2,28 @@ package local
 
 import (
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
+	"github.com/joho/godotenv"
+	"log"
+	"os"
 	"testing"
 )
 
 var client *Client
 
 func init() {
-	client = Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz", nil)
-	err := client.Start()
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+	projectApiKey := os.Getenv("API_KEY")
+	secretKey := os.Getenv("SECRET_KEY")
+	cohortSyncConfig := CohortSyncConfig{
+		ApiKey:    projectApiKey,
+		SecretKey: secretKey,
+	}
+	client = Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz",
+		&Config{CohortSyncConfig: &cohortSyncConfig})
+	err = client.Start()
 	if err != nil {
 		panic(err)
 	}
@@ -51,7 +65,6 @@ func TestEvaluate(t *testing.T) {
 		t.Fatalf("Unexpected variant %v", variant)
 	}
 }
-
 
 func TestEvaluateV2AllFlags(t *testing.T) {
 	user := &experiment.User{UserId: "test_user"}
@@ -155,5 +168,42 @@ func TestFlagMetadataLocalFlagKey(t *testing.T) {
 	md := client.FlagMetadata("sdk-local-evaluation-ci-test")
 	if md["evaluationMode"] != "local" {
 		t.Fatalf("Unexpected metadata %v", md)
+	}
+}
+
+func TestEvaluateV2Cohort(t *testing.T) {
+	user := &experiment.User{UserId: "12345"}
+	flagKeys := []string{"sdk-local-evaluation-user-cohort-ci-test"}
+	result, err := client.EvaluateV2(user, flagKeys)
+	if err != nil {
+		t.Fatalf("Unexpected error %v", err)
+	}
+	variant := result["sdk-local-evaluation-user-cohort-ci-test"]
+	if variant.Key != "on" {
+		t.Fatalf("Unexpected variant %v", variant)
+	}
+	if variant.Value != "on" {
+		t.Fatalf("Unexpected variant %v", variant)
+	}
+}
+
+func TestEvaluateV2GroupCohort(t *testing.T) {
+	user := &experiment.User{
+		UserId:   "12345",
+		DeviceId: "device_id",
+		Groups: map[string][]string{
+			"org id": {"1"},
+		}}
+	flagKeys := []string{"sdk-local-evaluation-group-cohort-ci-test"}
+	result, err := client.EvaluateV2(user, flagKeys)
+	if err != nil {
+		t.Fatalf("Unexpected error %v", err)
+	}
+	variant := result["sdk-local-evaluation-group-cohort-ci-test"]
+	if variant.Key != "on" {
+		t.Fatalf("Unexpected variant %v", variant)
+	}
+	if variant.Value != "on" {
+		t.Fatalf("Unexpected variant %v", variant)
 	}
 }
