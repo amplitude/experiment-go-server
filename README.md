@@ -110,3 +110,12 @@ Fetch variants for a user given an experiment user JSON object
 ```
 
 > Note: must use single quotes around JSON object string
+
+### Running unit tests suite
+To set up for running test on local, create a `.env` file in `pkg/experiment/local` with following
+contents, and replace `{API_KEY}` and `{SECRET_KEY}` (or `{EU_API_KEY}` and `{EU_SECRET_KEY}` for EU data center) for the project in test:
+
+```
+API_KEY={API_KEY}
+SECRET_KEY={SECRET_KEY}
+```
