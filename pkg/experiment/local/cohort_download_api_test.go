@@ -207,7 +207,7 @@ func TestCohortDownloadApi(t *testing.T) {
 		assert.True(t, isCohortTooLargeException)
 	})
 
-	t.Run("test_cohort_not_modified_exception", func(t *testing.T) {
+	t.Run("test_cohort_not_modified", func(t *testing.T) {
 		cohort := &Cohort{Id: "1234", LastModified: 1000, Size: 1, MemberIds: []string{}}
 
 		httpmock.RegisterResponder("GET", api.buildCohortURL("1234", cohort),
