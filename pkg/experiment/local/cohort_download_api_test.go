@@ -214,9 +214,8 @@ func TestCohortDownloadApi(t *testing.T) {
 			httpmock.NewStringResponder(204, ""),
 		)
 
-		_, err := api.getCohort("1234", cohort)
-		assert.Error(t, err)
-		_, isCohortNotModifiedException := err.(*CohortNotModifiedException)
-		assert.True(t, isCohortNotModifiedException)
+		result, err := api.getCohort("1234", cohort)
+		assert.Nil(t, result)
+		assert.NoError(t, err)
 	})
 }

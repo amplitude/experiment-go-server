@@ -69,7 +69,9 @@ func (task *CohortLoaderTask) run() {
 	if err != nil {
 		task.err = err
 	} else {
-		task.loader.cohortStorage.putCohort(cohort)
+		if cohort != nil {
+			task.loader.cohortStorage.putCohort(cohort)
+		}
 	}
 
 	task.loader.removeJob(task.cohortId)

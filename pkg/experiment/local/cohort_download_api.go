@@ -48,7 +48,7 @@ func (api *directCohortDownloadApi) getCohort(cohortID string, cohort *Cohort) (
 			errors++
 			if errors >= 3 || func(err error) bool {
 				switch err.(type) {
-				case *CohortNotModifiedException, *CohortTooLargeException:
+				case *CohortTooLargeException:
 					return true
 				default:
 					return false
@@ -85,7 +85,7 @@ func (api *directCohortDownloadApi) getCohort(cohortID string, cohort *Cohort) (
 				}(),
 			}, nil
 		} else if response.StatusCode == http.StatusNoContent {
-			return nil, &CohortNotModifiedException{Message: "Cohort not modified"}
+			return nil, nil
 		} else if response.StatusCode == http.StatusRequestEntityTooLarge {
 			return nil, &CohortTooLargeException{Message: "Cohort exceeds max cohort size"}
 		} else {

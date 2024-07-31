@@ -16,11 +16,3 @@ type CohortTooLargeException struct {
 func (e *CohortTooLargeException) Error() string {
 	return e.Message
 }
-
-type CohortNotModifiedException struct {
-	Message string
-}
-
-func (e *CohortNotModifiedException) Error() string {
-	return e.Message
-}
