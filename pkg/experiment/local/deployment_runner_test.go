@@ -36,7 +36,7 @@ func TestStartThrowsIfFirstFlagConfigLoadFails(t *testing.T) {
 	}
 }
 
-func TestStartThrowsIfFirstCohortLoadFails(t *testing.T) {
+func TestStartSucceedsEvenIfFirstCohortLoadFails(t *testing.T) {
 	flagAPI := &mockFlagConfigApi{getFlagConfigsFunc: func() (map[string]*evaluation.Flag, error) {
 		return map[string]*evaluation.Flag{"flag": createTestFlag()}, nil
 	}}
@@ -57,8 +57,8 @@ func TestStartThrowsIfFirstCohortLoadFails(t *testing.T) {
 
 	err := runner.start()
 
-	if err == nil {
-		t.Error("Expected error but got nil")
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
 	}
 }
 

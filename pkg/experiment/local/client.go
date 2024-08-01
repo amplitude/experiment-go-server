@@ -116,13 +116,14 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 
 func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
 	flagConfigs := c.flagConfigStorage.getFlagConfigs()
-	enrichedUser, err := c.enrichUser(user, flagConfigs)
+	sortedFlags, err := topologicalSort(flagConfigs, flagKeys)
+	c.requiredCohortsInStorage(sortedFlags)
+	enrichedUser, err := c.enrichUserWithCohorts(user, flagConfigs)
 	if err != nil {
 		return nil, err
 	}
 	userContext := evaluation.UserToContext(enrichedUser)
 	c.flagsMutex.RLock()
-	sortedFlags, err := topologicalSort(flagConfigs, flagKeys)
 	c.flagsMutex.RUnlock()
 	if err != nil {
 		return nil, err
@@ -338,7 +339,29 @@ func coerceString(value interface{}) string {
 	return fmt.Sprintf("%v", value)
 }
 
-func (c *Client) enrichUser(user *experiment.User, flagConfigs map[string]*evaluation.Flag) (*experiment.User, error) {
+func (c *Client) requiredCohortsInStorage(flagConfigs []*evaluation.Flag) {
+	storedCohortIDs := c.cohortStorage.getCohortIds()
+	for _, flag := range flagConfigs {
+		flagCohortIDs := getAllCohortIDsFromFlag(flag)
+		missingCohorts := difference(flagCohortIDs, storedCohortIDs)
+
+		if len(missingCohorts) > 0 {
+			if c.config.CohortSyncConfig != nil {
+				c.log.Debug(
+					"Evaluating flag %s dependent on cohorts %v without %v in storage",
+					flag.Key, flagCohortIDs, missingCohorts,
+				)
+			} else {
+				c.log.Debug(
+					"Evaluating flag %s dependent on cohorts %v without cohort syncing configured",
+					flag.Key, flagCohortIDs,
+				)
+			}
+		}
+	}
+}
+
+func (c *Client) enrichUserWithCohorts(user *experiment.User, flagConfigs map[string]*evaluation.Flag) (*experiment.User, error) {
 	flagConfigSlice := make([]*evaluation.Flag, 0, len(flagConfigs))
 
 	for _, value := range flagConfigs {

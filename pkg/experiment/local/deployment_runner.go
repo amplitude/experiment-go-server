@@ -2,7 +2,6 @@ package local
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
@@ -119,31 +118,20 @@ func (dr *deploymentRunner) updateFlagConfigs() error {
 	// Get updated set of cohort ids
 	updatedCohortIDs := dr.cohortStorage.getCohortIds()
 	// Iterate through new flag configs and check if their required cohorts exist
-	failedFlagCount := 0
 	for _, flagConfig := range flagConfigs {
 		cohortIDs := getAllCohortIDsFromFlag(flagConfig)
-		if len(cohortIDs) == 0 || dr.cohortLoader == nil {
-			dr.flagConfigStorage.putFlagConfig(flagConfig)
-			dr.log.Debug("Putting non-cohort flag %s", flagConfig.Key)
-		} else if subset(cohortIDs, updatedCohortIDs) {
-			dr.flagConfigStorage.putFlagConfig(flagConfig)
-			dr.log.Debug("Putting flag %s", flagConfig.Key)
-		} else {
-			dr.log.Error("Flag %s not updated because not all required cohorts could be loaded", flagConfig.Key)
-			failedFlagCount++
+		missingCohorts := difference(cohortIDs, updatedCohortIDs)
+
+		dr.flagConfigStorage.putFlagConfig(flagConfig)
+		dr.log.Debug("Putting flag %s", flagConfig.Key)
+		if len(missingCohorts) != 0 {
+			dr.log.Error("Flag %s - failed to load cohorts: %v", flagConfig.Key, missingCohorts)
 		}
 	}
 
 	// Delete unused cohorts
 	dr.deleteUnusedCohorts()
-	dr.log.Debug("Refreshed %d flag configs.", len(flagConfigs)-failedFlagCount)
-
-	// If there are any download errors, raise an aggregated exception
-	if len(cohortDownloadErrors) > 0 {
-		errorCount := len(cohortDownloadErrors)
-		errorMessages := strings.Join(cohortDownloadErrors, "\n")
-		return fmt.Errorf("%d cohort(s) failed to download:\n%s", errorCount, errorMessages)
-	}
+	dr.log.Debug("Refreshed %d flag configs.", len(flagConfigs))
 
 	return nil
 }
@@ -182,13 +170,4 @@ func difference(set1, set2 map[string]struct{}) map[string]struct{} {
 		}
 	}
 	return diff
-}
-
-func subset(subset, set map[string]struct{}) bool {
-	for k := range subset {
-		if _, exists := set[k]; !exists {
-			return false
-		}
-	}
-	return true
 }

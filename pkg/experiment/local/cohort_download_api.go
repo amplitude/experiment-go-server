@@ -88,7 +88,7 @@ func (api *directCohortDownloadApi) getCohort(cohortID string, cohort *Cohort) (
 			api.log.Debug("getCohortMembers(%s): Cohort not modified", cohortID)
 			return nil, nil
 		} else if response.StatusCode == http.StatusRequestEntityTooLarge {
-			return nil, &CohortTooLargeException{Message: "Cohort exceeds max cohort size"}
+			return nil, &CohortTooLargeException{Message: "Cohort exceeds max cohort size of " + strconv.Itoa(api.MaxCohortSize)}
 		} else {
 			return nil, &HTTPErrorResponseException{StatusCode: response.StatusCode, Message: "Unexpected response code"}
 		}
