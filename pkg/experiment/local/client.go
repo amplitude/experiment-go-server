@@ -117,14 +117,15 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
 	flagConfigs := c.flagConfigStorage.getFlagConfigs()
 	sortedFlags, err := topologicalSort(flagConfigs, flagKeys)
+	if err != nil {
+		return nil, err
+	}
 	c.requiredCohortsInStorage(sortedFlags)
 	enrichedUser, err := c.enrichUserWithCohorts(user, flagConfigs)
 	if err != nil {
 		return nil, err
 	}
 	userContext := evaluation.UserToContext(enrichedUser)
-	c.flagsMutex.RLock()
-	c.flagsMutex.RUnlock()
 	if err != nil {
 		return nil, err
 	}

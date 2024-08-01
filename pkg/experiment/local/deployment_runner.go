@@ -1,7 +1,6 @@
 package local
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
@@ -105,12 +104,10 @@ func (dr *deploymentRunner) updateFlagConfigs() error {
 
 	existingCohortIDs := dr.cohortStorage.getCohortIds()
 	cohortIDsToDownload := difference(newCohortIDs, existingCohortIDs)
-	var cohortDownloadErrors []string
 
 	// Download all new cohorts
 	for cohortID := range cohortIDsToDownload {
 		if err := dr.cohortLoader.loadCohort(cohortID).wait(); err != nil {
-			cohortDownloadErrors = append(cohortDownloadErrors, fmt.Sprintf("Cohort %s: %v", cohortID, err))
 			dr.log.Error("Download cohort %s failed: %v", cohortID, err)
 		}
 	}
