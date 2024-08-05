@@ -48,7 +48,7 @@ func (api *directCohortDownloadApi) getCohort(cohortID string, cohort *Cohort) (
 			errors++
 			if errors >= 3 || func(err error) bool {
 				switch err.(type) {
-				case *CohortTooLargeException:
+				case *cohortTooLargeException:
 					return true
 				default:
 					return false
@@ -88,9 +88,9 @@ func (api *directCohortDownloadApi) getCohort(cohortID string, cohort *Cohort) (
 			api.log.Debug("getCohortMembers(%s): Cohort not modified", cohortID)
 			return nil, nil
 		} else if response.StatusCode == http.StatusRequestEntityTooLarge {
-			return nil, &CohortTooLargeException{Message: "Cohort exceeds max cohort size of " + strconv.Itoa(api.MaxCohortSize)}
+			return nil, &cohortTooLargeException{Message: "Cohort exceeds max cohort size of " + strconv.Itoa(api.MaxCohortSize)}
 		} else {
-			return nil, &HTTPErrorResponseException{StatusCode: response.StatusCode, Message: "Unexpected response code"}
+			return nil, &httpErrorResponseException{StatusCode: response.StatusCode, Message: "Unexpected response code"}
 		}
 	}
 }

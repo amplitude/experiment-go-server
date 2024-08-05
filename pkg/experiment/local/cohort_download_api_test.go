@@ -203,7 +203,7 @@ func TestCohortDownloadApi(t *testing.T) {
 
 		_, err := api.getCohort("1234", cohort)
 		assert.Error(t, err)
-		_, isCohortTooLargeException := err.(*CohortTooLargeException)
+		_, isCohortTooLargeException := err.(*cohortTooLargeException)
 		assert.True(t, isCohortTooLargeException)
 	})
 

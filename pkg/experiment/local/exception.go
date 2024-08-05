@@ -1,18 +1,18 @@
 package local
 
-type HTTPErrorResponseException struct {
+type httpErrorResponseException struct {
 	StatusCode int
 	Message    string
 }
 
-func (e *HTTPErrorResponseException) Error() string {
+func (e *httpErrorResponseException) Error() string {
 	return e.Message
 }
 
-type CohortTooLargeException struct {
+type cohortTooLargeException struct {
 	Message string
 }
 
-func (e *CohortTooLargeException) Error() string {
+func (e *cohortTooLargeException) Error() string {
 	return e.Message
 }
