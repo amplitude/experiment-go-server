@@ -30,7 +30,7 @@ type Client struct {
 	flagsMutex        *sync.RWMutex
 	engine            *evaluation.Engine
 	assignmentService *assignmentService
-	cohortStorage     CohortStorage
+	cohortStorage     cohortStorage
 	flagConfigStorage flagConfigStorage
 	cohortLoader      *cohortLoader
 	deploymentRunner  *deploymentRunner

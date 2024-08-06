@@ -12,7 +12,7 @@ type deploymentRunner struct {
 	config            *Config
 	flagConfigApi     flagConfigApi
 	flagConfigStorage flagConfigStorage
-	cohortStorage     CohortStorage
+	cohortStorage     cohortStorage
 	cohortLoader      *cohortLoader
 	lock              sync.Mutex
 	poller            *poller
@@ -23,7 +23,7 @@ func newDeploymentRunner(
 	config *Config,
 	flagConfigApi flagConfigApi,
 	flagConfigStorage flagConfigStorage,
-	cohortStorage CohortStorage,
+	cohortStorage cohortStorage,
 	cohortLoader *cohortLoader,
 ) *deploymentRunner {
 	dr := &deploymentRunner{

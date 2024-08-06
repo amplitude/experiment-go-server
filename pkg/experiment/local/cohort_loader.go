@@ -7,13 +7,13 @@ import (
 
 type cohortLoader struct {
 	cohortDownloadApi cohortDownloadApi
-	cohortStorage     CohortStorage
+	cohortStorage     cohortStorage
 	jobs              sync.Map
 	executor          *sync.Pool
 	lockJobs          sync.Mutex
 }
 
-func newCohortLoader(cohortDownloadApi cohortDownloadApi, cohortStorage CohortStorage) *cohortLoader {
+func newCohortLoader(cohortDownloadApi cohortDownloadApi, cohortStorage cohortStorage) *cohortLoader {
 	return &cohortLoader{
 		cohortDownloadApi: cohortDownloadApi,
 		cohortStorage:     cohortStorage,

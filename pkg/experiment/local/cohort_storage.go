@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-type CohortStorage interface {
+type cohortStorage interface {
 	getCohort(cohortID string) *Cohort
 	getCohorts() map[string]*Cohort
 	getCohortsForUser(userID string, cohortIDs map[string]struct{}) map[string]struct{}
