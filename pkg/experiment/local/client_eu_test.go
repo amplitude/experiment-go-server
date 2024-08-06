@@ -22,7 +22,7 @@ func init() {
 		SecretKey: secretKey,
 	}
 	clientEU = Initialize("server-Qlp7XiSu6JtP2S3JzA95PnP27duZgQCF",
-		&Config{CohortSyncConfig: &cohortSyncConfig, ServerZone: "eu"})
+		&Config{CohortSyncConfig: &cohortSyncConfig, ServerZone: EUServerZone})
 	err = clientEU.Start()
 	if err != nil {
 		panic(err)

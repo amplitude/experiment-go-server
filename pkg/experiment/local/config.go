@@ -3,17 +3,23 @@ package local
 import (
 	"github.com/amplitude/analytics-go/amplitude"
 	"math"
-	"strings"
 	"time"
 )
 
 const EUFlagServerUrl = "https://flag.lab.eu.amplitude.com"
 const EUCohortSyncUrl = "https://cohort-v2.lab.eu.amplitude.com"
 
+type ServerZone int
+
+const (
+	USServerZone ServerZone = iota
+	EUServerZone
+)
+
 type Config struct {
 	Debug                          bool
 	ServerUrl                      string
-	ServerZone                     string
+	ServerZone                     ServerZone
 	FlagConfigPollerInterval       time.Duration
 	FlagConfigPollerRequestTimeout time.Duration
 	AssignmentConfig               *AssignmentConfig
@@ -26,17 +32,17 @@ type AssignmentConfig struct {
 }
 
 type CohortSyncConfig struct {
-	ApiKey                   string
-	SecretKey                string
-	MaxCohortSize            int
-	CohortRequestDelayMillis int
-	CohortServerUrl          string
+	ApiKey                string
+	SecretKey             string
+	MaxCohortSize         int
+	CohortPollingInterval time.Duration
+	CohortServerUrl       string
 }
 
 var DefaultConfig = &Config{
 	Debug:                          false,
 	ServerUrl:                      "https://api.lab.amplitude.com/",
-	ServerZone:                     "us",
+	ServerZone:                     USServerZone,
 	FlagConfigPollerInterval:       30 * time.Second,
 	FlagConfigPollerRequestTimeout: 10 * time.Second,
 }
@@ -46,22 +52,23 @@ var DefaultAssignmentConfig = &AssignmentConfig{
 }
 
 var DefaultCohortSyncConfig = &CohortSyncConfig{
-	MaxCohortSize:            math.MaxInt32,
-	CohortRequestDelayMillis: 5000,
-	CohortServerUrl:          "https://cohort-v2.lab.amplitude.com",
+	MaxCohortSize:         math.MaxInt32,
+	CohortPollingInterval: 60 * time.Second,
+	CohortServerUrl:       "https://cohort-v2.lab.amplitude.com",
 }
 
 func fillConfigDefaults(c *Config) *Config {
 	if c == nil {
 		return DefaultConfig
 	}
-	if c.ServerZone == "" {
+	if c.ServerZone == 0 {
 		c.ServerZone = DefaultConfig.ServerZone
 	}
 	if c.ServerUrl == "" {
-		if strings.EqualFold(strings.ToLower(c.ServerZone), strings.ToLower(DefaultConfig.ServerZone)) {
+		switch c.ServerZone {
+		case USServerZone:
 			c.ServerUrl = DefaultConfig.ServerUrl
-		} else if strings.EqualFold(strings.ToLower(c.ServerZone), "eu") {
+		case EUServerZone:
 			c.ServerUrl = EUFlagServerUrl
 		}
 	}
@@ -80,14 +87,15 @@ func fillConfigDefaults(c *Config) *Config {
 		c.CohortSyncConfig.MaxCohortSize = DefaultCohortSyncConfig.MaxCohortSize
 	}
 
-	if c.CohortSyncConfig != nil && c.CohortSyncConfig.CohortRequestDelayMillis == 0 {
-		c.CohortSyncConfig.CohortRequestDelayMillis = DefaultCohortSyncConfig.CohortRequestDelayMillis
+	if c.CohortSyncConfig != nil && (c.CohortSyncConfig.CohortPollingInterval < DefaultCohortSyncConfig.CohortPollingInterval) {
+		c.CohortSyncConfig.CohortPollingInterval = DefaultCohortSyncConfig.CohortPollingInterval
 	}
 
 	if c.CohortSyncConfig != nil && c.CohortSyncConfig.CohortServerUrl == "" {
-		if strings.EqualFold(strings.ToLower(c.ServerZone), strings.ToLower(DefaultConfig.ServerZone)) {
+		switch c.ServerZone {
+		case USServerZone:
 			c.CohortSyncConfig.CohortServerUrl = DefaultCohortSyncConfig.CohortServerUrl
-		} else if strings.EqualFold(strings.ToLower(c.ServerZone), "eu") {
+		case EUServerZone:
 			c.CohortSyncConfig.CohortServerUrl = EUCohortSyncUrl
 		}
 	}

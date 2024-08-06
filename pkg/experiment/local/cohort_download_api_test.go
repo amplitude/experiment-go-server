@@ -33,7 +33,7 @@ func TestCohortDownloadApi(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	api := newDirectCohortDownloadApi("api", "secret", 15000, 100, "https://server.amplitude.com", false)
+	api := newDirectCohortDownloadApi("api", "secret", 15000, "https://server.amplitude.com", false)
 
 	t.Run("test_cohort_download_success", func(t *testing.T) {
 		cohort := &Cohort{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"user"}, GroupType: "userGroupType"}

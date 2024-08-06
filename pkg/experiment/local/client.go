@@ -58,7 +58,7 @@ func Initialize(apiKey string, config *Config) *Client {
 		var cohortLoader *cohortLoader
 		var deploymentRunner *deploymentRunner
 		if config.CohortSyncConfig != nil {
-			cohortDownloadApi := newDirectCohortDownloadApi(config.CohortSyncConfig.ApiKey, config.CohortSyncConfig.SecretKey, config.CohortSyncConfig.MaxCohortSize, config.CohortSyncConfig.CohortRequestDelayMillis, config.CohortSyncConfig.CohortServerUrl, config.Debug)
+			cohortDownloadApi := newDirectCohortDownloadApi(config.CohortSyncConfig.ApiKey, config.CohortSyncConfig.SecretKey, config.CohortSyncConfig.MaxCohortSize, config.CohortSyncConfig.CohortServerUrl, config.Debug)
 			cohortLoader = newCohortLoader(cohortDownloadApi, cohortStorage)
 		}
 		deploymentRunner = newDeploymentRunner(config, newFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout), flagConfigStorage, cohortStorage, cohortLoader)

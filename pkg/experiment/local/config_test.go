@@ -1,7 +1,6 @@
 package local
 
 import (
-	"strings"
 	"testing"
 	"time"
 )
@@ -10,7 +9,7 @@ func TestFillConfigDefaults_ServerZoneAndServerUrl(t *testing.T) {
 	tests := []struct {
 		name         string
 		input        *Config
-		expectedZone string
+		expectedZone ServerZone
 		expectedUrl  string
 	}{
 		{
@@ -27,26 +26,26 @@ func TestFillConfigDefaults_ServerZoneAndServerUrl(t *testing.T) {
 		},
 		{
 			name:         "ServerZone US",
-			input:        &Config{ServerZone: "us"},
-			expectedZone: "us",
+			input:        &Config{ServerZone: USServerZone},
+			expectedZone: USServerZone,
 			expectedUrl:  DefaultConfig.ServerUrl,
 		},
 		{
 			name:         "ServerZone EU",
-			input:        &Config{ServerZone: "eu"},
-			expectedZone: "eu",
+			input:        &Config{ServerZone: EUServerZone},
+			expectedZone: EUServerZone,
 			expectedUrl:  EUFlagServerUrl,
 		},
 		{
 			name:         "Uppercase ServerZone EU",
-			input:        &Config{ServerZone: "EU"},
-			expectedZone: "EU",
+			input:        &Config{ServerZone: EUServerZone},
+			expectedZone: EUServerZone,
 			expectedUrl:  EUFlagServerUrl,
 		},
 		{
 			name:         "Custom ServerUrl",
-			input:        &Config{ServerZone: "us", ServerUrl: "https://custom.url/"},
-			expectedZone: "us",
+			input:        &Config{ServerZone: USServerZone, ServerUrl: "https://custom.url/"},
+			expectedZone: USServerZone,
 			expectedUrl:  "https://custom.url/",
 		},
 	}
@@ -54,8 +53,8 @@ func TestFillConfigDefaults_ServerZoneAndServerUrl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := fillConfigDefaults(tt.input)
-			if !strings.EqualFold(result.ServerZone, tt.expectedZone) {
-				t.Errorf("expected ServerZone %s, got %s", tt.expectedZone, result.ServerZone)
+			if result.ServerZone != tt.expectedZone {
+				t.Errorf("expected ServerZone %d, got %d", tt.expectedZone, result.ServerZone)
 			}
 			if result.ServerUrl != tt.expectedUrl {
 				t.Errorf("expected ServerUrl %s, got %s", tt.expectedUrl, result.ServerUrl)
@@ -73,7 +72,7 @@ func TestFillConfigDefaults_CohortSyncConfig(t *testing.T) {
 		{
 			name: "Nil CohortSyncConfig",
 			input: &Config{
-				ServerZone:       "eu",
+				ServerZone:       EUServerZone,
 				CohortSyncConfig: nil,
 			},
 			expectedUrl: "",
@@ -81,7 +80,7 @@ func TestFillConfigDefaults_CohortSyncConfig(t *testing.T) {
 		{
 			name: "CohortSyncConfig with empty CohortServerUrl",
 			input: &Config{
-				ServerZone:       "eu",
+				ServerZone:       EUServerZone,
 				CohortSyncConfig: &CohortSyncConfig{},
 			},
 			expectedUrl: EUCohortSyncUrl,
@@ -89,7 +88,7 @@ func TestFillConfigDefaults_CohortSyncConfig(t *testing.T) {
 		{
 			name: "CohortSyncConfig with custom CohortServerUrl",
 			input: &Config{
-				ServerZone: "us",
+				ServerZone: USServerZone,
 				CohortSyncConfig: &CohortSyncConfig{
 					CohortServerUrl: "https://custom-cohort.url/",
 				},
@@ -141,13 +140,13 @@ func TestFillConfigDefaults_DefaultValues(t *testing.T) {
 		{
 			name: "Custom values",
 			input: &Config{
-				ServerZone:                     "eu",
+				ServerZone:                     EUServerZone,
 				ServerUrl:                      "https://custom.url/",
 				FlagConfigPollerInterval:       60 * time.Second,
 				FlagConfigPollerRequestTimeout: 20 * time.Second,
 			},
 			expected: &Config{
-				ServerZone:                     "eu",
+				ServerZone:                     EUServerZone,
 				ServerUrl:                      "https://custom.url/",
 				FlagConfigPollerInterval:       60 * time.Second,
 				FlagConfigPollerRequestTimeout: 20 * time.Second,
@@ -159,7 +158,7 @@ func TestFillConfigDefaults_DefaultValues(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := fillConfigDefaults(tt.input)
 			if result.ServerZone != tt.expected.ServerZone {
-				t.Errorf("expected ServerZone %s, got %s", tt.expected.ServerZone, result.ServerZone)
+				t.Errorf("expected ServerZone %d, got %d", tt.expected.ServerZone, result.ServerZone)
 			}
 			if result.ServerUrl != tt.expected.ServerUrl {
 				t.Errorf("expected ServerUrl %s, got %s", tt.expected.ServerUrl, result.ServerUrl)

@@ -9,29 +9,29 @@ import (
 	"time"
 )
 
+const cohortRequestDelay = 100 * time.Millisecond
+
 type cohortDownloadApi interface {
 	getCohort(cohortID string, cohort *Cohort) (*Cohort, error)
 }
 
 type directCohortDownloadApi struct {
-	ApiKey                   string
-	SecretKey                string
-	MaxCohortSize            int
-	CohortRequestDelayMillis int
-	ServerUrl                string
-	Debug                    bool
-	log                      *logger.Log
+	ApiKey        string
+	SecretKey     string
+	MaxCohortSize int
+	ServerUrl     string
+	Debug         bool
+	log           *logger.Log
 }
 
-func newDirectCohortDownloadApi(apiKey, secretKey string, maxCohortSize, cohortRequestDelayMillis int, serverUrl string, debug bool) *directCohortDownloadApi {
+func newDirectCohortDownloadApi(apiKey, secretKey string, maxCohortSize int, serverUrl string, debug bool) *directCohortDownloadApi {
 	api := &directCohortDownloadApi{
-		ApiKey:                   apiKey,
-		SecretKey:                secretKey,
-		MaxCohortSize:            maxCohortSize,
-		CohortRequestDelayMillis: cohortRequestDelayMillis,
-		ServerUrl:                serverUrl,
-		Debug:                    debug,
-		log:                      logger.New(debug),
+		ApiKey:        apiKey,
+		SecretKey:     secretKey,
+		MaxCohortSize: maxCohortSize,
+		ServerUrl:     serverUrl,
+		Debug:         debug,
+		log:           logger.New(debug),
 	}
 	return api
 }
@@ -56,7 +56,7 @@ func (api *directCohortDownloadApi) getCohort(cohortID string, cohort *Cohort) (
 			}(err) {
 				return nil, err
 			}
-			time.Sleep(time.Duration(api.CohortRequestDelayMillis) * time.Millisecond)
+			time.Sleep(cohortRequestDelay)
 			continue
 		}
 

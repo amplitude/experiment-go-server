@@ -2,15 +2,11 @@ package local
 
 import (
 	"fmt"
-	"strings"
-	"sync"
-	"time"
-
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
 	"github.com/amplitude/experiment-go-server/internal/logger"
+	"strings"
+	"sync"
 )
-
-const CohortPollerInterval = 60 * time.Second
 
 type deploymentRunner struct {
 	config            *Config
@@ -57,8 +53,8 @@ func (dr *deploymentRunner) start() error {
 		}
 	})
 
-	if dr.cohortLoader != nil {
-		dr.poller.Poll(CohortPollerInterval, func() {
+	if dr.config.CohortSyncConfig != nil {
+		dr.poller.Poll(dr.config.CohortSyncConfig.CohortPollingInterval, func() {
 			dr.updateStoredCohorts()
 		})
 	}
