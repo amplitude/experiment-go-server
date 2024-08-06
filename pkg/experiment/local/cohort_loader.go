@@ -1,8 +1,6 @@
 package local
 
 import (
-	"fmt"
-	"strings"
 	"sync"
 	"sync/atomic"
 )
@@ -87,39 +85,4 @@ func (task *CohortLoaderTask) wait() error {
 func (cl *cohortLoader) downloadCohort(cohortID string) (*Cohort, error) {
 	cohort := cl.cohortStorage.getCohort(cohortID)
 	return cl.cohortDownloadApi.getCohort(cohortID, cohort)
-}
-
-func (cl *cohortLoader) updateStoredCohorts() error {
-	var wg sync.WaitGroup
-	errorChan := make(chan error, len(cl.cohortStorage.getCohortIds()))
-
-	cohortIds := make([]string, 0, len(cl.cohortStorage.getCohortIds()))
-	for id := range cl.cohortStorage.getCohortIds() {
-		cohortIds = append(cohortIds, id)
-	}
-
-	for _, cohortID := range cohortIds {
-		wg.Add(1)
-		go func(id string) {
-			defer wg.Done()
-			task := cl.loadCohort(id)
-			if err := task.wait(); err != nil {
-				errorChan <- fmt.Errorf("cohort %s: %v", id, err)
-			}
-		}(cohortID)
-	}
-
-	wg.Wait()
-	close(errorChan)
-
-	var errorMessages []string
-	for err := range errorChan {
-		errorMessages = append(errorMessages, err.Error())
-	}
-
-	if len(errorMessages) > 0 {
-		return fmt.Errorf("One or more cohorts failed to download:\n%s",
-			strings.Join(errorMessages, "\n"))
-	}
-	return nil
 }

@@ -1,6 +1,8 @@
 package local
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
@@ -106,11 +108,7 @@ func (dr *deploymentRunner) updateFlagConfigs() error {
 	cohortIDsToDownload := difference(newCohortIDs, existingCohortIDs)
 
 	// Download all new cohorts
-	for cohortID := range cohortIDsToDownload {
-		if err := dr.cohortLoader.loadCohort(cohortID).wait(); err != nil {
-			dr.log.Error("Download cohort %s failed: %v", cohortID, err)
-		}
-	}
+	dr.downloadCohorts(cohortIDsToDownload)
 
 	// Get updated set of cohort ids
 	updatedCohortIDs := dr.cohortStorage.getCohortIds()
@@ -134,10 +132,8 @@ func (dr *deploymentRunner) updateFlagConfigs() error {
 }
 
 func (dr *deploymentRunner) updateStoredCohorts() {
-	err := dr.cohortLoader.updateStoredCohorts()
-	if err != nil {
-		dr.log.Error("Error updating stored cohorts: %v", err)
-	}
+	cohortIDs := getAllCohortIDsFromFlags(dr.flagConfigStorage.getFlagConfigsArray())
+	dr.downloadCohorts(cohortIDs)
 }
 
 func (dr *deploymentRunner) deleteUnusedCohorts() {
@@ -167,4 +163,35 @@ func difference(set1, set2 map[string]struct{}) map[string]struct{} {
 		}
 	}
 	return diff
+}
+
+func (dr *deploymentRunner) downloadCohorts(cohortIDs map[string]struct{}) {
+	var wg sync.WaitGroup
+	errorChan := make(chan error, len(cohortIDs))
+
+	for cohortID := range cohortIDs {
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			task := dr.cohortLoader.loadCohort(id)
+			if err := task.wait(); err != nil {
+				errorChan <- fmt.Errorf("cohort %s: %v", id, err)
+			}
+		}(cohortID)
+	}
+
+	go func() {
+		wg.Wait()
+		close(errorChan)
+	}()
+
+	var errorMessages []string
+	for err := range errorChan {
+		errorMessages = append(errorMessages, err.Error())
+		dr.log.Error("Error downloading cohort: %v", err)
+	}
+
+	if len(errorMessages) > 0 {
+		dr.log.Error("One or more cohorts failed to download:\n%s", strings.Join(errorMessages, "\n"))
+	}
 }

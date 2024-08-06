@@ -8,6 +8,7 @@ import (
 type flagConfigStorage interface {
 	getFlagConfig(key string) *evaluation.Flag
 	getFlagConfigs() map[string]*evaluation.Flag
+	getFlagConfigsArray() []*evaluation.Flag
 	putFlagConfig(flagConfig *evaluation.Flag)
 	removeIf(condition func(*evaluation.Flag) bool)
 }
@@ -35,6 +36,17 @@ func (storage *inMemoryFlagConfigStorage) getFlagConfigs() map[string]*evaluatio
 	copyFlagConfigs := make(map[string]*evaluation.Flag)
 	for key, value := range storage.flagConfigs {
 		copyFlagConfigs[key] = value
+	}
+	return copyFlagConfigs
+}
+
+func (storage *inMemoryFlagConfigStorage) getFlagConfigsArray() []*evaluation.Flag {
+	storage.flagConfigsLock.Lock()
+	defer storage.flagConfigsLock.Unlock()
+
+	var copyFlagConfigs []*evaluation.Flag
+	for _, value := range storage.flagConfigs {
+		copyFlagConfigs = append(copyFlagConfigs, value)
 	}
 	return copyFlagConfigs
 }
