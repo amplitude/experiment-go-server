@@ -3,7 +3,9 @@ package local
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/amplitude/experiment-go-server/internal/logger"
+	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"net/http"
 	"strconv"
 	"time"
@@ -101,6 +103,7 @@ func (api *directCohortDownloadApi) getCohortMembersRequest(client *http.Client,
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Basic "+api.getBasicAuth())
+	req.Header.Set("X-Amp-Exp-Library", fmt.Sprintf("experiment-go-server/%v", experiment.VERSION))
 	return client.Do(req)
 }
 
