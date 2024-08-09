@@ -1,6 +1,7 @@
 package remote
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -14,19 +15,20 @@ import (
 
 func TestClient_Fetch_DoesNotReturnDefaultVariants(t *testing.T) {
 	client := Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz", nil)
+	ctx := context.Background()
 	user := &experiment.User{}
-	result, err := client.Fetch(user)
+	result, err := client.Fetch(ctx, user)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	variant := result["sdk-ci-test"]
 	require.Empty(t, variant)
 }
 
-
 func TestClient_FetchV2_ReturnsDefaultVariants(t *testing.T) {
 	client := Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz", nil)
+	ctx := context.Background()
 	user := &experiment.User{}
-	result, err := client.FetchV2(user)
+	result, err := client.FetchV2(ctx, user)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	variant := result["sdk-ci-test"]
@@ -47,6 +49,8 @@ func TestClient_FetchRetryWithDifferentResponseCodes(t *testing.T) {
 		{500, "Fetch Exception 500", 2},
 		{0, "Other Exception", 2},
 	}
+
+	ctx := context.Background()
 
 	for _, data := range testData {
 		// Mock client initialization with httptest
@@ -92,7 +96,7 @@ func TestClient_FetchRetryWithDifferentResponseCodes(t *testing.T) {
 		fmt.Printf("%d %s\n", data.responseCode, data.errorMessage)
 
 		// Perform the fetch and catch the exception
-		_, err := client.Fetch(&experiment.User{UserId: "test_user"})
+		_, err := client.Fetch(ctx, &experiment.User{UserId: "test_user"})
 		if err != nil {
 			fmt.Println(err.Error())
 		}

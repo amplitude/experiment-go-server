@@ -1,7 +1,6 @@
 package remote
 
 import (
-	"net/http"
 	"time"
 )
 
@@ -10,7 +9,6 @@ type Config struct {
 	ServerUrl    string
 	FetchTimeout time.Duration
 	RetryBackoff *RetryBackoff
-	HttpClient   *http.Client
 }
 
 var DefaultConfig = &Config{
@@ -18,7 +16,6 @@ var DefaultConfig = &Config{
 	ServerUrl:    "https://api.lab.amplitude.com/",
 	FetchTimeout: 500 * time.Millisecond,
 	RetryBackoff: DefaultRetryBackoff,
-	HttpClient:   nil,
 }
 
 type RetryBackoff struct {
