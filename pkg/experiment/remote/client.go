@@ -39,9 +39,16 @@ func Initialize(apiKey string, config *Config) *Client {
 			log:    logger.New(config.Debug),
 			apiKey: apiKey,
 			config: config,
-			client: &http.Client{},
 		}
+
+		if config.HttpClient != nil {
+			client.client = config.HttpClient
+		} else {
+			client.client = &http.Client{}
+		}
+
 		client.log.Debug("config: %v", *config)
+		clients[apiKey] = client
 	}
 	initMutex.Unlock()
 	return client
