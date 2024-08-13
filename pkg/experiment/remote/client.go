@@ -49,8 +49,8 @@ func Initialize(apiKey string, config *Config) *Client {
 }
 
 // Deprecated: Use FetchV2
-func (c *Client) Fetch(ctx context.Context, user *experiment.User) (map[string]experiment.Variant, error) {
-	variants, err := c.FetchV2(ctx, user)
+func (c *Client) Fetch(user *experiment.User) (map[string]experiment.Variant, error) {
+	variants, err := c.FetchV2(user)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,13 @@ func (c *Client) Fetch(ctx context.Context, user *experiment.User) (map[string]e
 
 // FetchV2 fetches variants for a user from the remote evaluation service.
 // Unlike Fetch, this method returns all variants, including default variants.
-func (c *Client) FetchV2(ctx context.Context, user *experiment.User) (map[string]experiment.Variant, error) {
+func (c *Client) FetchV2(user *experiment.User) (map[string]experiment.Variant, error) {
+	ctx := context.Background()
+	return c.FetchV2WithContext(ctx, user)
+}
+
+// FetchV2WithContext fetches variants for a user from the remote evaluation service with a context.
+func (c *Client) FetchV2WithContext(ctx context.Context, user *experiment.User) (map[string]experiment.Variant, error) {
 	variants, err := c.doFetch(ctx, user, c.config.FetchTimeout)
 	if err != nil {
 		c.log.Error("fetch error: %v", err)
