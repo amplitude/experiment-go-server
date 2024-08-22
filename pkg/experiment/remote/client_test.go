@@ -22,7 +22,6 @@ func TestClient_Fetch_DoesNotReturnDefaultVariants(t *testing.T) {
 	require.Empty(t, variant)
 }
 
-
 func TestClient_FetchV2_ReturnsDefaultVariants(t *testing.T) {
 	client := Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz", nil)
 	user := &experiment.User{}

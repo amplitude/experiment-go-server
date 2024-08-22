@@ -1,6 +1,8 @@
 package remote
 
-import "time"
+import (
+	"time"
+)
 
 type Config struct {
 	Debug        bool
