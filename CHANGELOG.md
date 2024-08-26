@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/amplitude/experiment-go-server/compare/v1.5.0...v1.6.0) (2024-08-26)
+
+
+### Features
+
+* **remote.Client:** Add current context to Fetch and FetchV2 ([#29](https://github.com/amplitude/experiment-go-server/issues/29)) ([2113bed](https://github.com/amplitude/experiment-go-server/commit/2113bedccfcefbd7168c8d37e50a10b5bcdc5b3e))
+
 # [1.5.0](https://github.com/amplitude/experiment-go-server/compare/v1.4.0...v1.5.0) (2024-04-19)
 
 
