@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/amplitude/experiment-go-server/compare/v1.6.0...v1.7.0) (2024-08-27)
+
+
+### Features
+
+* support cohort targeting for local evaluation ([#27](https://github.com/amplitude/experiment-go-server/issues/27)) ([92179de](https://github.com/amplitude/experiment-go-server/commit/92179dec0dcd4103112c26d36272b031ecc582cd))
+
 # [1.6.0](https://github.com/amplitude/experiment-go-server/compare/v1.5.0...v1.6.0) (2024-08-26)
 
 
