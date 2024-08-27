@@ -27,10 +27,13 @@ type Client struct {
 	config            *Config
 	client            *http.Client
 	poller            *poller
-	flags             map[string]*evaluation.Flag
 	flagsMutex        *sync.RWMutex
 	engine            *evaluation.Engine
 	assignmentService *assignmentService
+	cohortStorage     cohortStorage
+	flagConfigStorage flagConfigStorage
+	cohortLoader      *cohortLoader
+	deploymentRunner  *deploymentRunner
 }
 
 func Initialize(apiKey string, config *Config) *Client {
@@ -43,23 +46,35 @@ func Initialize(apiKey string, config *Config) *Client {
 		config = fillConfigDefaults(config)
 		log := logger.New(config.Debug)
 		var as *assignmentService
-		if config.AssignmentConfig != nil && config.AssignmentConfig.APIKey != ""  {
+		if config.AssignmentConfig != nil && config.AssignmentConfig.APIKey != "" {
 			amplitudeClient := amplitude.NewClient(config.AssignmentConfig.Config)
 			as = &assignmentService{
 				amplitude: &amplitudeClient,
-				filter: newAssignmentFilter(config.AssignmentConfig.CacheCapacity),
+				filter:    newAssignmentFilter(config.AssignmentConfig.CacheCapacity),
 			}
 		}
+		cohortStorage := newInMemoryCohortStorage()
+		flagConfigStorage := newInMemoryFlagConfigStorage()
+		var cohortLoader *cohortLoader
+		var deploymentRunner *deploymentRunner
+		if config.CohortSyncConfig != nil {
+			cohortDownloadApi := newDirectCohortDownloadApi(config.CohortSyncConfig.ApiKey, config.CohortSyncConfig.SecretKey, config.CohortSyncConfig.MaxCohortSize, config.CohortSyncConfig.CohortServerUrl, config.Debug)
+			cohortLoader = newCohortLoader(cohortDownloadApi, cohortStorage)
+		}
+		deploymentRunner = newDeploymentRunner(config, newFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout), flagConfigStorage, cohortStorage, cohortLoader)
 		client = &Client{
-			log:        log,
-			apiKey:     apiKey,
-			config:     config,
-			client:     &http.Client{},
-			poller:     newPoller(),
-			flags:      make(map[string]*evaluation.Flag),
-			flagsMutex: &sync.RWMutex{},
-			engine:     evaluation.NewEngine(log),
+			log:               log,
+			apiKey:            apiKey,
+			config:            config,
+			client:            &http.Client{},
+			poller:            newPoller(),
+			flagsMutex:        &sync.RWMutex{},
+			engine:            evaluation.NewEngine(log),
 			assignmentService: as,
+			cohortStorage:     cohortStorage,
+			flagConfigStorage: flagConfigStorage,
+			cohortLoader:      cohortLoader,
+			deploymentRunner:  deploymentRunner,
 		}
 		client.log.Debug("config: %v", *config)
 		clients[apiKey] = client
@@ -69,20 +84,10 @@ func Initialize(apiKey string, config *Config) *Client {
 }
 
 func (c *Client) Start() error {
-	result, err := c.doFlagsV2()
+	err := c.deploymentRunner.start()
 	if err != nil {
 		return err
 	}
-	c.flags = result
-	c.poller.Poll(c.config.FlagConfigPollerInterval, func() {
-		result, err := c.doFlagsV2()
-		if err != nil {
-			return
-		}
-		c.flagsMutex.Lock()
-		c.flags = result
-		c.flagsMutex.Unlock()
-	})
 	return nil
 }
 
@@ -110,10 +115,17 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 }
 
 func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
-	userContext := evaluation.UserToContext(user)
-	c.flagsMutex.RLock()
-	sortedFlags, err := topologicalSort(c.flags, flagKeys)
-	c.flagsMutex.RUnlock()
+	flagConfigs := c.flagConfigStorage.getFlagConfigs()
+	sortedFlags, err := topologicalSort(flagConfigs, flagKeys)
+	if err != nil {
+		return nil, err
+	}
+	c.requiredCohortsInStorage(sortedFlags)
+	enrichedUser, err := c.enrichUserWithCohorts(user, flagConfigs)
+	if err != nil {
+		return nil, err
+	}
+	userContext := evaluation.UserToContext(enrichedUser)
 	if err != nil {
 		return nil, err
 	}
@@ -149,9 +161,7 @@ func (c *Client) FlagsV2() (string, error) {
 
 // FlagMetadata returns a copy of the flag's metadata. If the flag is not found then nil is returned.
 func (c *Client) FlagMetadata(flagKey string) map[string]interface{} {
-	c.flagsMutex.RLock()
-	f := c.flags[flagKey]
-	c.flagsMutex.RUnlock()
+	f := c.flagConfigStorage.getFlagConfig(flagKey)
 	if f == nil {
 		return nil
 	}
@@ -328,4 +338,57 @@ func coerceString(value interface{}) string {
 		}
 	}
 	return fmt.Sprintf("%v", value)
+}
+
+func (c *Client) requiredCohortsInStorage(flagConfigs []*evaluation.Flag) {
+	storedCohortIDs := c.cohortStorage.getCohortIds()
+	for _, flag := range flagConfigs {
+		flagCohortIDs := getAllCohortIDsFromFlag(flag)
+		missingCohorts := difference(flagCohortIDs, storedCohortIDs)
+
+		if len(missingCohorts) > 0 {
+			if c.config.CohortSyncConfig != nil {
+				c.log.Debug(
+					"Evaluating flag %s dependent on cohorts %v without %v in storage",
+					flag.Key, flagCohortIDs, missingCohorts,
+				)
+			} else {
+				c.log.Debug(
+					"Evaluating flag %s dependent on cohorts %v without cohort syncing configured",
+					flag.Key, flagCohortIDs,
+				)
+			}
+		}
+	}
+}
+
+func (c *Client) enrichUserWithCohorts(user *experiment.User, flagConfigs map[string]*evaluation.Flag) (*experiment.User, error) {
+	flagConfigSlice := make([]*evaluation.Flag, 0, len(flagConfigs))
+
+	for _, value := range flagConfigs {
+		flagConfigSlice = append(flagConfigSlice, value)
+	}
+	groupedCohortIDs := getGroupedCohortIDsFromFlags(flagConfigSlice)
+
+	if cohortIDs, ok := groupedCohortIDs[userGroupType]; ok {
+		if len(cohortIDs) > 0 && user.UserId != "" {
+			user.CohortIds = c.cohortStorage.getCohortsForUser(user.UserId, cohortIDs)
+		}
+	}
+
+	if user.Groups != nil {
+		for groupType, groupNames := range user.Groups {
+			groupName := ""
+			if len(groupNames) > 0 {
+				groupName = groupNames[0]
+			}
+			if groupName == "" {
+				continue
+			}
+			if cohortIDs, ok := groupedCohortIDs[groupType]; ok {
+				user.AddGroupCohortIds(groupType, groupName, c.cohortStorage.getCohortsForGroup(groupType, groupName, cohortIDs))
+			}
+		}
+	}
+	return user, nil
 }

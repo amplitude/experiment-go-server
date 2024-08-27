@@ -2,3 +2,4 @@
 xpmt
 .DS_Store
 cmd/xpmt/bin/
+pkg/experiment/local/.env
