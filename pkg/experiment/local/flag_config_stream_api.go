@@ -10,12 +10,9 @@ import (
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
 )
 
-const MAX_JITTER = 5 * time.Second
-
-// type flagConfigStreamApi interface {
-// 	Connect() error
-// 	Close() error
-// }
+const streamApiMaxJitter = 5 * time.Second
+const streamApiKeepaliveTimeout = 17 * time.Second
+const streamApiReconnInterval = 15 * time.Minute
 
 type flagConfigStreamApiV2 struct {
 	OnInitUpdate func (map[string]*evaluation.Flag) error
@@ -24,8 +21,6 @@ type flagConfigStreamApiV2 struct {
 	DeploymentKey                        string
 	ServerURL                            string
     connectionTimeout time.Duration
-    keepaliveTimeout time.Duration
-    reconnInterval time.Duration
 	stopCh chan bool
 	lock sync.Mutex
 }
@@ -34,15 +29,11 @@ func NewFlagConfigStreamApiV2(
 	deploymentKey                        string,
 	serverURL                            string,
     connectionTimeout time.Duration,
-    keepaliveTimeout time.Duration,
-    reconnInterval time.Duration,
 ) *flagConfigStreamApiV2 {
 	return &flagConfigStreamApiV2{
 		DeploymentKey:                        deploymentKey,
 		ServerURL:                            serverURL,
 		connectionTimeout: connectionTimeout,
-		keepaliveTimeout: keepaliveTimeout,
-		reconnInterval: reconnInterval,
 		stopCh: nil,
 		lock: sync.Mutex{},
 	}
@@ -65,7 +56,7 @@ func (api *flagConfigStreamApiV2) Connect() error {
 	endpoint.Path = "sdk/stream/v1/flags"
 
 	// Create Stream.
-	stream := NewSseStream("Api-Key " + api.DeploymentKey, endpoint.String(), api.connectionTimeout, api.keepaliveTimeout, api.reconnInterval, MAX_JITTER)
+	stream := NewSseStream("Api-Key " + api.DeploymentKey, endpoint.String(), api.connectionTimeout, streamApiKeepaliveTimeout, streamApiReconnInterval, streamApiMaxJitter)
 
 	streamMsgCh := make(chan StreamEvent)
 	streamErrCh := make(chan error)

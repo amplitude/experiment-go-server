@@ -12,25 +12,11 @@ import (
 	"github.com/amplitude/experiment-go-server/pkg/experiment/remote"
 )
 
-func forever() {
-    for {
-        fmt.Printf("%v+\n", time.Now())
-		fmt.Println()
-        time.Sleep(500 * time.Millisecond)
-    }
-}
-
 func main() {
 	connTimeout := 2 * time.Second
-	reconnTimeout := 30 * time.Second
-	keepaliveTimeout := 17 * time.Second
-	api := local.NewFlagConfigStreamApiV2("server-tUTqR62DZefq7c73zMpbIr1M5VDtwY8T", "https://skylab-stream.stag2.amplitude.com", connTimeout, keepaliveTimeout, reconnTimeout)
+	api := local.NewFlagConfigStreamApiV2("server-tUTqR62DZefq7c73zMpbIr1M5VDtwY8T", "https://skylab-stream.stag2.amplitude.com", connTimeout)
 	cohortStorage := local.NewInMemoryCohortStorage()
 	flagConfigStorage := local.NewInMemoryFlagConfigStorage()
-	// streamer := local.NewFlagConfigStreamer(api, local.DefaultConfig, flagConfigStorage, cohortStorage, nil)
-	// streamer.Start(func (err error) {
-	// 	fmt.Println("got err", err)
-	// })
 	dr := local.NewDeploymentRunner(
 		local.DefaultConfig, 
 		local.NewFlagConfigApiV2("server-tUTqR62DZefq7c73zMpbIr1M5VDtwY8T", "https://skylab-api.staging.amplitude.com", connTimeout), 
@@ -43,8 +29,6 @@ func main() {
 		fmt.Println(flagConfigStorage.GetFlagConfigs())
         time.Sleep(500 * time.Millisecond)
     }
-    // go forever(flagConfigStorage)
-    // select {}
 
 	// if len(os.Args) < 2 {
 	// 	fmt.Printf("error: command required\n")

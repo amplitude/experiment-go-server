@@ -1,12 +1,14 @@
 package local
 
 import (
-	"github.com/amplitude/analytics-go/amplitude"
 	"math"
 	"time"
+
+	"github.com/amplitude/analytics-go/amplitude"
 )
 
 const EUFlagServerUrl = "https://flag.lab.eu.amplitude.com"
+const EUFlagStreamServerUrl = "https://stream.lab.eu.amplitude.com"
 const EUCohortSyncUrl = "https://cohort-v2.lab.eu.amplitude.com"
 
 type ServerZone int
@@ -22,6 +24,9 @@ type Config struct {
 	ServerZone                     ServerZone
 	FlagConfigPollerInterval       time.Duration
 	FlagConfigPollerRequestTimeout time.Duration
+    StreamUpdates bool
+    StreamServerUrl string
+    StreamFlagConnTimeout time.Duration
 	AssignmentConfig               *AssignmentConfig
 	CohortSyncConfig               *CohortSyncConfig
 }
@@ -45,6 +50,9 @@ var DefaultConfig = &Config{
 	ServerZone:                     USServerZone,
 	FlagConfigPollerInterval:       30 * time.Second,
 	FlagConfigPollerRequestTimeout: 10 * time.Second,
+    StreamUpdates: false,
+    StreamServerUrl: "https://stream.lab.amplitude.com",
+    StreamFlagConnTimeout: 1500 * time.Millisecond,
 }
 
 var DefaultAssignmentConfig = &AssignmentConfig{
@@ -68,8 +76,10 @@ func fillConfigDefaults(c *Config) *Config {
 		switch c.ServerZone {
 		case USServerZone:
 			c.ServerUrl = DefaultConfig.ServerUrl
+			c.StreamServerUrl = DefaultConfig.ServerUrl
 		case EUServerZone:
 			c.ServerUrl = EUFlagServerUrl
+			c.StreamServerUrl = EUFlagStreamServerUrl
 		}
 	}
 
@@ -78,6 +88,9 @@ func fillConfigDefaults(c *Config) *Config {
 	}
 	if c.FlagConfigPollerRequestTimeout == 0 {
 		c.FlagConfigPollerRequestTimeout = DefaultConfig.FlagConfigPollerRequestTimeout
+	}
+	if c.StreamFlagConnTimeout == 0 {
+		c.StreamFlagConnTimeout = DefaultConfig.StreamFlagConnTimeout
 	}
 	if c.AssignmentConfig != nil && c.AssignmentConfig.CacheCapacity == 0 {
 		c.AssignmentConfig.CacheCapacity = DefaultAssignmentConfig.CacheCapacity

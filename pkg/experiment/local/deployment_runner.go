@@ -17,8 +17,9 @@ type deploymentRunner struct {
 	log               *logger.Log
 }
 
-const RETRY_DELAY_MILLIS_DEFAULT = 15 * time.Second
-const MAX_JITTER_MILLIS_DEFAULT = 2 * time.Second
+const streamUpdaterRetryDelay = 15 * time.Second
+const updaterRetryMaxJitter = 2 * time.Second
+
 func NewDeploymentRunner(
 	config *Config,
 	flagConfigApi flagConfigApi,
@@ -27,9 +28,9 @@ func NewDeploymentRunner(
 	cohortStorage cohortStorage,
 	cohortLoader *cohortLoader,
 ) *deploymentRunner {
-	flagConfigUpdater := NewFlagConfigFallbackRetryWrapper(NewFlagConfigPoller(flagConfigApi, config, flagConfigStorage, cohortStorage, cohortLoader), nil, config.FlagConfigPollerInterval, MAX_JITTER_MILLIS_DEFAULT)
+	flagConfigUpdater := NewFlagConfigFallbackRetryWrapper(NewFlagConfigPoller(flagConfigApi, config, flagConfigStorage, cohortStorage, cohortLoader), nil, config.FlagConfigPollerInterval, updaterRetryMaxJitter)
 	if (flagConfigStreamApi != nil) {
-		flagConfigUpdater = NewFlagConfigFallbackRetryWrapper(NewFlagConfigStreamer(flagConfigStreamApi, config, flagConfigStorage, cohortStorage, cohortLoader), flagConfigUpdater, RETRY_DELAY_MILLIS_DEFAULT, MAX_JITTER_MILLIS_DEFAULT)
+		flagConfigUpdater = NewFlagConfigFallbackRetryWrapper(NewFlagConfigStreamer(flagConfigStreamApi, config, flagConfigStorage, cohortStorage, cohortLoader), flagConfigUpdater, streamUpdaterRetryDelay, updaterRetryMaxJitter)
 	}
 	dr := &deploymentRunner{
 		config:            config,
