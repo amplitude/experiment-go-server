@@ -12,3 +12,13 @@ func hashCode(s string) int {
 	}
 	return hash
 }
+
+func difference(set1, set2 map[string]struct{}) map[string]struct{} {
+	diff := make(map[string]struct{})
+	for k := range set1 {
+		if _, exists := set2[k]; !exists {
+			diff[k] = struct{}{}
+		}
+	}
+	return diff
+}

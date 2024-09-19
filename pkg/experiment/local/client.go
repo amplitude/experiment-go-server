@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/amplitude/analytics-go/amplitude"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"reflect"
 	"sync"
+
+	"github.com/amplitude/analytics-go/amplitude"
 
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
 
@@ -53,15 +54,15 @@ func Initialize(apiKey string, config *Config) *Client {
 				filter:    newAssignmentFilter(config.AssignmentConfig.CacheCapacity),
 			}
 		}
-		cohortStorage := newInMemoryCohortStorage()
-		flagConfigStorage := newInMemoryFlagConfigStorage()
+		cohortStorage := NewInMemoryCohortStorage()
+		flagConfigStorage := NewInMemoryFlagConfigStorage()
 		var cohortLoader *cohortLoader
 		var deploymentRunner *deploymentRunner
 		if config.CohortSyncConfig != nil {
 			cohortDownloadApi := newDirectCohortDownloadApi(config.CohortSyncConfig.ApiKey, config.CohortSyncConfig.SecretKey, config.CohortSyncConfig.MaxCohortSize, config.CohortSyncConfig.CohortServerUrl, config.Debug)
 			cohortLoader = newCohortLoader(cohortDownloadApi, cohortStorage)
 		}
-		deploymentRunner = newDeploymentRunner(config, newFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout), flagConfigStorage, cohortStorage, cohortLoader)
+		deploymentRunner = NewDeploymentRunner(config, NewFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout), nil, flagConfigStorage, cohortStorage, cohortLoader)
 		client = &Client{
 			log:               log,
 			apiKey:            apiKey,
@@ -84,7 +85,7 @@ func Initialize(apiKey string, config *Config) *Client {
 }
 
 func (c *Client) Start() error {
-	err := c.deploymentRunner.start()
+	err := c.deploymentRunner.Start()
 	if err != nil {
 		return err
 	}

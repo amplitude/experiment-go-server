@@ -12,25 +12,58 @@ import (
 	"github.com/amplitude/experiment-go-server/pkg/experiment/remote"
 )
 
+func forever() {
+    for {
+        fmt.Printf("%v+\n", time.Now())
+		fmt.Println()
+        time.Sleep(500 * time.Millisecond)
+    }
+}
+
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Printf("error: command required\n")
-		fmt.Printf("Available commands:\n" +
-			"  fetch\n" +
-			"  flags\n" +
-			"  evaluate\n")
-		return
-	}
-	switch os.Args[1] {
-	case "fetch":
-		fetch()
-	case "flags":
-		flags()
-	case "evaluate":
-		evaluate()
-	default:
-		fmt.Printf("error: unknown sub-command '%v'", os.Args[1])
-	}
+	connTimeout := 2 * time.Second
+	reconnTimeout := 30 * time.Second
+	keepaliveTimeout := 17 * time.Second
+	api := local.NewFlagConfigStreamApiV2("server-tUTqR62DZefq7c73zMpbIr1M5VDtwY8T", "https://skylab-stream.stag2.amplitude.com", connTimeout, keepaliveTimeout, reconnTimeout)
+	cohortStorage := local.NewInMemoryCohortStorage()
+	flagConfigStorage := local.NewInMemoryFlagConfigStorage()
+	// streamer := local.NewFlagConfigStreamer(api, local.DefaultConfig, flagConfigStorage, cohortStorage, nil)
+	// streamer.Start(func (err error) {
+	// 	fmt.Println("got err", err)
+	// })
+	dr := local.NewDeploymentRunner(
+		local.DefaultConfig, 
+		local.NewFlagConfigApiV2("server-tUTqR62DZefq7c73zMpbIr1M5VDtwY8T", "https://skylab-api.staging.amplitude.com", connTimeout), 
+		api,
+		flagConfigStorage, cohortStorage, nil)
+	dr.Start()
+
+    for {
+        // fmt.Printf("%v+\n", time.Now())
+		fmt.Println(flagConfigStorage.GetFlagConfigs())
+        time.Sleep(500 * time.Millisecond)
+    }
+    // go forever(flagConfigStorage)
+    // select {}
+
+	// if len(os.Args) < 2 {
+	// 	fmt.Printf("error: command required\n")
+	// 	fmt.Printf("Available commands:\n" +
+	// 		"  fetch\n" +
+	// 		"  flags\n" +
+	// 		"  evaluate\n")
+	// 	return
+	// }
+	// switch os.Args[1] {
+	// case "fetch":
+	// 	fetch()
+	// case "flags":
+	// 	flags()
+	// case "evaluate":
+	// 	evaluate()
+	// default:
+	// 	fmt.Printf("error: unknown sub-command '%v'", os.Args[1])
+	// }
 }
 
 func fetch() {

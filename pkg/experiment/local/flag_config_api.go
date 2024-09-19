@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/amplitude/experiment-go-server/internal/evaluation"
-	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/amplitude/experiment-go-server/internal/evaluation"
+	"github.com/amplitude/experiment-go-server/pkg/experiment"
 )
 
 type flagConfigApi interface {
@@ -22,7 +23,7 @@ type flagConfigApiV2 struct {
 	FlagConfigPollerRequestTimeoutMillis time.Duration
 }
 
-func newFlagConfigApiV2(deploymentKey, serverURL string, flagConfigPollerRequestTimeoutMillis time.Duration) *flagConfigApiV2 {
+func NewFlagConfigApiV2(deploymentKey, serverURL string, flagConfigPollerRequestTimeoutMillis time.Duration) *flagConfigApiV2 {
 	return &flagConfigApiV2{
 		DeploymentKey:                        deploymentKey,
 		ServerURL:                            serverURL,

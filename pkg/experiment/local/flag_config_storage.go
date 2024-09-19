@@ -1,8 +1,9 @@
 package local
 
 import (
-	"github.com/amplitude/experiment-go-server/internal/evaluation"
 	"sync"
+
+	"github.com/amplitude/experiment-go-server/internal/evaluation"
 )
 
 type flagConfigStorage interface {
@@ -18,10 +19,14 @@ type inMemoryFlagConfigStorage struct {
 	flagConfigsLock sync.Mutex
 }
 
-func newInMemoryFlagConfigStorage() *inMemoryFlagConfigStorage {
+func NewInMemoryFlagConfigStorage() *inMemoryFlagConfigStorage {
 	return &inMemoryFlagConfigStorage{
 		flagConfigs: make(map[string]*evaluation.Flag),
 	}
+}
+
+func (storage *inMemoryFlagConfigStorage) GetFlagConfigs() map[string]*evaluation.Flag {
+	return storage.getFlagConfigs()
 }
 
 func (storage *inMemoryFlagConfigStorage) getFlagConfig(key string) *evaluation.Flag {
