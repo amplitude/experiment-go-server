@@ -15,11 +15,7 @@ import (
 	"gopkg.in/cenkalti/backoff.v1"
 )
 
-// type sseStream interface {
-// 	getFlagConfigs() (map[string]*evaluation.Flag, error)
-// }
-
-func recoverPanic() {
+func mutePanic() {
 	if err := recover(); err != nil {
 		// log.Println("panic occurred:", err)
 	}
@@ -57,33 +53,33 @@ func NewSseStream(authToken, url string,
 	}
 }
 
-func (a *SseStream) Connect(
+func (s *SseStream) Connect(
 	messageCh chan StreamEvent,
 	errorCh chan error,
 ) error {
-	a.Cancel()
+	s.Cancel()
 
-	a.lock.Lock()
-	defer a.lock.Unlock()
+	s.lock.Lock()
+	defer s.lock.Unlock()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	a.cancelClientContext = cancel
+	s.cancelClientContext = cancel
 	
 	transport := &http.Transport{
 		Dial: (&net.Dialer{
-			Timeout:   a.connectionTimeout,
+			Timeout:   s.connectionTimeout,
 		}).Dial,
-		TLSHandshakeTimeout: a.connectionTimeout,
-		ResponseHeaderTimeout: a.connectionTimeout,
+		TLSHandshakeTimeout: s.connectionTimeout,
+		ResponseHeaderTimeout: s.connectionTimeout,
 	}
 
 	// The http client timeout includes reading body, which is the entire SSE lifecycle until SSE is closed.
-	httpClient := &http.Client{Transport: transport, Timeout: a.reconnInterval + a.maxJitter} // Max time for this connection.
+	httpClient := &http.Client{Transport: transport, Timeout: s.reconnInterval + s.maxJitter} // Max time for this connection.
 	
-	client := sse.NewClient(a.url)
+	client := sse.NewClient(s.url)
 	client.Connection = httpClient
 	client.Headers = map[string]string{
-		"Authorization": a.AuthToken,
+		"Authorization": s.AuthToken,
 		"X-Amp-Exp-Library": fmt.Sprintf("experiment-go-server/%v", experiment.VERSION),
 	}
 	
@@ -99,10 +95,10 @@ func (a *SseStream) Connect(
 	})
 
 	go func() {
-		a.resetKeepAliveTimeout(errorCh)
+		s.resetKeepAliveTimeout(errorCh)
 		err := client.SubscribeRawWithContext(ctx, func(msg *sse.Event) {
 			// Reset keep alive.
-			a.resetKeepAliveTimeout(errorCh)
+			s.resetKeepAliveTimeout(errorCh)
 			data := string(msg.Data)
 			if (data == " ") {
 				// Keep alive. 
@@ -110,70 +106,62 @@ func (a *SseStream) Connect(
 			}
 
 			// Possible write to closed channel
-			defer recoverPanic()
+			defer mutePanic()
 			messageCh <- StreamEvent{msg.Data}
 		})
 		if (err != nil) {
-			a.Cancel()
+			s.Cancel()
 
 			// Possible write to closed channel
-			defer recoverPanic()
+			defer mutePanic()
 			errorCh <- err
 		}
 	}()
-	a.reconnTimer = time.NewTimer(a.reconnInterval - a.maxJitter + time.Duration(rand.Int64N(a.maxJitter.Nanoseconds() * 2)))
-	go func() {
-		<- a.reconnTimer.C
-		a.Cancel()
-		a.Connect(messageCh, errorCh)
-	}()
+	s.reconnTimer = time.AfterFunc(
+		s.reconnInterval - s.maxJitter + time.Duration(rand.Int64N(s.maxJitter.Nanoseconds() * 2)),
+	 	func() {
+			s.reconnTimer = nil
+			s.Cancel()
+			s.Connect(messageCh, errorCh)
+		},
+	)
 
 	return nil
 }
 
-func (a *SseStream) Cancel() {
-	a.lock.Lock()
-	defer a.lock.Unlock()
-
-	if (a.keepaliveTimer != nil) {
-		if (!a.keepaliveTimer.Stop()) {
-			select{
-			case <- a.keepaliveTimer.C:
-			default:
-			}
-		}
+func (s *SseStream) cancelInternal() {
+	if (s.keepaliveTimer != nil) {
+		s.keepaliveTimer.Stop()
 	}
-	if (a.reconnTimer != nil) {
-		if (!a.reconnTimer.Stop()) {
-			select{
-			case <- a.reconnTimer.C:
-			default:
-			}
-		}
+	if (s.reconnTimer != nil) {
+		s.reconnTimer.Stop()
 	}
-	if (a.cancelClientContext != nil) {
-		a.cancelClientContext()
-		a.cancelClientContext = nil
+	if (s.cancelClientContext != nil) {
+		s.cancelClientContext()
+		s.cancelClientContext = nil
 	}
 }
 
-func (a *SseStream) resetKeepAliveTimeout(errorCh chan error) {
-	a.lock.Lock()
-	defer a.lock.Unlock()
+func (s *SseStream) Cancel() {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.cancelInternal()
+}
 
-	if (a.keepaliveTimer != nil) {
-		if (!a.keepaliveTimer.Stop()) {
-			select{
-			case <- a.keepaliveTimer.C:
-			default:
-			}
-		}
+func (s *SseStream) resetKeepAliveTimeout(errorCh chan error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if (s.keepaliveTimer != nil) {
+		s.keepaliveTimer.Stop()
 	}
-	a.keepaliveTimer = time.NewTimer(a.keepaliveTimeout)
-	go func() {
-		<- a.keepaliveTimer.C
+	s.keepaliveTimer = time.AfterFunc(s.keepaliveTimeout, func() {
+		s.lock.Lock()
+		s.keepaliveTimer = nil
 		// Timed out, raise error.
-		a.Cancel()
+		s.cancelInternal()
+		s.lock.Unlock()
+		
 		errorCh <- errors.New("keep alive failed")
-	}()
+	})
 }
