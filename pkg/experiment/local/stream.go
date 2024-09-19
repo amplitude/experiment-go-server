@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand/v2"
 	"net"
 	"net/http"
 	"sync"
@@ -118,7 +117,7 @@ func (s *SseStream) Connect(
 		}
 	}()
 	s.reconnTimer = time.AfterFunc(
-		s.reconnInterval - s.maxJitter + time.Duration(rand.Int64N(s.maxJitter.Nanoseconds() * 2)),
+		randTimeDuration(s.reconnInterval, s.maxJitter),
 	 	func() {
 			s.reconnTimer = nil
 			s.Cancel()
@@ -161,7 +160,7 @@ func (s *SseStream) resetKeepAliveTimeout(errorCh chan error) {
 		// Timed out, raise error.
 		s.cancelInternal()
 		s.lock.Unlock()
-		
+
 		errorCh <- errors.New("keep alive failed")
 	})
 }

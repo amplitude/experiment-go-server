@@ -2,7 +2,6 @@ package local
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"sync"
 	"time"
 
@@ -243,7 +242,7 @@ type FlagConfigFallbackRetryWrapper struct {
     fallbackUpdater flagConfigUpdater
     retryDelay time.Duration
     maxJitter time.Duration
-	retryCancelCh chan bool
+	retryTimer *time.Timer
 	lock sync.Mutex
 }
 func NewFlagConfigFallbackRetryWrapper(
@@ -271,13 +270,13 @@ func (w *FlagConfigFallbackRetryWrapper) Start(onError func (error)) error {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
-	if (w.retryCancelCh != nil) {
-		close(w.retryCancelCh)
-		w.retryCancelCh = nil
+	if (w.retryTimer != nil) {
+		w.retryTimer.Stop()
+		w.retryTimer = nil
 	}
 
 	err := w.mainUpdater.Start(func (error) {
-		w.scheduleRetry() // Don't care if poller start error or not, always retry.
+		go func() {w.scheduleRetry()}() // Don't care if poller start error or not, always retry.
 		if (w.fallbackUpdater != nil) {
 			w.fallbackUpdater.Start(nil)
 		}
@@ -309,9 +308,9 @@ func (w *FlagConfigFallbackRetryWrapper) Stop() {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
-	if (w.retryCancelCh != nil) {
-		close(w.retryCancelCh)
-		w.retryCancelCh = nil
+	if (w.retryTimer != nil) {
+		w.retryTimer.Stop()
+		w.retryTimer = nil
 	}
 	w.mainUpdater.Stop()
 	if (w.fallbackUpdater != nil) {
@@ -323,36 +322,33 @@ func (w *FlagConfigFallbackRetryWrapper) scheduleRetry() {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
-	if (w.retryCancelCh != nil) {
-		close(w.retryCancelCh)
+	if (w.retryTimer != nil) {
+		w.retryTimer.Stop()
+		w.retryTimer = nil
 	}
-	w.retryCancelCh = make(chan bool)
-	go func() {
-		select {
-		case <-w.retryCancelCh: return
-		case <-time.After(w.retryDelay - w.maxJitter + time.Duration(rand.Int64N(w.maxJitter.Nanoseconds() * 2))):
-			fmt.Println("retrying")
-			w.lock.Lock()
-			defer w.lock.Unlock()
+	w.retryTimer = time.AfterFunc(randTimeDuration(w.retryDelay, w.maxJitter), func() {
+		fmt.Println("retrying")
+		w.lock.Lock()
+		defer w.lock.Unlock()
 
-			close(w.retryCancelCh)
-			w.retryCancelCh = nil
-
-			err := w.mainUpdater.Start(func (error) {
-				w.scheduleRetry() // Don't care if poller start error or not, always retry.
-				if (w.fallbackUpdater != nil) {
-					w.fallbackUpdater.Start(nil)
-				}
-			})
-			if (err == nil) {
-				// Main start success, stop fallback.
-				if (w.fallbackUpdater != nil) {
-					w.fallbackUpdater.Stop()
-				}
-				return
-			}
-			
-			go func() {w.scheduleRetry()}()
+		if (w.retryTimer != nil) {
+			w.retryTimer = nil
 		}
-	}()
+
+		err := w.mainUpdater.Start(func (error) {
+			go func() {w.scheduleRetry()}() // Don't care if poller start error or not, always retry.
+			if (w.fallbackUpdater != nil) {
+				w.fallbackUpdater.Start(nil)
+			}
+		})
+		if (err == nil) {
+			// Main start success, stop fallback.
+			if (w.fallbackUpdater != nil) {
+				w.fallbackUpdater.Stop()
+			}
+			return
+		}
+		
+		go func() {w.scheduleRetry()}()
+	})
 }
