@@ -30,6 +30,9 @@ func difference(set1, set2 map[string]struct{}) map[string]struct{} {
 }
 
 func randTimeDuration(base time.Duration, jitter time.Duration) time.Duration {
+	if (jitter == 0) {
+		return base
+	}
 	dmin := base.Nanoseconds() - jitter.Nanoseconds()
 	if (dmin < 0) {
 		dmin = 0

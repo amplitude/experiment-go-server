@@ -136,15 +136,17 @@ func (s *flagConfigStreamer) Start(onError func (error)) error {
 	defer s.lock.Unlock()
 
 	s.stopInternal()
-	s.flagConfigStreamApi.OnUpdate = func (flags map[string]*evaluation.Flag) error {
-		return s.update(flags)
-	}
-	s.flagConfigStreamApi.OnError = func (err error) {
-		if (onError != nil) {
-			onError(err)
-		}
-	}
-	return s.flagConfigStreamApi.Connect()
+	return s.flagConfigStreamApi.Connect(
+		nil, 
+		func (flags map[string]*evaluation.Flag) error {
+			return s.update(flags)
+		},
+		func (err error) {
+			if (onError != nil) {
+				onError(err)
+			}
+		},
+	)
 }
 
 func (s *flagConfigStreamer) stopInternal() {

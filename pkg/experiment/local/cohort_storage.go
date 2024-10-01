@@ -20,7 +20,7 @@ type inMemoryCohortStorage struct {
 	cohortStore        map[string]*Cohort
 }
 
-func NewInMemoryCohortStorage() *inMemoryCohortStorage {
+func newInMemoryCohortStorage() *inMemoryCohortStorage {
 	return &inMemoryCohortStorage{
 		groupToCohortStore: make(map[string]map[string]struct{}),
 		cohortStore:        make(map[string]*Cohort),

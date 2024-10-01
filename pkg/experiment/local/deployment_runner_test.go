@@ -24,6 +24,7 @@ func TestStartThrowsIfFirstFlagConfigLoadFails(t *testing.T) {
 	runner := newDeploymentRunner(
 		&Config{},
 		flagAPI,
+		nil,
 		flagConfigStorage,
 		cohortStorage,
 		cohortLoader,
@@ -50,6 +51,7 @@ func TestStartSucceedsEvenIfFirstCohortLoadFails(t *testing.T) {
 	runner := newDeploymentRunner(
 		DefaultConfig,
 		flagAPI,
+		nil,
 		flagConfigStorage,
 		cohortStorage,
 		cohortLoader,

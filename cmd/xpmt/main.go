@@ -13,22 +13,22 @@ import (
 )
 
 func main() {
-	connTimeout := 2 * time.Second
-	api := local.NewFlagConfigStreamApiV2("server-tUTqR62DZefq7c73zMpbIr1M5VDtwY8T", "https://skylab-stream.stag2.amplitude.com", connTimeout)
-	cohortStorage := local.NewInMemoryCohortStorage()
-	flagConfigStorage := local.NewInMemoryFlagConfigStorage()
-	dr := local.NewDeploymentRunner(
-		local.DefaultConfig, 
-		local.NewFlagConfigApiV2("server-tUTqR62DZefq7c73zMpbIr1M5VDtwY8T", "https://skylab-api.staging.amplitude.com", connTimeout), 
-		api,
-		flagConfigStorage, cohortStorage, nil)
-	dr.Start()
+	// connTimeout := 2 * time.Second
+	// api := local.NewFlagConfigStreamApiV2("server-tUTqR62DZefq7c73zMpbIr1M5VDtwY8T", "https://skylab-stream.stag2.amplitude.com", connTimeout)
+	// cohortStorage := local.NewInMemoryCohortStorage()
+	// flagConfigStorage := local.NewInMemoryFlagConfigStorage()
+	// dr := local.NewDeploymentRunner(
+	// 	local.DefaultConfig, 
+	// 	local.NewFlagConfigApiV2("server-tUTqR62DZefq7c73zMpbIr1M5VDtwY8T", "https://skylab-api.staging.amplitude.com", connTimeout), 
+	// 	api,
+	// 	flagConfigStorage, cohortStorage, nil)
+	// dr.Start()
 
-    for {
-        // fmt.Printf("%v+\n", time.Now())
-		fmt.Println(flagConfigStorage.GetFlagConfigs())
-        time.Sleep(500 * time.Millisecond)
-    }
+    // for {
+    //     // fmt.Printf("%v+\n", time.Now())
+	// 	fmt.Println(flagConfigStorage.GetFlagConfigs())
+    //     time.Sleep(500 * time.Millisecond)
+    // }
 
 	// if len(os.Args) < 2 {
 	// 	fmt.Printf("error: command required\n")

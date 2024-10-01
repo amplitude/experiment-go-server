@@ -54,8 +54,8 @@ func Initialize(apiKey string, config *Config) *Client {
 				filter:    newAssignmentFilter(config.AssignmentConfig.CacheCapacity),
 			}
 		}
-		cohortStorage := NewInMemoryCohortStorage()
-		flagConfigStorage := NewInMemoryFlagConfigStorage()
+		cohortStorage := newInMemoryCohortStorage()
+		flagConfigStorage := newInMemoryFlagConfigStorage()
 		var cohortLoader *cohortLoader
 		var deploymentRunner *deploymentRunner
 		if config.CohortSyncConfig != nil {
@@ -66,7 +66,7 @@ func Initialize(apiKey string, config *Config) *Client {
 		if config.StreamUpdates {
 			flagStreamApi = NewFlagConfigStreamApiV2(apiKey, config.ServerUrl, config.StreamFlagConnTimeout)
 		}
-		deploymentRunner = NewDeploymentRunner(
+		deploymentRunner = newDeploymentRunner(
 			config, 
 			NewFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout), 
 			flagStreamApi, flagConfigStorage, cohortStorage, cohortLoader)
@@ -92,7 +92,7 @@ func Initialize(apiKey string, config *Config) *Client {
 }
 
 func (c *Client) Start() error {
-	err := c.deploymentRunner.Start()
+	err := c.deploymentRunner.start()
 	if err != nil {
 		return err
 	}

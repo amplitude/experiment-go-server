@@ -19,7 +19,7 @@ type inMemoryFlagConfigStorage struct {
 	flagConfigsLock sync.Mutex
 }
 
-func NewInMemoryFlagConfigStorage() *inMemoryFlagConfigStorage {
+func newInMemoryFlagConfigStorage() *inMemoryFlagConfigStorage {
 	return &inMemoryFlagConfigStorage{
 		flagConfigs: make(map[string]*evaluation.Flag),
 	}

@@ -14,10 +14,71 @@ import (
 	"gopkg.in/cenkalti/backoff.v1"
 )
 
-func mutePanic() {
-	if err := recover(); err != nil {
-		// log.Println("panic occurred:", err)
+const STREAM_KEEP_ALIVE_BYTE = byte(' ')
+
+// Mute panics caused by writing to a closed channel.
+func mutePanic(f func()) {
+	if err := recover(); err != nil && f != nil {
+		f()
 	}
+}
+
+type EventSource struct {
+	connect func() error
+}
+
+type NewEventSourceFactory = func (
+	ctx context.Context,
+	url string,
+	connTimeout time.Duration,
+	maxTime time.Duration,
+	headers map[string]string,
+	onConnect func(es *EventSource),
+	onDisconnect func(es *EventSource),
+	onUpdate func(es *EventSource, msg []byte),
+) *EventSource
+
+func NewEventSource(
+	ctx context.Context,
+	url string,
+	connTimeout time.Duration,
+	maxTime time.Duration,
+	headers map[string]string,
+	onConnect func(es *EventSource),
+	onDisconnect func(es *EventSource),
+	onUpdate func(es *EventSource, msg []byte),
+) *EventSource {
+	transport := &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout:   connTimeout,
+		}).Dial,
+		TLSHandshakeTimeout: connTimeout,
+		ResponseHeaderTimeout: connTimeout,
+	}
+
+	// The http client timeout includes reading body, which is the entire SSE lifecycle until SSE is closed.
+	httpClient := &http.Client{Transport: transport, Timeout: maxTime} // Max time for this connection.
+	
+	client := sse.NewClient(url)
+	client.Connection = httpClient
+	client.Headers = headers
+
+	sse.ClientMaxBufferSize(1 << 32)(client)
+	client.ReconnectStrategy = &backoff.StopBackOff{};
+
+	es := &EventSource{}
+	es.connect = func() error {
+		return client.SubscribeRawWithContext(ctx, func(msg *sse.Event) {
+			onUpdate(es, msg.Data)
+		})
+	}
+
+	// On connect callback.
+	client.OnConnect(func(c *sse.Client) {onConnect(es)})
+	// On disconnect callback.
+	client.OnDisconnect(func(c *sse.Client) {onDisconnect(es)})
+
+	return es
 }
 
 type StreamEvent struct {
@@ -33,15 +94,22 @@ type SseStream struct {
     maxJitter time.Duration
 	lock                sync.Mutex
 	cancelClientContext context.CancelFunc
+	connTimeoutTimer *time.Timer
 	keepaliveTimer *time.Timer
 	reconnTimer *time.Timer
+	NewEventSource NewEventSourceFactory
+	es *EventSource
 }
 
-func NewSseStream(authToken, url string,
+func NewSseStream(
+	authToken, 
+	url string,
     connectionTimeout time.Duration,
     keepaliveTimeout time.Duration,
     reconnInterval time.Duration,
-    maxJitter time.Duration) *SseStream {
+    maxJitter time.Duration,
+	newES NewEventSourceFactory,
+) *SseStream {
 	return &SseStream{
 		AuthToken:                        authToken,
 		url:                            url,
@@ -49,6 +117,7 @@ func NewSseStream(authToken, url string,
 		keepaliveTimeout: keepaliveTimeout,
 		reconnInterval: reconnInterval,
 		maxJitter: maxJitter,
+		NewEventSource: newES,
 	}
 }
 
@@ -56,72 +125,111 @@ func (s *SseStream) Connect(
 	messageCh chan StreamEvent,
 	errorCh chan error,
 ) error {
-	s.Cancel()
-
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
+	s.cancelInternal()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancelClientContext = cancel
-	
-	transport := &http.Transport{
-		Dial: (&net.Dialer{
-			Timeout:   s.connectionTimeout,
-		}).Dial,
-		TLSHandshakeTimeout: s.connectionTimeout,
-		ResponseHeaderTimeout: s.connectionTimeout,
-	}
 
-	// The http client timeout includes reading body, which is the entire SSE lifecycle until SSE is closed.
-	httpClient := &http.Client{Transport: transport, Timeout: s.reconnInterval + s.maxJitter} // Max time for this connection.
-	
-	client := sse.NewClient(s.url)
-	client.Connection = httpClient
-	client.Headers = map[string]string{
-		"Authorization": s.AuthToken,
-		"X-Amp-Exp-Library": fmt.Sprintf("experiment-go-server/%v", experiment.VERSION),
-	}
-	
-	sse.ClientMaxBufferSize(1 << 32)(client)
-	client.ReconnectStrategy = &backoff.StopBackOff{};
-	client.OnConnect(func(c *sse.Client) {
-		fmt.Println("connected")
-		// Connected.
-	})
-	client.OnDisconnect(func(c *sse.Client) {
-		// Disconnected.
-		errorCh <- errors.New("disconnected error")
-	})
+	es := s.NewEventSource(
+		ctx, 
+		s.url, 
+		s.connectionTimeout, 
+		s.reconnInterval + s.maxJitter,
+		map[string]string{
+			"Authorization": s.AuthToken,
+			"X-Amp-Exp-Library": fmt.Sprintf("experiment-go-server/%v", experiment.VERSION),
+		},
+		func (es *EventSource) {
+			s.lock.Lock()
+			defer s.lock.Unlock()
+			if (es != s.es) {
+				return
+			}
+			if (s.connTimeoutTimer != nil) {
+				s.connTimeoutTimer.Stop()
+			}
+			s.resetKeepAliveTimeout(errorCh)
+		},
+		func (es *EventSource) {
+			s.lock.Lock()
+			if (es != s.es) {
+				s.lock.Unlock()
+				return
+			}
+			// Disconnected.
+			s.cancelInternal()
+			s.lock.Unlock()
 
-	go func() {
-		s.resetKeepAliveTimeout(errorCh)
-		err := client.SubscribeRawWithContext(ctx, func(msg *sse.Event) {
+			// Possible write to closed channel
+			defer mutePanic(nil)
+			errorCh <- errors.New("disconnected error")
+		},
+		func (es *EventSource, msg []byte) {
+			s.lock.Lock()
+			if (es != s.es) {
+				s.lock.Unlock()
+				return
+			}
 			// Reset keep alive.
 			s.resetKeepAliveTimeout(errorCh)
-			data := string(msg.Data)
-			if (data == " ") {
+			s.lock.Unlock()
+			if (len(msg) == 1 && msg[0] == STREAM_KEEP_ALIVE_BYTE) {
 				// Keep alive. 
 				return
 			}
 
 			// Possible write to closed channel
-			defer mutePanic()
-			messageCh <- StreamEvent{msg.Data}
-		})
+			defer mutePanic(s.Cancel)
+			messageCh <- StreamEvent{msg}
+		},
+	)
+	s.es = es
+
+	go func() {
+		err := es.connect()
 		if (err != nil) {
-			s.Cancel()
+			s.lock.Lock()
+			if (es != s.es) {
+				s.lock.Unlock()
+				return
+			}
+			s.cancelInternal()
+			s.lock.Unlock()
 
 			// Possible write to closed channel
-			defer mutePanic()
+			defer mutePanic(nil)
 			errorCh <- err
 		}
 	}()
 	s.reconnTimer = time.AfterFunc(
 		randTimeDuration(s.reconnInterval, s.maxJitter),
 	 	func() {
+			s.lock.Lock()
+			if (es != s.es) {
+				s.lock.Unlock()
+				return
+			}
 			s.reconnTimer = nil
-			s.Cancel()
+			s.lock.Unlock()
+			// Connect performs cancelInternal()
 			s.Connect(messageCh, errorCh)
+		},
+	)
+	s.connTimeoutTimer = time.AfterFunc(
+		s.connectionTimeout,
+		func() {
+			s.lock.Lock()
+			if (es != s.es) {
+				s.lock.Unlock()
+				return
+			}
+			s.connTimeoutTimer = nil
+			s.cancelInternal()
+			s.lock.Unlock()
+			errorCh <- errors.New("timedout error")
 		},
 	)
 
@@ -129,11 +237,18 @@ func (s *SseStream) Connect(
 }
 
 func (s *SseStream) cancelInternal() {
+	s.es = nil
+	if (s.connTimeoutTimer != nil) {
+		s.connTimeoutTimer.Stop()
+		s.connTimeoutTimer = nil
+	}
 	if (s.keepaliveTimer != nil) {
 		s.keepaliveTimer.Stop()
+		s.keepaliveTimer = nil
 	}
 	if (s.reconnTimer != nil) {
 		s.reconnTimer.Stop()
+		s.reconnTimer = nil
 	}
 	if (s.cancelClientContext != nil) {
 		s.cancelClientContext()
@@ -148,9 +263,6 @@ func (s *SseStream) Cancel() {
 }
 
 func (s *SseStream) resetKeepAliveTimeout(errorCh chan error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
 	if (s.keepaliveTimer != nil) {
 		s.keepaliveTimer.Stop()
 	}

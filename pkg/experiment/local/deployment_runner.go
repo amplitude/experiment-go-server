@@ -20,7 +20,7 @@ type deploymentRunner struct {
 const streamUpdaterRetryDelay = 15 * time.Second
 const updaterRetryMaxJitter = 2 * time.Second
 
-func NewDeploymentRunner(
+func newDeploymentRunner(
 	config *Config,
 	flagConfigApi flagConfigApi,
 	flagConfigStreamApi *flagConfigStreamApiV2,
@@ -43,7 +43,7 @@ func NewDeploymentRunner(
 	return dr
 }
 
-func (dr *deploymentRunner) Start() error {
+func (dr *deploymentRunner) start() error {
 	dr.lock.Lock()
 	defer dr.lock.Unlock()
 	err := dr.flagConfigUpdater.Start(nil)
