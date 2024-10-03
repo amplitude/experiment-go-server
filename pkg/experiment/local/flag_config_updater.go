@@ -18,6 +18,8 @@ type flagConfigUpdater interface {
 	Stop()
 }
 
+// The base for all flag config updaters.
+// Contains a method to properly update the flag configs into storage and download cohorts. 
 type flagConfigUpdaterBase struct {
 	flagConfigStorage flagConfigStorage
 	cohortStorage cohortStorage
@@ -39,6 +41,7 @@ func newFlagConfigUpdaterBase(
 	}
 }
 
+// Updates the received flag configs into storage and download cohorts.
 func (u *flagConfigUpdaterBase) update(flagConfigs map[string]*evaluation.Flag) error {
 	
 	flagKeys := make(map[string]struct{})
@@ -112,14 +115,15 @@ func (u *flagConfigUpdaterBase) deleteUnusedCohorts() {
 	}
 }
 
+// The streamer for flag configs. It receives flag configs through server side events.
 type flagConfigStreamer struct {
 	flagConfigUpdaterBase
-    flagConfigStreamApi *flagConfigStreamApiV2
+    flagConfigStreamApi flagConfigStreamApi
 	lock sync.Mutex
 }
 
 func NewFlagConfigStreamer(
-    flagConfigStreamApi *flagConfigStreamApiV2,
+    flagConfigStreamApi flagConfigStreamApi,
     config *Config,
 	flagConfigStorage flagConfigStorage,
 	cohortStorage cohortStorage,
@@ -137,11 +141,14 @@ func (s *flagConfigStreamer) Start(onError func (error)) error {
 
 	s.stopInternal()
 	return s.flagConfigStreamApi.Connect(
-		nil, 
+		func (flags map[string]*evaluation.Flag) error {
+			return s.update(flags)
+		},
 		func (flags map[string]*evaluation.Flag) error {
 			return s.update(flags)
 		},
 		func (err error) {
+			s.Stop()
 			if (onError != nil) {
 				onError(err)
 			}
@@ -159,6 +166,8 @@ func (s *flagConfigStreamer) Stop() {
 	s.stopInternal()
 }
 
+// The poller for flag configs. It polls every configured interval.
+// On start, it polls a set of flag configs. If failed, error is returned. If success, poller starts.
 type flagConfigPoller struct {
 	flagConfigUpdaterBase
     flagConfigApi flagConfigApi
@@ -239,6 +248,8 @@ func (p *flagConfigPoller) Stop() {
 	p.stopInternal()
 }
 
+// A wrapper around flag config updaters to retry and fallback.
+// If the main updater fails, it will fallback to the fallback updater and main updater enters retry loop.
 type FlagConfigFallbackRetryWrapper struct {
     mainUpdater flagConfigUpdater
     fallbackUpdater flagConfigUpdater
@@ -261,9 +272,12 @@ func NewFlagConfigFallbackRetryWrapper(
 	}
 }
 
-    /**
-     * Since the wrapper retries, so there will never be error case. Thus, onError will never be called.
-     */
+// Start tries to start main updater first. 
+//   If it failed, start the fallback updater.
+//     If fallback updater failed as well, return error.
+//     If fallback updater succeed, main updater enters retry, return ok.
+// Since the wrapper retries, so there will never be error case.
+// Thus, onError will never be called.
 func (w *FlagConfigFallbackRetryWrapper) Start(onError func (error)) error {
 	// if (mainUpdater is FlagConfigFallbackRetryWrapper) {
 	//     throw Error("Do not use FlagConfigFallbackRetryWrapper as main updater. Fallback updater will never be used. Rewrite retry and fallback logic.")
@@ -284,7 +298,6 @@ func (w *FlagConfigFallbackRetryWrapper) Start(onError func (error)) error {
 		}
 	})
 	if (err == nil) {
-		fmt.Println("main start ok")
 		// Main start success, stop fallback.
 		if (w.fallbackUpdater != nil) {
 			w.fallbackUpdater.Stop()
@@ -329,7 +342,6 @@ func (w *FlagConfigFallbackRetryWrapper) scheduleRetry() {
 		w.retryTimer = nil
 	}
 	w.retryTimer = time.AfterFunc(randTimeDuration(w.retryDelay, w.maxJitter), func() {
-		fmt.Println("retrying")
 		w.lock.Lock()
 		defer w.lock.Unlock()
 
@@ -350,6 +362,7 @@ func (w *FlagConfigFallbackRetryWrapper) scheduleRetry() {
 			}
 			return
 		}
+		fmt.Println("retrying failed", err)
 		
 		go func() {w.scheduleRetry()}()
 	})

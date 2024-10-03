@@ -14,6 +14,15 @@ const streamApiMaxJitter = 5 * time.Second
 const streamApiKeepaliveTimeout = 17 * time.Second
 const streamApiReconnInterval = 15 * time.Minute
 
+type flagConfigStreamApi interface {
+	Connect(
+		onInitUpdate func (map[string]*evaluation.Flag) error,
+		onUpdate func (map[string]*evaluation.Flag) error,
+		onError func (error),
+	) error
+	Close()
+}
+
 type flagConfigStreamApiV2 struct {
 	DeploymentKey                        string
 	ServerURL                            string
@@ -53,10 +62,7 @@ func (api *flagConfigStreamApiV2) Connect(
 	api.lock.Lock()
 	defer api.lock.Unlock()
 
-	err := api.closeInternal()
-	if (err != nil) {
-		return err
-	}
+	api.closeInternal()
 
 	// Create URL.
 	endpoint, err := url.Parse(api.ServerURL)
@@ -174,16 +180,15 @@ func parseData(data []byte) (map[string]*evaluation.Flag, error) {
 	return flags, nil
 }
 
-func (api *flagConfigStreamApiV2) closeInternal() error {
+func (api *flagConfigStreamApiV2) closeInternal() {
 	if (api.stopCh != nil) {
 		close(api.stopCh)
 		api.stopCh = nil
 	}
-	return nil
 }
-func (api *flagConfigStreamApiV2) Close() error {
+func (api *flagConfigStreamApiV2) Close() {
 	api.lock.Lock()
 	defer api.lock.Unlock()
 
-	return api.closeInternal()
+	api.closeInternal()
 }

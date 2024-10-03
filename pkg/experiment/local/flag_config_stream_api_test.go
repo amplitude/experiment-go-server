@@ -12,6 +12,7 @@ import (
 )
 
 type mockSseStream struct {
+	// Params
 	authToken string
 	url string
 	connectionTimeout time.Duration
@@ -19,9 +20,11 @@ type mockSseStream struct {
 	reconnInterval time.Duration
 	maxJitter time.Duration
 
+	// Channels to emit messages to simulate new events received through stream.
 	messageCh chan(StreamEvent)
 	errorCh chan(error)
 
+	// Channel to tell there's a connection call.
 	chConnected chan bool
 }
 
