@@ -44,6 +44,17 @@ type StreamEvent struct {
 	data []byte
 }
 
+type Stream interface {
+	Connect(messageCh chan StreamEvent, errorCh chan error) error
+	Cancel()
+	// For testing.
+	setNewESFactory(f func (httpClient *http.Client, url string, headers map[string]string) EventSource)
+}
+
+func (s *SseStream) setNewESFactory(f func (httpClient *http.Client, url string, headers map[string]string) EventSource) {
+	s.newESFactory = f
+}
+
 type SseStream struct {
 	AuthToken                        string
 	url                            string
@@ -63,7 +74,7 @@ func NewSseStream(
     keepaliveTimeout time.Duration,
     reconnInterval time.Duration,
     maxJitter time.Duration,
-) *SseStream {
+) Stream {
 	return &SseStream{
 		AuthToken:                        authToken,
 		url:                            url,
@@ -131,7 +142,7 @@ func (s *SseStream) connectInternal(
 	})
 	go func() {
 		// Subscribe to messages using channel.
-		// This is a non blocking call.
+		// This should be a non blocking call, but unsure how long it takes.
 		err := client.SubscribeChanRawWithContext(ctx, esMsgCh)
 		if (err != nil) {
 			esConnectErrCh <- err

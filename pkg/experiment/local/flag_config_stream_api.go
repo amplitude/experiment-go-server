@@ -27,7 +27,7 @@ type flagConfigStreamApiV2 struct {
 		keepaliveTimeout time.Duration,
 		reconnInterval time.Duration,
 		maxJitter time.Duration,
-	) *SseStream
+	) Stream
 }
 
 func NewFlagConfigStreamApiV2(
@@ -66,7 +66,7 @@ func (api *flagConfigStreamApiV2) Connect(
 	endpoint.Path = "sdk/stream/v1/flags"
 
 	// Create Stream.
-	stream := NewSseStream("Api-Key " + api.DeploymentKey, endpoint.String(), api.connectionTimeout, streamApiKeepaliveTimeout, streamApiReconnInterval, streamApiMaxJitter)
+	stream := api.newSseStreamFactory("Api-Key " + api.DeploymentKey, endpoint.String(), api.connectionTimeout, streamApiKeepaliveTimeout, streamApiReconnInterval, streamApiMaxJitter)
 
 	streamMsgCh := make(chan StreamEvent)
 	streamErrCh := make(chan error)
@@ -78,7 +78,10 @@ func (api *flagConfigStreamApiV2) Connect(
 	}
 
 	// Connect.
-	stream.Connect(streamMsgCh, streamErrCh)
+	err = stream.Connect(streamMsgCh, streamErrCh)
+	if (err != nil) {
+		return err
+	}
 
 	// Retrieve first flag configs and parse it.
 	// If any error here means init error.
@@ -88,7 +91,7 @@ func (api *flagConfigStreamApiV2) Connect(
 		flags, err := parseData(msg.data)
 		if (err != nil) {
 			closeStream()
-			return errors.New("stream corrupt data, cause: " + err.Error())
+			return errors.New("flag config stream api corrupt data, cause: " + err.Error())
 		}
 		if (onInitUpdate != nil) {
 			err = onInitUpdate(flags)
