@@ -3,63 +3,96 @@ package local
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 
+	"github.com/r3labs/sse/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
+type mockSseStream struct {
+	mock.Mock
+
+	httpClient *http.Client
+	url string
+	headers map[string]string
+
+	subscribeChanError error
+	chConnected chan bool
+
+	ctx context.Context
+	messageChan chan *sse.Event
+	onDisCb sse.ConnCallback
+	onConnCb sse.ConnCallback
+}
+
+func (s *mockSseStream) OnDisconnect(fn sse.ConnCallback) {
+	s.onDisCb = fn
+}
+
+func (s *mockSseStream) OnConnect(fn sse.ConnCallback) {
+	s.onConnCb = fn
+}
+
+func (s *mockSseStream) SubscribeChanRawWithContext(ctx context.Context, ch chan *sse.Event) error {
+	s.ctx = ctx
+	s.messageChan = ch
+	s.chConnected <- true
+	return s.subscribeChanError
+}
+
+func (s *mockSseStream) mockSseStreamFactory(httpClient *http.Client, url string, headers map[string]string) EventSource {
+	s.httpClient = httpClient
+	s.url = url
+	s.headers = headers
+	return s
+}
+
 func TestStream(t *testing.T) {
-	var streamOnUpdate func(es *EventSource, msg []byte)
-	var streamCtx context.Context
-	streamConnectCalled := make(chan bool)
-	es := EventSource{}
-	newMockES := func (ctx context.Context, url string, connTimeout time.Duration, maxTime time.Duration, headers map[string]string, onConnect func(es *EventSource), onDisconnect func(es *EventSource), onUpdate func(es *EventSource, msg []byte)) *EventSource {
-		// Check for all variables.
-		assert.Equal(t, "url", url)
-		assert.Equal(t, 2 * time.Second, connTimeout)
-		assert.Equal(t, 7 * time.Second, maxTime)
-		assert.Equal(t, "authToken", headers["Authorization"])
-		assert.NotNil(t, headers["X-Amp-Exp-Library"])
-
-		es.connect = func() error {
-			streamCtx = ctx
-			streamOnUpdate = onUpdate
-			onConnect(&es)
-			streamConnectCalled <- true
-
-			<-ctx.Done()
-			return nil
-		}
-		return &es
-	}
-	client := NewSseStream("authToken", "url", 2 * time.Second, 4 * time.Second, 6 * time.Second, 1 * time.Second, newMockES)
+	var s = mockSseStream{chConnected: make(chan bool)}
+	// 	assert.Equal(t, 2 * time.Second, connTimeout)
+	// 	assert.Equal(t, 7 * time.Second, maxTime)
+	client := NewSseStream("authToken", "url", 2 * time.Second, 4 * time.Second, 6 * time.Second, 1 * time.Second)
+	client.newESFactory = s.mockSseStreamFactory
 	messageCh := make(chan StreamEvent)
 	errorCh := make(chan error)
-	
+
 	// Make connection.
 	client.Connect(messageCh, errorCh)
 	// Wait for connection "establish".
-	<-streamConnectCalled
+	<-s.chConnected
+
+	// Check for all variables.
+	assert.Equal(t, "url", s.url)
+	assert.Equal(t, "authToken", s.headers["Authorization"])
+	assert.NotNil(t, s.headers["X-Amp-Exp-Library"])
+
+	// Signal connected.
+	s.onConnCb(nil)
 	
 	// Send update 1, ensure received.
-	go func() {streamOnUpdate(&es, []byte("data1"))}()
+	go func() {s.messageChan <- &sse.Event{Data: []byte("data1")}}()
 	assert.Equal(t, []byte("data1"), (<-messageCh).data)
+
+	// Send keep alive, not passed down, checked later along with updates 2 and 3.
+	go func() {s.messageChan <- &sse.Event{Data: []byte(" ")}}()
 
 	// Send update 2 and 3, ensure received in order.
 	go func() {
-		streamOnUpdate(&es, []byte("data2"))
-		streamOnUpdate(&es, []byte("data3"))
+		s.messageChan <- &sse.Event{Data: []byte("data2")}
+		s.messageChan <- &sse.Event{Data: []byte("data3")}
 	}()
 	assert.Equal(t, []byte("data2"), (<-messageCh).data)
 	assert.Equal(t, []byte("data3"), (<-messageCh).data)
 
 	// Stop client, ensure context cancelled.
 	client.Cancel()
-	assert.True(t, errors.Is(streamCtx.Err(), context.Canceled))
+	assert.True(t, errors.Is(s.ctx.Err(), context.Canceled))
 
 	// No message is passed through even it's received.
-	go func() {streamOnUpdate(&es, []byte("data4"))}()
+	go func() {s.messageChan <- &sse.Event{Data: []byte("data4")}}()
 
 	// Ensure no message after cancel.
 	select {
@@ -77,108 +110,80 @@ func TestStream(t *testing.T) {
 }
 
 func TestStreamConnTimeout(t *testing.T) {
-	var streamCtx context.Context
-	es := EventSource{}
-	newMockES := func (ctx context.Context, url string, connTimeout time.Duration, maxTime time.Duration, headers map[string]string, onConnect func(es *EventSource), onDisconnect func(es *EventSource), onUpdate func(es *EventSource, msg []byte)) *EventSource {
-		es.connect = func() error {
-			streamCtx = ctx
-			<-ctx.Done()
-			return nil
-		}
-		return &es
-	}
-	client := NewSseStream("", "", 2 * time.Second, 4 * time.Second, 6 * time.Second, 1 * time.Second, newMockES)
+	var s = mockSseStream{chConnected: make(chan bool)}
+	client := NewSseStream("", "", 2 * time.Second, 4 * time.Second, 6 * time.Second, 1 * time.Second)
+	client.newESFactory = s.mockSseStreamFactory
 	messageCh := make(chan StreamEvent)
 	errorCh := make(chan error)
-	
+
 	// Make connection. 
 	client.Connect(messageCh, errorCh)
+	<-s.chConnected
 	// Wait for timeout to reach. 
 	time.Sleep(2 * time.Second + 10 * time.Millisecond)
 	// Check that context cancelled and error received.
- 	assert.True(t, errors.Is(streamCtx.Err(), context.Canceled))
-	assert.Equal(t, errors.New("timedout error"), <-errorCh)
+	assert.True(t, errors.Is(s.ctx.Err(), context.Canceled))
+	assert.Equal(t, errors.New("stream connection timeout"), <-errorCh)
 }
 
 func TestStreamKeepAliveTimeout(t *testing.T) {
-	var streamOnUpdate func(es *EventSource, msg []byte)
-	var streamCtx context.Context
-	streamConnectCalled := make(chan bool)
-	es := EventSource{}
-	newMockES := func (ctx context.Context, url string, connTimeout time.Duration, maxTime time.Duration, headers map[string]string, onConnect func(es *EventSource), onDisconnect func(es *EventSource), onUpdate func(es *EventSource, msg []byte)) *EventSource {
-		es.connect = func() error {
-			streamCtx = ctx
-			streamOnUpdate = onUpdate
-			onConnect(&es)
-			streamConnectCalled <- true
-			<-ctx.Done()
-			return nil
-		}
-		return &es
-	}
-	client := NewSseStream("", "", 2 * time.Second, 1 * time.Second, 6 * time.Second, 1 * time.Second, newMockES)
+	var s = mockSseStream{chConnected: make(chan bool)}
+	client := NewSseStream("", "", 2 * time.Second, 1 * time.Second, 6 * time.Second, 1 * time.Second)
+	client.newESFactory = s.mockSseStreamFactory
 	messageCh := make(chan StreamEvent)
 	errorCh := make(chan error)
 	
 	// Make connection.
 	client.Connect(messageCh, errorCh)
-	<-streamConnectCalled
+	<-s.chConnected
+	s.onConnCb(nil)
 
 	// Send keepalive 1 and wait.
-	go func() {streamOnUpdate(&es, []byte(" "))}()
+	go func() {s.messageChan <- &sse.Event{Data: []byte(" ")}}()
 	time.Sleep(1 * time.Second - 10 * time.Millisecond)
-	assert.False(t, errors.Is(streamCtx.Err(), context.Canceled))
+	assert.False(t, errors.Is(s.ctx.Err(), context.Canceled))
 	// Send keepalive 2 and wait.
-	go func() {streamOnUpdate(&es, []byte(" "))}()
+	go func() {s.messageChan <- &sse.Event{Data: []byte(" ")}}()
 	time.Sleep(1 * time.Second - 10 * time.Millisecond)
-	assert.False(t, errors.Is(streamCtx.Err(), context.Canceled))
+	assert.False(t, errors.Is(s.ctx.Err(), context.Canceled))
 	// Send data and wait, data should reset keepalive.
-	go func() {streamOnUpdate(&es, []byte("data1"))}()
+	go func() {s.messageChan <- &sse.Event{Data: []byte("data1")}}()
 	assert.Equal(t, []byte("data1"), (<-messageCh).data)
 	time.Sleep(1 * time.Second - 10 * time.Millisecond)
-	assert.False(t, errors.Is(streamCtx.Err(), context.Canceled))
+	assert.False(t, errors.Is(s.ctx.Err(), context.Canceled))
 	// Send data ensure stream is open.
-	go func() {streamOnUpdate(&es, []byte("data1"))}()
+	go func() {s.messageChan <- &sse.Event{Data: []byte("data1")}}()
 	assert.Equal(t, []byte("data1"), (<-messageCh).data)
-	assert.False(t, errors.Is(streamCtx.Err(), context.Canceled))
+	assert.False(t, errors.Is(s.ctx.Err(), context.Canceled))
 	// Wait for keepalive to timeout, stream should close.
 	time.Sleep(1 * time.Second + 10 * time.Millisecond)
-	assert.Equal(t, errors.New("keep alive failed"), <-errorCh)
- 	assert.True(t, errors.Is(streamCtx.Err(), context.Canceled))
+	assert.Equal(t, errors.New("stream keepalive timed out"), <-errorCh)
+ 	assert.True(t, errors.Is(s.ctx.Err(), context.Canceled))
 }
 
 func TestStreamReconnectsTimeout(t *testing.T) {
-	var streamOnUpdate func(es *EventSource, msg []byte)
-	var streamCtx context.Context
-	streamConnectCalled := make(chan bool)
-	es := EventSource{}
-	newMockES := func (ctx context.Context, url string, connTimeout time.Duration, maxTime time.Duration, headers map[string]string, onConnect func(es *EventSource), onDisconnect func(es *EventSource), onUpdate func(es *EventSource, msg []byte)) *EventSource {
-		es.connect = func() error {
-			streamCtx = ctx
-			streamOnUpdate = onUpdate
-			onConnect(&es)
-			streamConnectCalled <- true
-			<-ctx.Done()
-			return nil
-		}
-		return &es
-	}
-	client := NewSseStream("", "", 2 * time.Second, 3 * time.Second, 2 * time.Second, 0 * time.Second, newMockES)
+	var s = mockSseStream{chConnected: make(chan bool)}
+	client := NewSseStream("", "", 2 * time.Second, 3 * time.Second, 2 * time.Second, 0 * time.Second)
+	client.newESFactory = s.mockSseStreamFactory
 	messageCh := make(chan StreamEvent)
 	errorCh := make(chan error)
 	
 	// Make connection.
 	client.Connect(messageCh, errorCh)
-	<-streamConnectCalled
+	<-s.chConnected
+	s.onConnCb(nil)
+
 	// Sleep for reconnect to timeout, data should pass through.
-	time.Sleep(2 * time.Second * 3 + 100 * time.Millisecond)
-	go func() {streamOnUpdate(&es, []byte(" "))}()
-	go func() {streamOnUpdate(&es, []byte("data1"))}()
+	time.Sleep(2 * time.Second + 100 * time.Millisecond)
+	<-s.chConnected
+	s.onConnCb(nil)
+	go func() {s.messageChan <- &sse.Event{Data: []byte(" ")}}()
+	go func() {s.messageChan <- &sse.Event{Data: []byte("data1")}}()
 	assert.Equal(t, []byte("data1"), (<-messageCh).data)
-	assert.False(t, errors.Is(streamCtx.Err(), context.Canceled))
+	assert.False(t, errors.Is(s.ctx.Err(), context.Canceled))
 	// Cancel stream, should cancel context.
 	client.Cancel()
-	assert.True(t, errors.Is(streamCtx.Err(), context.Canceled))
+	assert.True(t, errors.Is(s.ctx.Err(), context.Canceled))
 	select {
 	case msg, ok := <-errorCh:
 		if ok {
@@ -190,16 +195,9 @@ func TestStreamReconnectsTimeout(t *testing.T) {
 }
 
 func TestStreamConnectAndCancelImmediately(t *testing.T) {
-	es := EventSource{}
-	newMockES := func (ctx context.Context, url string, connTimeout time.Duration, maxTime time.Duration, headers map[string]string, onConnect func(es *EventSource), onDisconnect func(es *EventSource), onUpdate func(es *EventSource, msg []byte)) *EventSource {
-		es.connect = func() error {
-			onConnect(&es)
-			<-ctx.Done()
-			return nil
-		}
-		return &es
-	}
-	client := NewSseStream("", "", 2 * time.Second, 3 * time.Second, 2 * time.Second, 0 * time.Second, newMockES)
+	var s = mockSseStream{chConnected: make(chan bool)}
+	client := NewSseStream("", "", 2 * time.Second, 3 * time.Second, 2 * time.Second, 0 * time.Second)
+	client.newESFactory = s.mockSseStreamFactory
 	messageCh := make(chan StreamEvent)
 	errorCh := make(chan error)
 	
@@ -218,22 +216,9 @@ func TestStreamConnectAndCancelImmediately(t *testing.T) {
 }
 
 func TestStreamChannelCloseOk(t *testing.T) {
-	var streamOnUpdate func(es *EventSource, msg []byte)
-	streamConnectCalled := make(chan bool)
-	var streamCtx context.Context
-	es := EventSource{}
-	newMockES := func (ctx context.Context, url string, connTimeout time.Duration, maxTime time.Duration, headers map[string]string, onConnect func(es *EventSource), onDisconnect func(es *EventSource), onUpdate func(es *EventSource, msg []byte)) *EventSource {
-		es.connect = func() error {
-			streamOnUpdate = onUpdate
-			streamCtx = ctx
-			onConnect(&es)
-			streamConnectCalled <- true
-			<-ctx.Done();
-			return nil
-		}
-		return &es
-	}
-	client := NewSseStream("", "", 1 * time.Second, 1 * time.Second, 1 * time.Second, 0 * time.Second, newMockES)
+	var s = mockSseStream{chConnected: make(chan bool)}
+	client := NewSseStream("", "", 1 * time.Second, 1 * time.Second, 1 * time.Second, 0 * time.Second)
+	client.newESFactory = s.mockSseStreamFactory
 	messageCh := make(chan StreamEvent)
 	errorCh := make(chan error)
 
@@ -243,9 +228,11 @@ func TestStreamChannelCloseOk(t *testing.T) {
 
 	// Connect and send message, the client should cancel right away.
 	client.Connect(messageCh, errorCh)
-	<-streamConnectCalled
-	streamOnUpdate(&es, []byte("data1"))
-	assert.True(t, errors.Is(streamCtx.Err(), context.Canceled))
+	<-s.chConnected
+	s.onConnCb(nil)
+	
+	s.messageChan <- &sse.Event{Data: []byte("data1")}
+	assert.True(t, errors.Is(s.ctx.Err(), context.Canceled))
 
 	select {
 	case msg, ok := <-messageCh:
@@ -262,30 +249,20 @@ func TestStreamChannelCloseOk(t *testing.T) {
 }
 
 func TestStreamDisconnectErrorPasses(t *testing.T) {
-	var streamOnDisconnect func(es *EventSource)
-	streamConnectCalled := make(chan bool)
-	es := EventSource{}
-	newMockES := func (ctx context.Context, url string, connTimeout time.Duration, maxTime time.Duration, headers map[string]string, onConnect func(es *EventSource), onDisconnect func(es *EventSource), onUpdate func(es *EventSource, msg []byte)) *EventSource {
-		es.connect = func() error {
-			streamOnDisconnect = onDisconnect
-			onConnect(&es)
-			streamConnectCalled <- true
-			<-ctx.Done();
-			return nil
-		}
-		return &es
-	}
-	client := NewSseStream("", "", 1 * time.Second, 1 * time.Second, 1 * time.Second, 0 * time.Second, newMockES)
+	var s = mockSseStream{chConnected: make(chan bool)}
+	client := NewSseStream("", "", 1 * time.Second, 1 * time.Second, 1 * time.Second, 0 * time.Second)
+	client.newESFactory = s.mockSseStreamFactory
 	messageCh := make(chan StreamEvent)
 	errorCh := make(chan error)
 	
 	// Make connection.
 	client.Connect(messageCh, errorCh)
-	<-streamConnectCalled
+	<-s.chConnected
+	s.onConnCb(nil)
 
 	// Disconnect error goes through.
-	go func() {streamOnDisconnect(&es)}()
-	assert.Equal(t, errors.New("disconnected error"), <-errorCh)
+	s.onDisCb(nil)
+	assert.Equal(t, errors.New("stream disconnected error"), <-errorCh)
 
 	select {
 	case msg, ok := <-errorCh:
@@ -298,22 +275,17 @@ func TestStreamDisconnectErrorPasses(t *testing.T) {
 }
 
 func TestStreamConnectErrorPasses(t *testing.T) {
-	streamConnectCalled := make(chan bool)
-	es := EventSource{}
-	newMockES := func (ctx context.Context, url string, connTimeout time.Duration, maxTime time.Duration, headers map[string]string, onConnect func(es *EventSource), onDisconnect func(es *EventSource), onUpdate func(es *EventSource, msg []byte)) *EventSource {
-		es.connect = func() error {
-			streamConnectCalled <- true
-			return errors.New("some error occurred")
-		}
-		return &es
-	}
-	client := NewSseStream("", "", 1 * time.Second, 1 * time.Second, 1 * time.Second, 0 * time.Second, newMockES)
+	var s = mockSseStream{chConnected: make(chan bool)}
+	client := NewSseStream("", "", 1 * time.Second, 1 * time.Second, 1 * time.Second, 0 * time.Second)
+	client.newESFactory = s.mockSseStreamFactory
 	messageCh := make(chan StreamEvent)
 	errorCh := make(chan error)
 	
 	// Make connection.
+	s.subscribeChanError = errors.New("some error occurred")
 	client.Connect(messageCh, errorCh)
-	<-streamConnectCalled
+	<-s.chConnected
+	s.onConnCb(nil)
 
 	// Connect error goes through.
 	assert.Equal(t, errors.New("some error occurred"), <-errorCh)
@@ -327,4 +299,3 @@ func TestStreamConnectErrorPasses(t *testing.T) {
 		// No message received within the timeout, as expected
 	}
 }
-

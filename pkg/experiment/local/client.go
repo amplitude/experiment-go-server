@@ -64,7 +64,7 @@ func Initialize(apiKey string, config *Config) *Client {
 		}
 		var flagStreamApi *flagConfigStreamApiV2
 		if config.StreamUpdates {
-			flagStreamApi = NewFlagConfigStreamApiV2(apiKey, config.ServerUrl, config.StreamFlagConnTimeout)
+			flagStreamApi = NewFlagConfigStreamApiV2(apiKey, config.StreamServerUrl, config.StreamFlagConnTimeout)
 		}
 		deploymentRunner = newDeploymentRunner(
 			config, 

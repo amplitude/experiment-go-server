@@ -20,6 +20,14 @@ type flagConfigStreamApiV2 struct {
     connectionTimeout time.Duration
 	stopCh chan bool
 	lock sync.Mutex
+	newSseStreamFactory func (
+		authToken, 
+		url string,
+		connectionTimeout time.Duration,
+		keepaliveTimeout time.Duration,
+		reconnInterval time.Duration,
+		maxJitter time.Duration,
+	) *SseStream
 }
 
 func NewFlagConfigStreamApiV2(
@@ -33,6 +41,7 @@ func NewFlagConfigStreamApiV2(
 		connectionTimeout: connectionTimeout,
 		stopCh: nil,
 		lock: sync.Mutex{},
+		newSseStreamFactory: NewSseStream,
 	}
 }
 
@@ -57,18 +66,19 @@ func (api *flagConfigStreamApiV2) Connect(
 	endpoint.Path = "sdk/stream/v1/flags"
 
 	// Create Stream.
-	stream := NewSseStream("Api-Key " + api.DeploymentKey, endpoint.String(), api.connectionTimeout, streamApiKeepaliveTimeout, streamApiReconnInterval, streamApiMaxJitter, NewEventSource)
+	stream := NewSseStream("Api-Key " + api.DeploymentKey, endpoint.String(), api.connectionTimeout, streamApiKeepaliveTimeout, streamApiReconnInterval, streamApiMaxJitter)
 
 	streamMsgCh := make(chan StreamEvent)
 	streamErrCh := make(chan error)
-	// Connect.
-	stream.Connect(streamMsgCh, streamErrCh)
 
 	closeStream := func () {
 		stream.Cancel()
 		close(streamMsgCh)
 		close(streamErrCh)
 	}
+
+	// Connect.
+	stream.Connect(streamMsgCh, streamErrCh)
 
 	// Retrieve first flag configs and parse it.
 	// If any error here means init error.
@@ -96,7 +106,7 @@ func (api *flagConfigStreamApiV2) Connect(
 	case <-time.After(api.connectionTimeout):
 		// Timed out.
 		closeStream()
-		return errors.New("stream connect timeout")
+		return errors.New("flag config stream api connect timeout")
 	}
 
 	// Prep procedures for stopping.
