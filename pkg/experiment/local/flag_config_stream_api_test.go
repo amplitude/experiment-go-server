@@ -28,12 +28,11 @@ type mockSseStream struct {
 	chConnected chan bool
 }
 
-func (s *mockSseStream) Connect(messageCh chan (streamEvent), errorCh chan (error)) error {
+func (s *mockSseStream) Connect(messageCh chan (streamEvent), errorCh chan (error)) {
 	s.messageCh = messageCh
 	s.errorCh = errorCh
 
 	s.chConnected <- true
-	return nil
 }
 
 func (s *mockSseStream) Cancel() {

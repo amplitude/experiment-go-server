@@ -28,9 +28,10 @@ func TestFlagConfigPoller(t *testing.T) {
 	api.getFlagConfigsFunc = func() (map[string]*evaluation.Flag, error) {
 		return FLAG_1, nil
 	}
-	poller.Start(func(e error) {
+	err := poller.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first poll.
+	assert.Nil(t, err)
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
 
 	// Change up flags to empty.
@@ -75,9 +76,10 @@ func TestFlagConfigPollerPollingFail(t *testing.T) {
 	api.getFlagConfigsFunc = func() (map[string]*evaluation.Flag, error) {
 		return FLAG_1, nil
 	}
-	poller.Start(func(e error) {
+	err := poller.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first poll.
+	assert.Nil(t, err)
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
 
 	// Return error on poll.
@@ -98,9 +100,10 @@ func TestFlagConfigPollerPollingFail(t *testing.T) {
 	api.getFlagConfigsFunc = func() (map[string]*evaluation.Flag, error) {
 		return map[string]*evaluation.Flag{}, nil
 	}
-	poller.Start(func(e error) {
+	err = poller.Start(func(e error) {
 		errorCh <- e
 	})
+	assert.Nil(t, err)
 	assert.Equal(t, map[string]*evaluation.Flag{}, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
 }
 
@@ -143,22 +146,24 @@ func TestFlagConfigStreamer(t *testing.T) {
 		onUpdate func(map[string]*evaluation.Flag) error,
 		onError func(error),
 	) error {
-		onInitUpdate(FLAG_1)
+		err := onInitUpdate(FLAG_1)
 		updateCb = onUpdate
-		return nil
+		return err
 	}
 	api.closeFunc = func() {
 		updateCb = nil
 	}
 
 	// Streamer start normal.
-	streamer.Start(func(e error) {
+	err := streamer.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first set of flags.
+	assert.Nil(t, err)
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
 
 	// Update flags with empty set.
-	updateCb(map[string]*evaluation.Flag{})
+	err = updateCb(map[string]*evaluation.Flag{})
+	assert.Nil(t, err)
 	assert.Equal(t, map[string]*evaluation.Flag{}, flagConfigStorage.getFlagConfigs()) // Empty flags are updated.
 
 	// Stop streamer.
@@ -166,9 +171,10 @@ func TestFlagConfigStreamer(t *testing.T) {
 	assert.Nil(t, updateCb) // Make sure stream Close is called.
 
 	// Streamer start again.
-	streamer.Start(func(e error) {
+	err = streamer.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first set of flags.
+	assert.Nil(t, err)
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
 
 	streamer.Stop()
@@ -210,10 +216,10 @@ func TestFlagConfigStreamerStreamingFail(t *testing.T) {
 		onUpdate func(map[string]*evaluation.Flag) error,
 		onError func(error),
 	) error {
-		onInitUpdate(FLAG_1)
+		err := onInitUpdate(FLAG_1)
 		updateCb = onUpdate
 		errorCb = onError
-		return nil
+		return err
 	}
 	api.closeFunc = func() {
 		updateCb = nil
@@ -221,9 +227,10 @@ func TestFlagConfigStreamerStreamingFail(t *testing.T) {
 	}
 
 	// Streamer start normal.
-	streamer.Start(func(e error) {
+	err := streamer.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first set of flags.
+	assert.Nil(t, err)
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
 
 	// Stream error.
@@ -234,9 +241,10 @@ func TestFlagConfigStreamerStreamingFail(t *testing.T) {
 
 	// Streamer start again.
 	flagConfigStorage.removeIf(func(f *evaluation.Flag) bool { return true })
-	streamer.Start(func(e error) {
+	err = streamer.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first set of flags.
+	assert.Nil(t, err)
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
 
 	streamer.Stop()
@@ -250,7 +258,7 @@ type mockFlagConfigUpdater struct {
 func (u *mockFlagConfigUpdater) Start(f func(error)) error { return u.startFunc(f) }
 func (u *mockFlagConfigUpdater) Stop()                     { u.stopFunc() }
 
-func TestflagConfigFallbackRetryWrapper(t *testing.T) {
+func TestFlagConfigFallbackRetryWrapper(t *testing.T) {
 	main := mockFlagConfigUpdater{}
 	var mainOnError func(error)
 	main.startFunc = func(onError func(error)) error {
@@ -275,7 +283,7 @@ func TestflagConfigFallbackRetryWrapper(t *testing.T) {
 	assert.Nil(t, mainOnError)
 }
 
-func TestflagConfigFallbackRetryWrapperBothStartFail(t *testing.T) {
+func TestFlagConfigFallbackRetryWrapperBothStartFail(t *testing.T) {
 	main := mockFlagConfigUpdater{}
 	var mainOnError func(error)
 	main.startFunc = func(onError func(error)) error {
@@ -302,7 +310,7 @@ func TestflagConfigFallbackRetryWrapperBothStartFail(t *testing.T) {
 	assert.Nil(t, mainOnError)
 }
 
-func TestflagConfigFallbackRetryWrapperMainStartFailFallbackSuccess(t *testing.T) {
+func TestFlagConfigFallbackRetryWrapperMainStartFailFallbackSuccess(t *testing.T) {
 	main := mockFlagConfigUpdater{}
 	var mainOnError func(error)
 	main.startFunc = func(onError func(error)) error {
@@ -348,7 +356,7 @@ func TestflagConfigFallbackRetryWrapperMainStartFailFallbackSuccess(t *testing.T
 	w.Stop()
 }
 
-func TestflagConfigFallbackRetryWrapperMainUpdatingFail(t *testing.T) {
+func TestFlagConfigFallbackRetryWrapperMainUpdatingFail(t *testing.T) {
 	main := mockFlagConfigUpdater{}
 	var mainOnError func(error)
 	main.startFunc = func(onError func(error)) error {
@@ -424,7 +432,7 @@ func TestflagConfigFallbackRetryWrapperMainUpdatingFail(t *testing.T) {
 
 }
 
-func TestflagConfigFallbackRetryWrapperMainOnly(t *testing.T) {
+func TestFlagConfigFallbackRetryWrapperMainOnly(t *testing.T) {
 	main := mockFlagConfigUpdater{}
 	var mainOnError func(error)
 	main.startFunc = func(onError func(error)) error {

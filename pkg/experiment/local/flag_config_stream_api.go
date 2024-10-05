@@ -84,10 +84,7 @@ func (api *flagConfigStreamApiV2) Connect(
 	}
 
 	// Connect.
-	err = stream.Connect(streamMsgCh, streamErrCh)
-	if err != nil {
-		return err
-	}
+	stream.Connect(streamMsgCh, streamErrCh)
 
 	// Retrieve first flag configs and parse it.
 	// If any error here means init error.
@@ -152,6 +149,7 @@ func (api *flagConfigStreamApiV2) Connect(
 				}
 				if onUpdate != nil {
 					// Deliver async. Don't care about any errors.
+					//nolint:errcheck
 					go func() { onUpdate(flags) }()
 				}
 			case err := <-streamErrCh:

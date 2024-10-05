@@ -2,7 +2,7 @@ package local
 
 import (
 	"math"
-	"math/rand/v2"
+	"math/rand"
 	"time"
 )
 
@@ -42,5 +42,5 @@ func randTimeDuration(base time.Duration, jitter time.Duration) time.Duration {
 		dmiddle = math.MaxInt64 - jitter.Nanoseconds()
 	}
 	dmax := dmiddle + jitter.Nanoseconds()
-	return time.Duration(dmin + rand.Int64N(dmax-dmin))
+	return time.Duration(dmin + rand.Int63n(dmax-dmin))
 }

@@ -45,7 +45,7 @@ type streamEvent struct {
 }
 
 type stream interface {
-	Connect(messageCh chan streamEvent, errorCh chan error) error
+	Connect(messageCh chan streamEvent, errorCh chan error)
 	Cancel()
 	// For testing.
 	setNewESFactory(f func(httpClient *http.Client, url string, headers map[string]string) eventSource)
@@ -89,16 +89,16 @@ func (s *sseStream) setNewESFactory(f func(httpClient *http.Client, url string, 
 func (s *sseStream) Connect(
 	messageCh chan streamEvent,
 	errorCh chan error,
-) error {
+) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	return s.connectInternal(messageCh, errorCh)
+	s.connectInternal(messageCh, errorCh)
 }
 
 func (s *sseStream) connectInternal(
 	messageCh chan streamEvent,
 	errorCh chan error,
-) error {
+) {
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancelClientContext = &cancel
 
@@ -216,8 +216,6 @@ func (s *sseStream) connectInternal(
 			return
 		}
 	})
-
-	return nil
 }
 
 func (s *sseStream) Cancel() {

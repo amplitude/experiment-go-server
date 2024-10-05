@@ -193,9 +193,7 @@ func (p *flagConfigPoller) Start(onError func(error)) error {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
-	if err := p.stopInternal(); err != nil {
-		return err
-	}
+	p.stopInternal()
 
 	if err := p.updateFlagConfigs(); err != nil {
 		p.log.Error("Initial updateFlagConfigs failed: %v", err)
@@ -233,12 +231,11 @@ func (p *flagConfigPoller) updateFlagConfigs() error {
 	return p.update(flagConfigs)
 }
 
-func (p *flagConfigPoller) stopInternal() error {
+func (p *flagConfigPoller) stopInternal() {
 	if p.poller != nil {
 		close(p.poller.shutdown)
 		p.poller = nil
 	}
-	return nil
 }
 
 func (p *flagConfigPoller) Stop() {
@@ -300,7 +297,8 @@ func (w *flagConfigFallbackRetryWrapper) Start(onError func(error)) error {
 		w.log.Error("main updater updating err, starting fallback if available. error: ", err)
 		go func() { w.scheduleRetry() }() // Don't care if poller start error or not, always retry.
 		if w.fallbackUpdater != nil {
-			w.fallbackUpdater.Start(nil)
+			//nolint:errcheck
+			w.fallbackUpdater.Start(nil) // Don't care if fallback start success or fail.
 		}
 	})
 	if err == nil {
@@ -359,7 +357,8 @@ func (w *flagConfigFallbackRetryWrapper) scheduleRetry() {
 		err := w.mainUpdater.Start(func(error) {
 			go func() { w.scheduleRetry() }() // Don't care if poller start error or not, always retry.
 			if w.fallbackUpdater != nil {
-				w.fallbackUpdater.Start(nil)
+				//nolint:errcheck
+				w.fallbackUpdater.Start(nil) // Don't care if fallback start success or fail.
 			}
 		})
 		if err == nil {
