@@ -14,7 +14,7 @@ func createTestPollerObjs() (mockFlagConfigApi, flagConfigStorage, cohortStorage
 	cohortDownloadAPI := &mockCohortDownloadApi{}
 	flagConfigStorage := newInMemoryFlagConfigStorage()
 	cohortStorage := newInMemoryCohortStorage()
-	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage)
+	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, true)
 	return api, flagConfigStorage, cohortStorage, cohortLoader
 }
 
@@ -128,7 +128,7 @@ func createTestStreamerObjs() (mockFlagConfigStreamApi, flagConfigStorage, cohor
 	cohortDownloadAPI := &mockCohortDownloadApi{}
 	flagConfigStorage := newInMemoryFlagConfigStorage()
 	cohortStorage := newInMemoryCohortStorage()
-	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage)
+	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, true)
 	return api, flagConfigStorage, cohortStorage, cohortLoader
 }
 

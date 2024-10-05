@@ -2,11 +2,15 @@ package local
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/amplitude/experiment-go-server/internal/logger"
 )
 
 type cohortLoader struct {
+	log *logger.Log
 	cohortDownloadApi cohortDownloadApi
 	cohortStorage     cohortStorage
 	jobs              sync.Map
@@ -14,7 +18,7 @@ type cohortLoader struct {
 	lockJobs          sync.Mutex
 }
 
-func newCohortLoader(cohortDownloadApi cohortDownloadApi, cohortStorage cohortStorage) *cohortLoader {
+func newCohortLoader(cohortDownloadApi cohortDownloadApi, cohortStorage cohortStorage, debug bool) *cohortLoader {
 	return &cohortLoader{
 		cohortDownloadApi: cohortDownloadApi,
 		cohortStorage:     cohortStorage,
@@ -23,6 +27,7 @@ func newCohortLoader(cohortDownloadApi cohortDownloadApi, cohortStorage cohortSt
 				return &CohortLoaderTask{}
 			},
 		},
+		log: logger.New(debug),
 	}
 }
 
@@ -111,10 +116,10 @@ func (cl *cohortLoader) downloadCohorts(cohortIDs map[string]struct{}) {
 	var errorMessages []string
 	for err := range errorChan {
 		errorMessages = append(errorMessages, err.Error())
-		// dr.log.Error("Error downloading cohort: %v", err)
+		cl.log.Error("Error downloading cohort: %v", err)
 	}
 
 	if len(errorMessages) > 0 {
-		// dr.log.Error("One or more cohorts failed to download:\n%s", strings.Join(errorMessages, "\n"))
+		cl.log.Error("One or more cohorts failed to download:\n%s", strings.Join(errorMessages, "\n"))
 	}
 }

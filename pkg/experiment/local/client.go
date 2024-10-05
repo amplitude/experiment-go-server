@@ -60,7 +60,7 @@ func Initialize(apiKey string, config *Config) *Client {
 		var deploymentRunner *deploymentRunner
 		if config.CohortSyncConfig != nil {
 			cohortDownloadApi := newDirectCohortDownloadApi(config.CohortSyncConfig.ApiKey, config.CohortSyncConfig.SecretKey, config.CohortSyncConfig.MaxCohortSize, config.CohortSyncConfig.CohortServerUrl, config.Debug)
-			cohortLoader = newCohortLoader(cohortDownloadApi, cohortStorage)
+			cohortLoader = newCohortLoader(cohortDownloadApi, cohortStorage, config.Debug)
 		}
 		var flagStreamApi *flagConfigStreamApiV2
 		if config.StreamUpdates {
