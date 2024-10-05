@@ -64,11 +64,11 @@ func Initialize(apiKey string, config *Config) *Client {
 		}
 		var flagStreamApi *flagConfigStreamApiV2
 		if config.StreamUpdates {
-			flagStreamApi = NewFlagConfigStreamApiV2(apiKey, config.StreamServerUrl, config.StreamFlagConnTimeout)
+			flagStreamApi = newFlagConfigStreamApiV2(apiKey, config.StreamServerUrl, config.StreamFlagConnTimeout)
 		}
 		deploymentRunner = newDeploymentRunner(
 			config,
-			NewFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout),
+			newFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout),
 			flagStreamApi, flagConfigStorage, cohortStorage, cohortLoader)
 		client = &Client{
 			log:               log,

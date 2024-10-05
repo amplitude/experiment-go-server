@@ -121,7 +121,7 @@ type flagConfigStreamer struct {
 	lock                sync.Mutex
 }
 
-func NewFlagConfigStreamer(
+func newFlagConfigStreamer(
 	flagConfigStreamApi flagConfigStreamApi,
 	config *Config,
 	flagConfigStorage flagConfigStorage,
@@ -175,7 +175,7 @@ type flagConfigPoller struct {
 	lock          sync.Mutex
 }
 
-func NewFlagConfigPoller(
+func newFlagConfigPoller(
 	flagConfigApi flagConfigApi,
 	config *Config,
 	flagConfigStorage flagConfigStorage,
@@ -249,7 +249,7 @@ func (p *flagConfigPoller) Stop() {
 
 // A wrapper around flag config updaters to retry and fallback.
 // If the main updater fails, it will fallback to the fallback updater and main updater enters retry loop.
-type FlagConfigFallbackRetryWrapper struct {
+type flagConfigFallbackRetryWrapper struct {
 	log             *logger.Log
 	mainUpdater     flagConfigUpdater
 	fallbackUpdater flagConfigUpdater
@@ -259,14 +259,14 @@ type FlagConfigFallbackRetryWrapper struct {
 	lock            sync.Mutex
 }
 
-func NewFlagConfigFallbackRetryWrapper(
+func newflagConfigFallbackRetryWrapper(
 	mainUpdater flagConfigUpdater,
 	fallbackUpdater flagConfigUpdater,
 	retryDelay time.Duration,
 	maxJitter time.Duration,
 	debug bool,
 ) flagConfigUpdater {
-	return &FlagConfigFallbackRetryWrapper{
+	return &flagConfigFallbackRetryWrapper{
 		log:             logger.New(debug),
 		mainUpdater:     mainUpdater,
 		fallbackUpdater: fallbackUpdater,
@@ -283,9 +283,9 @@ func NewFlagConfigFallbackRetryWrapper(
 //
 // Since the wrapper retries, so there will never be error case.
 // Thus, onError will never be called.
-func (w *FlagConfigFallbackRetryWrapper) Start(onError func(error)) error {
-	// if (mainUpdater is FlagConfigFallbackRetryWrapper) {
-	//     throw Error("Do not use FlagConfigFallbackRetryWrapper as main updater. Fallback updater will never be used. Rewrite retry and fallback logic.")
+func (w *flagConfigFallbackRetryWrapper) Start(onError func(error)) error {
+	// if (mainUpdater is flagConfigFallbackRetryWrapper) {
+	//     throw Error("Do not use flagConfigFallbackRetryWrapper as main updater. Fallback updater will never be used. Rewrite retry and fallback logic.")
 	// }
 
 	w.lock.Lock()
@@ -325,7 +325,7 @@ func (w *FlagConfigFallbackRetryWrapper) Start(onError func(error)) error {
 	return nil
 }
 
-func (w *FlagConfigFallbackRetryWrapper) Stop() {
+func (w *flagConfigFallbackRetryWrapper) Stop() {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
@@ -339,7 +339,7 @@ func (w *FlagConfigFallbackRetryWrapper) Stop() {
 	}
 }
 
-func (w *FlagConfigFallbackRetryWrapper) scheduleRetry() {
+func (w *flagConfigFallbackRetryWrapper) scheduleRetry() {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 

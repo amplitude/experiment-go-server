@@ -40,7 +40,7 @@ func (s *mockEventSource) SubscribeChanRawWithContext(ctx context.Context, ch ch
 	return s.subscribeChanError
 }
 
-func (s *mockEventSource) mockEventSourceFactory(httpClient *http.Client, url string, headers map[string]string) EventSource {
+func (s *mockEventSource) mockEventSourceFactory(httpClient *http.Client, url string, headers map[string]string) eventSource {
 	s.httpClient = httpClient
 	s.url = url
 	s.headers = headers
@@ -49,9 +49,9 @@ func (s *mockEventSource) mockEventSourceFactory(httpClient *http.Client, url st
 
 func TestStream(t *testing.T) {
 	var s = mockEventSource{chConnected: make(chan bool)}
-	client := NewSseStream("authToken", "url", 2*time.Second, 4*time.Second, 6*time.Second, 1*time.Second)
+	client := newSseStream("authToken", "url", 2*time.Second, 4*time.Second, 6*time.Second, 1*time.Second)
 	client.setNewESFactory(s.mockEventSourceFactory)
-	messageCh := make(chan StreamEvent)
+	messageCh := make(chan streamEvent)
 	errorCh := make(chan error)
 
 	// Make connection.
@@ -106,9 +106,9 @@ func TestStream(t *testing.T) {
 
 func TestStreamConnTimeout(t *testing.T) {
 	var s = mockEventSource{chConnected: make(chan bool)}
-	client := NewSseStream("", "", 2*time.Second, 4*time.Second, 6*time.Second, 1*time.Second)
+	client := newSseStream("", "", 2*time.Second, 4*time.Second, 6*time.Second, 1*time.Second)
 	client.setNewESFactory(s.mockEventSourceFactory)
-	messageCh := make(chan StreamEvent)
+	messageCh := make(chan streamEvent)
 	errorCh := make(chan error)
 
 	// Make connection.
@@ -123,9 +123,9 @@ func TestStreamConnTimeout(t *testing.T) {
 
 func TestStreamKeepAliveTimeout(t *testing.T) {
 	var s = mockEventSource{chConnected: make(chan bool)}
-	client := NewSseStream("", "", 2*time.Second, 1*time.Second, 6*time.Second, 1*time.Second)
+	client := newSseStream("", "", 2*time.Second, 1*time.Second, 6*time.Second, 1*time.Second)
 	client.setNewESFactory(s.mockEventSourceFactory)
-	messageCh := make(chan StreamEvent)
+	messageCh := make(chan streamEvent)
 	errorCh := make(chan error)
 
 	// Make connection.
@@ -158,9 +158,9 @@ func TestStreamKeepAliveTimeout(t *testing.T) {
 
 func TestStreamReconnectsTimeout(t *testing.T) {
 	var s = mockEventSource{chConnected: make(chan bool)}
-	client := NewSseStream("", "", 2*time.Second, 3*time.Second, 2*time.Second, 0*time.Second)
+	client := newSseStream("", "", 2*time.Second, 3*time.Second, 2*time.Second, 0*time.Second)
 	client.setNewESFactory(s.mockEventSourceFactory)
-	messageCh := make(chan StreamEvent)
+	messageCh := make(chan streamEvent)
 	errorCh := make(chan error)
 
 	// Make connection.
@@ -193,9 +193,9 @@ func TestStreamReconnectsTimeout(t *testing.T) {
 
 func TestStreamConnectAndCancelImmediately(t *testing.T) {
 	var s = mockEventSource{chConnected: make(chan bool)}
-	client := NewSseStream("", "", 2*time.Second, 3*time.Second, 2*time.Second, 0*time.Second)
+	client := newSseStream("", "", 2*time.Second, 3*time.Second, 2*time.Second, 0*time.Second)
 	client.setNewESFactory(s.mockEventSourceFactory)
-	messageCh := make(chan StreamEvent)
+	messageCh := make(chan streamEvent)
 	errorCh := make(chan error)
 
 	// Make connection and cancel immediately.
@@ -214,9 +214,9 @@ func TestStreamConnectAndCancelImmediately(t *testing.T) {
 
 func TestStreamChannelCloseOk(t *testing.T) {
 	var s = mockEventSource{chConnected: make(chan bool)}
-	client := NewSseStream("", "", 1*time.Second, 1*time.Second, 1*time.Second, 0*time.Second)
+	client := newSseStream("", "", 1*time.Second, 1*time.Second, 1*time.Second, 0*time.Second)
 	client.setNewESFactory(s.mockEventSourceFactory)
-	messageCh := make(chan StreamEvent)
+	messageCh := make(chan streamEvent)
 	errorCh := make(chan error)
 
 	// Close channels.
@@ -248,9 +248,9 @@ func TestStreamChannelCloseOk(t *testing.T) {
 
 func TestStreamDisconnectErrorPasses(t *testing.T) {
 	var s = mockEventSource{chConnected: make(chan bool)}
-	client := NewSseStream("", "", 1*time.Second, 1*time.Second, 1*time.Second, 0*time.Second)
+	client := newSseStream("", "", 1*time.Second, 1*time.Second, 1*time.Second, 0*time.Second)
 	client.setNewESFactory(s.mockEventSourceFactory)
-	messageCh := make(chan StreamEvent)
+	messageCh := make(chan streamEvent)
 	errorCh := make(chan error)
 
 	// Make connection.
@@ -274,9 +274,9 @@ func TestStreamDisconnectErrorPasses(t *testing.T) {
 
 func TestStreamConnectErrorPasses(t *testing.T) {
 	var s = mockEventSource{chConnected: make(chan bool)}
-	client := NewSseStream("", "", 1*time.Second, 1*time.Second, 1*time.Second, 0*time.Second)
+	client := newSseStream("", "", 1*time.Second, 1*time.Second, 1*time.Second, 0*time.Second)
 	client.setNewESFactory(s.mockEventSourceFactory)
-	messageCh := make(chan StreamEvent)
+	messageCh := make(chan streamEvent)
 	errorCh := make(chan error)
 
 	// Make connection.

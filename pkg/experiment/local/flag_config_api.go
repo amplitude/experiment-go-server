@@ -23,7 +23,7 @@ type flagConfigApiV2 struct {
 	FlagConfigPollerRequestTimeoutMillis time.Duration
 }
 
-func NewFlagConfigApiV2(deploymentKey, serverURL string, flagConfigPollerRequestTimeoutMillis time.Duration) *flagConfigApiV2 {
+func newFlagConfigApiV2(deploymentKey, serverURL string, flagConfigPollerRequestTimeoutMillis time.Duration) *flagConfigApiV2 {
 	return &flagConfigApiV2{
 		DeploymentKey:                        deploymentKey,
 		ServerURL:                            serverURL,

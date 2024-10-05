@@ -21,14 +21,14 @@ type mockSseStream struct {
 	maxJitter         time.Duration
 
 	// Channels to emit messages to simulate new events received through stream.
-	messageCh chan (StreamEvent)
+	messageCh chan (streamEvent)
 	errorCh   chan (error)
 
 	// Channel to tell there's a connection call.
 	chConnected chan bool
 }
 
-func (s *mockSseStream) Connect(messageCh chan (StreamEvent), errorCh chan (error)) error {
+func (s *mockSseStream) Connect(messageCh chan (streamEvent), errorCh chan (error)) error {
 	s.messageCh = messageCh
 	s.errorCh = errorCh
 
@@ -39,7 +39,7 @@ func (s *mockSseStream) Connect(messageCh chan (StreamEvent), errorCh chan (erro
 func (s *mockSseStream) Cancel() {
 }
 
-func (s *mockSseStream) setNewESFactory(f func(httpClient *http.Client, url string, headers map[string]string) EventSource) {
+func (s *mockSseStream) setNewESFactory(f func(httpClient *http.Client, url string, headers map[string]string) eventSource) {
 }
 
 func (s *mockSseStream) newSseStreamFactory(
@@ -49,7 +49,7 @@ func (s *mockSseStream) newSseStreamFactory(
 	keepaliveTimeout time.Duration,
 	reconnInterval time.Duration,
 	maxJitter time.Duration,
-) Stream {
+) stream {
 	s.authToken = authToken
 	s.url = url
 	s.connectionTimeout = connectionTimeout
@@ -64,7 +64,7 @@ var FLAG_1, _ = parseData(FLAG_1_STR)
 
 func TestFlagConfigStreamApi(t *testing.T) {
 	sse := mockSseStream{chConnected: make(chan bool)}
-	api := NewFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
+	api := newFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
 	api.newSseStreamFactory = sse.newSseStreamFactory
 	receivedMsgCh := make(chan map[string]*evaluation.Flag)
 	receivedErrCh := make(chan error)
@@ -72,7 +72,7 @@ func TestFlagConfigStreamApi(t *testing.T) {
 	go func() {
 		// On connect.
 		<-sse.chConnected
-		sse.messageCh <- StreamEvent{data: FLAG_1_STR}
+		sse.messageCh <- streamEvent{data: FLAG_1_STR}
 		assert.Equal(t, FLAG_1, <-receivedMsgCh)
 	}()
 	err := api.Connect(
@@ -88,9 +88,9 @@ func TestFlagConfigStreamApi(t *testing.T) {
 	)
 	assert.Nil(t, err)
 
-	go func() { sse.messageCh <- StreamEvent{data: FLAG_1_STR} }()
+	go func() { sse.messageCh <- streamEvent{data: FLAG_1_STR} }()
 	assert.Equal(t, FLAG_1, <-receivedMsgCh)
-	go func() { sse.messageCh <- StreamEvent{data: FLAG_1_STR} }()
+	go func() { sse.messageCh <- streamEvent{data: FLAG_1_STR} }()
 	assert.Equal(t, FLAG_1, <-receivedMsgCh)
 
 	api.Close()
@@ -98,7 +98,7 @@ func TestFlagConfigStreamApi(t *testing.T) {
 
 func TestFlagConfigStreamApiErrorNoInitialFlags(t *testing.T) {
 	sse := mockSseStream{chConnected: make(chan bool)}
-	api := NewFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
+	api := newFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
 	api.newSseStreamFactory = sse.newSseStreamFactory
 
 	go func() {
@@ -111,7 +111,7 @@ func TestFlagConfigStreamApiErrorNoInitialFlags(t *testing.T) {
 
 func TestFlagConfigStreamApiErrorCorruptInitialFlags(t *testing.T) {
 	sse := mockSseStream{chConnected: make(chan bool)}
-	api := NewFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
+	api := newFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
 	api.newSseStreamFactory = sse.newSseStreamFactory
 	receivedMsgCh := make(chan map[string]*evaluation.Flag)
 	receivedErrCh := make(chan error)
@@ -119,7 +119,7 @@ func TestFlagConfigStreamApiErrorCorruptInitialFlags(t *testing.T) {
 	go func() {
 		// On connect.
 		<-sse.chConnected
-		sse.messageCh <- StreamEvent{data: []byte("bad data")}
+		sse.messageCh <- streamEvent{data: []byte("bad data")}
 		<-receivedMsgCh // Should hang as no good data was received.
 		assert.Fail(t, "Bad message went through")
 	}()
@@ -133,7 +133,7 @@ func TestFlagConfigStreamApiErrorCorruptInitialFlags(t *testing.T) {
 
 func TestFlagConfigStreamApiErrorInitialFlagsUpdateFailStopsApi(t *testing.T) {
 	sse := mockSseStream{chConnected: make(chan bool)}
-	api := NewFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
+	api := newFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
 	api.newSseStreamFactory = sse.newSseStreamFactory
 	receivedMsgCh := make(chan map[string]*evaluation.Flag)
 	receivedErrCh := make(chan error)
@@ -141,7 +141,7 @@ func TestFlagConfigStreamApiErrorInitialFlagsUpdateFailStopsApi(t *testing.T) {
 	go func() {
 		// On connect.
 		<-sse.chConnected
-		sse.messageCh <- StreamEvent{data: FLAG_1_STR}
+		sse.messageCh <- streamEvent{data: FLAG_1_STR}
 		<-receivedMsgCh // Should hang as no updates was received.
 		assert.Fail(t, "Bad message went through")
 	}()
@@ -155,7 +155,7 @@ func TestFlagConfigStreamApiErrorInitialFlagsUpdateFailStopsApi(t *testing.T) {
 
 func TestFlagConfigStreamApiErrorInitialFlagsFutureUpdateFailDoesntStopApi(t *testing.T) {
 	sse := mockSseStream{chConnected: make(chan bool)}
-	api := NewFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
+	api := newFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
 	api.newSseStreamFactory = sse.newSseStreamFactory
 	receivedMsgCh := make(chan map[string]*evaluation.Flag)
 	receivedErrCh := make(chan error)
@@ -163,7 +163,7 @@ func TestFlagConfigStreamApiErrorInitialFlagsFutureUpdateFailDoesntStopApi(t *te
 	go func() {
 		// On connect.
 		<-sse.chConnected
-		sse.messageCh <- StreamEvent{data: FLAG_1_STR}
+		sse.messageCh <- streamEvent{data: FLAG_1_STR}
 		assert.Equal(t, FLAG_1, <-receivedMsgCh) // Should hang as no updates was received.
 	}()
 	err := api.Connect(
@@ -173,14 +173,14 @@ func TestFlagConfigStreamApiErrorInitialFlagsFutureUpdateFailDoesntStopApi(t *te
 	)
 	assert.Nil(t, err)
 	// Send an update, this should call onUpdate cb which fails.
-	sse.messageCh <- StreamEvent{data: FLAG_1_STR}
+	sse.messageCh <- streamEvent{data: FLAG_1_STR}
 	// Make sure channel is not closed.
-	sse.messageCh <- StreamEvent{data: FLAG_1_STR}
+	sse.messageCh <- streamEvent{data: FLAG_1_STR}
 }
 
 func TestFlagConfigStreamApiErrorDuringStreaming(t *testing.T) {
 	sse := mockSseStream{chConnected: make(chan bool)}
-	api := NewFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
+	api := newFlagConfigStreamApiV2("deploymentkey", "serverurl", 1*time.Second)
 	api.newSseStreamFactory = sse.newSseStreamFactory
 	receivedMsgCh := make(chan map[string]*evaluation.Flag)
 	receivedErrCh := make(chan error)
@@ -188,7 +188,7 @@ func TestFlagConfigStreamApiErrorDuringStreaming(t *testing.T) {
 	go func() {
 		// On connect.
 		<-sse.chConnected
-		sse.messageCh <- StreamEvent{data: FLAG_1_STR}
+		sse.messageCh <- streamEvent{data: FLAG_1_STR}
 		assert.Equal(t, FLAG_1, <-receivedMsgCh)
 	}()
 	err := api.Connect(
@@ -203,6 +203,6 @@ func TestFlagConfigStreamApiErrorDuringStreaming(t *testing.T) {
 
 	// The message channel should be closed.
 	defer mutePanic(nil)
-	sse.messageCh <- StreamEvent{data: FLAG_1_STR}
+	sse.messageCh <- streamEvent{data: FLAG_1_STR}
 	assert.Fail(t, "Unexpected message after error")
 }

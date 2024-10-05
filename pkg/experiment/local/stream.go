@@ -25,13 +25,13 @@ func mutePanic(f func()) {
 }
 
 // This is a boiled down version of sse.Client.
-type EventSource interface {
+type eventSource interface {
 	OnDisconnect(fn sse.ConnCallback)
 	OnConnect(fn sse.ConnCallback)
 	SubscribeChanRawWithContext(ctx context.Context, ch chan *sse.Event) error
 }
 
-func newEventSource(httpClient *http.Client, url string, headers map[string]string) EventSource {
+func newEventSource(httpClient *http.Client, url string, headers map[string]string) eventSource {
 	client := sse.NewClient(url)
 	client.Connection = httpClient
 	client.Headers = headers
@@ -40,22 +40,18 @@ func newEventSource(httpClient *http.Client, url string, headers map[string]stri
 	return client
 }
 
-type StreamEvent struct {
+type streamEvent struct {
 	data []byte
 }
 
-type Stream interface {
-	Connect(messageCh chan StreamEvent, errorCh chan error) error
+type stream interface {
+	Connect(messageCh chan streamEvent, errorCh chan error) error
 	Cancel()
 	// For testing.
-	setNewESFactory(f func(httpClient *http.Client, url string, headers map[string]string) EventSource)
+	setNewESFactory(f func(httpClient *http.Client, url string, headers map[string]string) eventSource)
 }
 
-func (s *SseStream) setNewESFactory(f func(httpClient *http.Client, url string, headers map[string]string) EventSource) {
-	s.newESFactory = f
-}
-
-type SseStream struct {
+type sseStream struct {
 	AuthToken           string
 	url                 string
 	connectionTimeout   time.Duration
@@ -64,18 +60,18 @@ type SseStream struct {
 	maxJitter           time.Duration
 	lock                sync.Mutex
 	cancelClientContext *context.CancelFunc
-	newESFactory        func(httpClient *http.Client, url string, headers map[string]string) EventSource
+	newESFactory        func(httpClient *http.Client, url string, headers map[string]string) eventSource
 }
 
-func NewSseStream(
+func newSseStream(
 	authToken,
 	url string,
 	connectionTimeout time.Duration,
 	keepaliveTimeout time.Duration,
 	reconnInterval time.Duration,
 	maxJitter time.Duration,
-) Stream {
-	return &SseStream{
+) stream {
+	return &sseStream{
 		AuthToken:         authToken,
 		url:               url,
 		connectionTimeout: connectionTimeout,
@@ -86,8 +82,12 @@ func NewSseStream(
 	}
 }
 
-func (s *SseStream) Connect(
-	messageCh chan StreamEvent,
+func (s *sseStream) setNewESFactory(f func(httpClient *http.Client, url string, headers map[string]string) eventSource) {
+	s.newESFactory = f
+}
+
+func (s *sseStream) Connect(
+	messageCh chan streamEvent,
 	errorCh chan error,
 ) error {
 	s.lock.Lock()
@@ -95,8 +95,8 @@ func (s *SseStream) Connect(
 	return s.connectInternal(messageCh, errorCh)
 }
 
-func (s *SseStream) connectInternal(
-	messageCh chan StreamEvent,
+func (s *sseStream) connectInternal(
+	messageCh chan streamEvent,
 	errorCh chan error,
 ) error {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -196,7 +196,7 @@ func (s *SseStream) connectInternal(
 				// Possible write to closed channel
 				// If channel closed, cancel.
 				defer mutePanic(cancelWithLock)
-				messageCh <- StreamEvent{event.Data}
+				messageCh <- streamEvent{event.Data}
 			case <-time.After(s.keepaliveTimeout): // Keep alive timeout.
 				cancelWithLock()
 				defer mutePanic(nil)
@@ -220,7 +220,7 @@ func (s *SseStream) connectInternal(
 	return nil
 }
 
-func (s *SseStream) Cancel() {
+func (s *sseStream) Cancel() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if s.cancelClientContext != nil {

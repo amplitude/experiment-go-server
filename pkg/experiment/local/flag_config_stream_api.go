@@ -36,10 +36,10 @@ type flagConfigStreamApiV2 struct {
 		keepaliveTimeout time.Duration,
 		reconnInterval time.Duration,
 		maxJitter time.Duration,
-	) Stream
+	) stream
 }
 
-func NewFlagConfigStreamApiV2(
+func newFlagConfigStreamApiV2(
 	deploymentKey string,
 	serverURL string,
 	connectionTimeout time.Duration,
@@ -50,7 +50,7 @@ func NewFlagConfigStreamApiV2(
 		connectionTimeout:   connectionTimeout,
 		stopCh:              nil,
 		lock:                sync.Mutex{},
-		newSseStreamFactory: NewSseStream,
+		newSseStreamFactory: newSseStream,
 	}
 }
 
@@ -74,7 +74,7 @@ func (api *flagConfigStreamApiV2) Connect(
 	// Create Stream.
 	stream := api.newSseStreamFactory("Api-Key "+api.DeploymentKey, endpoint.String(), api.connectionTimeout, streamApiKeepaliveTimeout, streamApiReconnInterval, streamApiMaxJitter)
 
-	streamMsgCh := make(chan StreamEvent)
+	streamMsgCh := make(chan streamEvent)
 	streamErrCh := make(chan error)
 
 	closeStream := func() {
