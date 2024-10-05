@@ -49,8 +49,6 @@ func (s *mockEventSource) mockEventSourceFactory(httpClient *http.Client, url st
 
 func TestStream(t *testing.T) {
 	var s = mockEventSource{chConnected: make(chan bool)}
-	// 	assert.Equal(t, 2 * time.Second, connTimeout)
-	// 	assert.Equal(t, 7 * time.Second, maxTime)
 	client := NewSseStream("authToken", "url", 2 * time.Second, 4 * time.Second, 6 * time.Second, 1 * time.Second)
 	client.setNewESFactory(s.mockEventSourceFactory)
 	messageCh := make(chan StreamEvent)
@@ -88,18 +86,18 @@ func TestStream(t *testing.T) {
 	client.Cancel()
 	assert.True(t, errors.Is(s.ctx.Err(), context.Canceled))
 
-	// No message is passed through even it's received.
+	// No message is passed through after cancel even it's received.
 	go func() {s.messageChan <- &sse.Event{Data: []byte("data4")}}()
 
 	// Ensure no message after cancel.
 	select {
 	case msg, ok := <-messageCh:
 		if ok {
-			assert.Fail(t, "Unexpected data message received", msg)
+			assert.Fail(t, "Unexpected data message received", string(msg.data))
 		}
-	case msg, ok := <-errorCh:
+	case err, ok := <-errorCh:
 		if ok {
-			assert.Fail(t, "Unexpected error message received", msg)
+			assert.Fail(t, "Unexpected error message received", err)
 		}
 	case <-time.After(1 * time.Second):
 		// No message received within the timeout, as expected
@@ -188,7 +186,7 @@ func TestStreamReconnectsTimeout(t *testing.T) {
 		if ok {
 			assert.Fail(t, "Unexpected message received after disconnect", msg)
 		}
-	case <-time.After(6 * time.Second):
+	case <-time.After(3 * time.Second):
 		// No message received within the timeout, as expected
 	}
 }
@@ -230,6 +228,7 @@ func TestStreamChannelCloseOk(t *testing.T) {
 	<-s.chConnected
 	s.onConnCb(nil)
 	
+	// Test no message received for closed channel.
 	s.messageChan <- &sse.Event{Data: []byte("data1")}
 	assert.True(t, errors.Is(s.ctx.Err(), context.Canceled))
 

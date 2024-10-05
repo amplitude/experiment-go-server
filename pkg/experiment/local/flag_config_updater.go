@@ -1,7 +1,6 @@
 package local
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -251,6 +250,7 @@ func (p *flagConfigPoller) Stop() {
 // A wrapper around flag config updaters to retry and fallback.
 // If the main updater fails, it will fallback to the fallback updater and main updater enters retry loop.
 type FlagConfigFallbackRetryWrapper struct {
+	log               *logger.Log
     mainUpdater flagConfigUpdater
     fallbackUpdater flagConfigUpdater
     retryDelay time.Duration
@@ -263,8 +263,10 @@ func NewFlagConfigFallbackRetryWrapper(
     fallbackUpdater flagConfigUpdater,
     retryDelay time.Duration,
     maxJitter time.Duration,
+	debug bool,
 ) flagConfigUpdater {
 	return &FlagConfigFallbackRetryWrapper{
+		log: logger.New(debug),
 		mainUpdater: mainUpdater,
 		fallbackUpdater: fallbackUpdater,
 		retryDelay: retryDelay,
@@ -291,7 +293,8 @@ func (w *FlagConfigFallbackRetryWrapper) Start(onError func (error)) error {
 		w.retryTimer = nil
 	}
 
-	err := w.mainUpdater.Start(func (error) {
+	err := w.mainUpdater.Start(func (err error) {
+		w.log.Error("main updater updating err, starting fallback if available. error: ", err)
 		go func() {w.scheduleRetry()}() // Don't care if poller start error or not, always retry.
 		if (w.fallbackUpdater != nil) {
 			w.fallbackUpdater.Start(nil)
@@ -304,14 +307,14 @@ func (w *FlagConfigFallbackRetryWrapper) Start(onError func (error)) error {
 		}
 		return nil
 	}
-	fmt.Println("main start err", err)
-	// Logger.e("Primary flag configs start failed, start fallback. Error: ", t)
+	w.log.Debug("main updater start err, starting fallback. error: ", err)
 	if (w.fallbackUpdater == nil) {
 		// No fallback, main start failed is wrapper start fail
 		return err
 	}
 	err = w.fallbackUpdater.Start(nil)
 	if (err != nil) {
+		w.log.Debug("fallback updater start failed. error: ", err)
 		return err
 	}
 
@@ -349,6 +352,7 @@ func (w *FlagConfigFallbackRetryWrapper) scheduleRetry() {
 			w.retryTimer = nil
 		}
 
+		w.log.Debug("main updater retry start")
 		err := w.mainUpdater.Start(func (error) {
 			go func() {w.scheduleRetry()}() // Don't care if poller start error or not, always retry.
 			if (w.fallbackUpdater != nil) {
@@ -357,12 +361,12 @@ func (w *FlagConfigFallbackRetryWrapper) scheduleRetry() {
 		})
 		if (err == nil) {
 			// Main start success, stop fallback.
+			w.log.Debug("main updater retry start success")
 			if (w.fallbackUpdater != nil) {
 				w.fallbackUpdater.Stop()
 			}
 			return
 		}
-		fmt.Println("retrying failed", err)
 		
 		go func() {w.scheduleRetry()}()
 	})

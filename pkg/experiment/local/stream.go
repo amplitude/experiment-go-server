@@ -63,7 +63,7 @@ type SseStream struct {
     reconnInterval time.Duration
     maxJitter time.Duration
 	lock                sync.Mutex
-	cancelClientContext context.CancelFunc
+	cancelClientContext *context.CancelFunc
 	newESFactory func (httpClient *http.Client, url string, headers map[string]string) EventSource
 }
 
@@ -100,7 +100,7 @@ func (s *SseStream) connectInternal(
 	errorCh chan error,
 ) error {
 	ctx, cancel := context.WithCancel(context.Background())
-	s.cancelClientContext = cancel
+	s.cancelClientContext = &cancel
 
 	transport := &http.Transport{
 		Dial: (&net.Dialer{
@@ -137,7 +137,7 @@ func (s *SseStream) connectInternal(
 		case <-ctx.Done(): // Cancelled.
 			return
 		default:
-			connectCh <- true
+			go func() {connectCh <- true} ()
 		}
 	})
 	go func() {
@@ -149,31 +149,45 @@ func (s *SseStream) connectInternal(
 		}
 	}()
 
+	cancelWithLock := func() {
+		s.lock.Lock()
+		defer s.lock.Unlock()
+		cancel()
+		if (s.cancelClientContext == &cancel) {
+			s.cancelClientContext = nil
+		}
+	}
 	go func() {
 		// First wait for connect.
 		select {
 		case <-ctx.Done(): // Cancelled.
 			return
 		case err := <-esConnectErrCh: // Channel subscribe error.
-			cancel()
+			cancelWithLock()
 			defer mutePanic(nil)
 			errorCh <- err
 			return
 		case <-time.After(s.connectionTimeout): // Timeout.
-			cancel()
+			cancelWithLock()
 			defer mutePanic(nil)
 			errorCh <- errors.New("stream connection timeout")
 			return
 		case <-connectCh: // Connected callbacked.
 		}
 		for {
+			select { // Forced priority on context done.
+			case <-ctx.Done(): // Cancelled.
+				return
+			default:
+			}
 			select {
 			case <-ctx.Done(): // Cancelled.
 				return
 			case <- esDisconnectCh: // Disconnected.
-				cancel()
+				cancelWithLock()
 				defer mutePanic(nil)
 				errorCh <- errors.New("stream disconnected error")
+				return
 			case event := <-esMsgCh: // Message received.
 				if (len(event.Data) == 1 && event.Data[0] == STREAM_KEEP_ALIVE_BYTE) {
 					// Keep alive. 
@@ -181,10 +195,10 @@ func (s *SseStream) connectInternal(
 				}
 				// Possible write to closed channel
 				// If channel closed, cancel.
-				defer mutePanic(cancel)
+				defer mutePanic(cancelWithLock)
 				messageCh <- StreamEvent{event.Data}
 			case <-time.After(s.keepaliveTimeout): // Keep alive timeout.
-				cancel()
+				cancelWithLock()
 				defer mutePanic(nil)
 				errorCh <- errors.New("stream keepalive timed out")
 			}
@@ -193,13 +207,11 @@ func (s *SseStream) connectInternal(
 
 	// Reconnect after interval.
 	time.AfterFunc(randTimeDuration(s.reconnInterval, s.maxJitter), func () {
-		s.lock.Lock()
-		defer s.lock.Unlock()
 		select {
 		case <-ctx.Done(): // Cancelled.
 			return
 		default: // Reconnect.
-			cancel()
+			cancelWithLock()
 			s.connectInternal(messageCh, errorCh)
 			return
 		}
@@ -212,7 +224,7 @@ func (s *SseStream) Cancel() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if (s.cancelClientContext != nil) {
-		s.cancelClientContext()
+		(*(s.cancelClientContext))()
 		s.cancelClientContext = nil
 	}
 }

@@ -267,7 +267,7 @@ func TestFlagConfigFallbackRetryWrapper(t *testing.T) {
 	}
 	fallback.stopFunc = func () { 
 	}
-	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0)
+	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)
@@ -292,7 +292,7 @@ func TestFlagConfigFallbackRetryWrapperBothStartFail(t *testing.T) {
 	}
 	fallback.stopFunc = func () { 
 	}
-	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0)
+	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Equal(t, errors.New("fallback start error"), err)
 	assert.NotNil(t, mainOnError)
@@ -321,7 +321,7 @@ func TestFlagConfigFallbackRetryWrapperMainStartFailFallbackSuccess(t *testing.T
 	fallback.stopFunc = func () { 
 		go func() {fallbackStopCh <- true} ()
 	}
-	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0)
+	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)
@@ -366,7 +366,7 @@ func TestFlagConfigFallbackRetryWrapperMainUpdatingFail(t *testing.T) {
 		return nil
 	}
 	fallback.stopFunc = func () {}
-	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0)
+	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0, true)
 	// Start success
 	err := w.Start(nil)
 	assert.Nil(t, err)
@@ -429,7 +429,7 @@ func TestFlagConfigFallbackRetryWrapperMainOnly(t *testing.T) {
 	main.stopFunc = func () { 
 		mainOnError = nil 
 	}
-	w := NewFlagConfigFallbackRetryWrapper(&main, nil, 1 * time.Second, 0)
+	w := NewFlagConfigFallbackRetryWrapper(&main, nil, 1 * time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)
