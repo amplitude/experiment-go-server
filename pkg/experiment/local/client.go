@@ -67,8 +67,8 @@ func Initialize(apiKey string, config *Config) *Client {
 			flagStreamApi = NewFlagConfigStreamApiV2(apiKey, config.StreamServerUrl, config.StreamFlagConnTimeout)
 		}
 		deploymentRunner = newDeploymentRunner(
-			config, 
-			NewFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout), 
+			config,
+			NewFlagConfigApiV2(apiKey, config.ServerUrl, config.FlagConfigPollerRequestTimeout),
 			flagStreamApi, flagConfigStorage, cohortStorage, cohortLoader)
 		client = &Client{
 			log:               log,

@@ -28,7 +28,7 @@ func TestFlagConfigPoller(t *testing.T) {
 	api.getFlagConfigsFunc = func() (map[string]*evaluation.Flag, error) {
 		return FLAG_1, nil
 	}
-	poller.Start(func (e error) {
+	poller.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first poll.
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
@@ -37,7 +37,7 @@ func TestFlagConfigPoller(t *testing.T) {
 	api.getFlagConfigsFunc = func() (map[string]*evaluation.Flag, error) {
 		return map[string]*evaluation.Flag{}, nil
 	}
-	time.Sleep(1100 * time.Millisecond) // Sleep for poller to poll.
+	time.Sleep(1100 * time.Millisecond)                                                // Sleep for poller to poll.
 	assert.Equal(t, map[string]*evaluation.Flag{}, flagConfigStorage.getFlagConfigs()) // Test flags empty in storage.
 
 	// Stop poller, make sure there's no more poll.
@@ -49,7 +49,6 @@ func TestFlagConfigPoller(t *testing.T) {
 	time.Sleep(1100 * time.Millisecond) // Sleep for poller to poll.
 }
 
-
 func TestFlagConfigPollerStartFail(t *testing.T) {
 	api, flagConfigStorage, cohortStorage, cohortLoader := createTestPollerObjs()
 
@@ -60,7 +59,7 @@ func TestFlagConfigPollerStartFail(t *testing.T) {
 	api.getFlagConfigsFunc = func() (map[string]*evaluation.Flag, error) {
 		return nil, errors.New("start error")
 	}
-	err := poller.Start(func (e error) {
+	err := poller.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first poll.
 	assert.Equal(t, errors.New("start error"), err) // Test flags in storage.
@@ -76,7 +75,7 @@ func TestFlagConfigPollerPollingFail(t *testing.T) {
 	api.getFlagConfigsFunc = func() (map[string]*evaluation.Flag, error) {
 		return FLAG_1, nil
 	}
-	poller.Start(func (e error) {
+	poller.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first poll.
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
@@ -85,8 +84,8 @@ func TestFlagConfigPollerPollingFail(t *testing.T) {
 	api.getFlagConfigsFunc = func() (map[string]*evaluation.Flag, error) {
 		return nil, errors.New("flag error")
 	}
-	time.Sleep(1100 * time.Millisecond) // Sleep for poller to poll.
-	assert.Equal(t, errors.New("flag error"), <- errorCh) // Error callback called.
+	time.Sleep(1100 * time.Millisecond)                  // Sleep for poller to poll.
+	assert.Equal(t, errors.New("flag error"), <-errorCh) // Error callback called.
 
 	// Make sure there's no more poll.
 	api.getFlagConfigsFunc = func() (map[string]*evaluation.Flag, error) {
@@ -99,25 +98,25 @@ func TestFlagConfigPollerPollingFail(t *testing.T) {
 	api.getFlagConfigsFunc = func() (map[string]*evaluation.Flag, error) {
 		return map[string]*evaluation.Flag{}, nil
 	}
-	poller.Start(func (e error) {
+	poller.Start(func(e error) {
 		errorCh <- e
 	})
 	assert.Equal(t, map[string]*evaluation.Flag{}, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
 }
 
-
 type mockFlagConfigStreamApi struct {
 	connectFunc func(
-		func (map[string]*evaluation.Flag) error,
-		func (map[string]*evaluation.Flag) error,
-		func (error),
+		func(map[string]*evaluation.Flag) error,
+		func(map[string]*evaluation.Flag) error,
+		func(error),
 	) error
 	closeFunc func()
 }
+
 func (api *mockFlagConfigStreamApi) Connect(
-	onInitUpdate func (map[string]*evaluation.Flag) error,
-	onUpdate func (map[string]*evaluation.Flag) error,
-	onError func (error),
+	onInitUpdate func(map[string]*evaluation.Flag) error,
+	onUpdate func(map[string]*evaluation.Flag) error,
+	onError func(error),
 ) error {
 	return api.connectFunc(onInitUpdate, onUpdate, onError)
 }
@@ -138,11 +137,11 @@ func TestFlagConfigStreamer(t *testing.T) {
 	streamer := NewFlagConfigStreamer(&api, &Config{FlagConfigPollerInterval: 1 * time.Second}, flagConfigStorage, cohortStorage, cohortLoader)
 	errorCh := make(chan error)
 
-	var updateCb func (map[string]*evaluation.Flag) error
+	var updateCb func(map[string]*evaluation.Flag) error
 	api.connectFunc = func(
-		onInitUpdate func (map[string]*evaluation.Flag) error,
-		onUpdate func (map[string]*evaluation.Flag) error,
-		onError func (error),
+		onInitUpdate func(map[string]*evaluation.Flag) error,
+		onUpdate func(map[string]*evaluation.Flag) error,
+		onError func(error),
 	) error {
 		onInitUpdate(FLAG_1)
 		updateCb = onUpdate
@@ -153,7 +152,7 @@ func TestFlagConfigStreamer(t *testing.T) {
 	}
 
 	// Streamer start normal.
-	streamer.Start(func (e error) {
+	streamer.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first set of flags.
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
@@ -167,7 +166,7 @@ func TestFlagConfigStreamer(t *testing.T) {
 	assert.Nil(t, updateCb) // Make sure stream Close is called.
 
 	// Streamer start again.
-	streamer.Start(func (e error) {
+	streamer.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first set of flags.
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
@@ -182,9 +181,9 @@ func TestFlagConfigStreamerStartFail(t *testing.T) {
 	errorCh := make(chan error)
 
 	api.connectFunc = func(
-		onInitUpdate func (map[string]*evaluation.Flag) error,
-		onUpdate func (map[string]*evaluation.Flag) error,
-		onError func (error),
+		onInitUpdate func(map[string]*evaluation.Flag) error,
+		onUpdate func(map[string]*evaluation.Flag) error,
+		onError func(error),
 	) error {
 		return errors.New("api connect error")
 	}
@@ -192,7 +191,7 @@ func TestFlagConfigStreamerStartFail(t *testing.T) {
 	}
 
 	// Streamer start.
-	err := streamer.Start(func (e error) {
+	err := streamer.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first set of flags, which is error.
 	assert.Equal(t, errors.New("api connect error"), err)
@@ -204,12 +203,12 @@ func TestFlagConfigStreamerStreamingFail(t *testing.T) {
 	streamer := NewFlagConfigStreamer(&api, &Config{FlagConfigPollerInterval: 1 * time.Second}, flagConfigStorage, cohortStorage, cohortLoader)
 	errorCh := make(chan error)
 
-	var updateCb func (map[string]*evaluation.Flag) error
-	var errorCb func (error)
+	var updateCb func(map[string]*evaluation.Flag) error
+	var errorCb func(error)
 	api.connectFunc = func(
-		onInitUpdate func (map[string]*evaluation.Flag) error,
-		onUpdate func (map[string]*evaluation.Flag) error,
-		onError func (error),
+		onInitUpdate func(map[string]*evaluation.Flag) error,
+		onUpdate func(map[string]*evaluation.Flag) error,
+		onError func(error),
 	) error {
 		onInitUpdate(FLAG_1)
 		updateCb = onUpdate
@@ -222,20 +221,20 @@ func TestFlagConfigStreamerStreamingFail(t *testing.T) {
 	}
 
 	// Streamer start normal.
-	streamer.Start(func (e error) {
+	streamer.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first set of flags.
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
 
 	// Stream error.
-	go func() {errorCb(errors.New("stream error"))} ()
+	go func() { errorCb(errors.New("stream error")) }()
 	assert.Equal(t, errors.New("stream error"), <-errorCh) // Error callback is called.
-	assert.Nil(t, updateCb) // Make sure stream Close is called.
+	assert.Nil(t, updateCb)                                // Make sure stream Close is called.
 	assert.Nil(t, errorCb)
 
 	// Streamer start again.
-	flagConfigStorage.removeIf(func (f *evaluation.Flag) bool {return true})
-	streamer.Start(func (e error) {
+	flagConfigStorage.removeIf(func(f *evaluation.Flag) bool { return true })
+	streamer.Start(func(e error) {
 		errorCh <- e
 	}) // Start should block for first set of flags.
 	assert.Equal(t, FLAG_1, flagConfigStorage.getFlagConfigs()) // Test flags in storage.
@@ -244,30 +243,30 @@ func TestFlagConfigStreamerStreamingFail(t *testing.T) {
 }
 
 type mockFlagConfigUpdater struct {
-	startFunc func (func (error)) error
-	stopFunc func ()
+	startFunc func(func(error)) error
+	stopFunc  func()
 }
 
-func (u *mockFlagConfigUpdater) Start(f func (error)) error { return u.startFunc(f) }
-func (u *mockFlagConfigUpdater) Stop() { u.stopFunc() }
+func (u *mockFlagConfigUpdater) Start(f func(error)) error { return u.startFunc(f) }
+func (u *mockFlagConfigUpdater) Stop()                     { u.stopFunc() }
 
 func TestFlagConfigFallbackRetryWrapper(t *testing.T) {
 	main := mockFlagConfigUpdater{}
-	var mainOnError func (error)
-	main.startFunc = func (onError func (error)) error {
+	var mainOnError func(error)
+	main.startFunc = func(onError func(error)) error {
 		mainOnError = onError
 		return nil
 	}
-	main.stopFunc = func () { 
-		mainOnError = nil 
+	main.stopFunc = func() {
+		mainOnError = nil
 	}
-	fallback := mockFlagConfigUpdater{}	
-	fallback.startFunc = func (onError func (error)) error {
+	fallback := mockFlagConfigUpdater{}
+	fallback.startFunc = func(onError func(error)) error {
 		return nil
 	}
-	fallback.stopFunc = func () { 
+	fallback.stopFunc = func() {
 	}
-	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0, true)
+	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)
@@ -278,21 +277,21 @@ func TestFlagConfigFallbackRetryWrapper(t *testing.T) {
 
 func TestFlagConfigFallbackRetryWrapperBothStartFail(t *testing.T) {
 	main := mockFlagConfigUpdater{}
-	var mainOnError func (error)
-	main.startFunc = func (onError func (error)) error {
+	var mainOnError func(error)
+	main.startFunc = func(onError func(error)) error {
 		mainOnError = onError
 		return errors.New("main start error")
 	}
-	main.stopFunc = func () { 
-		mainOnError = nil 
+	main.stopFunc = func() {
+		mainOnError = nil
 	}
-	fallback := mockFlagConfigUpdater{}	
-	fallback.startFunc = func (onError func (error)) error {
+	fallback := mockFlagConfigUpdater{}
+	fallback.startFunc = func(onError func(error)) error {
 		return errors.New("fallback start error")
 	}
-	fallback.stopFunc = func () { 
+	fallback.stopFunc = func() {
 	}
-	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0, true)
+	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Equal(t, errors.New("fallback start error"), err)
 	assert.NotNil(t, mainOnError)
@@ -305,23 +304,23 @@ func TestFlagConfigFallbackRetryWrapperBothStartFail(t *testing.T) {
 
 func TestFlagConfigFallbackRetryWrapperMainStartFailFallbackSuccess(t *testing.T) {
 	main := mockFlagConfigUpdater{}
-	var mainOnError func (error)
-	main.startFunc = func (onError func (error)) error {
+	var mainOnError func(error)
+	main.startFunc = func(onError func(error)) error {
 		mainOnError = onError
 		return errors.New("main start error")
 	}
-	main.stopFunc = func () { 
-		mainOnError = nil 
+	main.stopFunc = func() {
+		mainOnError = nil
 	}
 	fallback := mockFlagConfigUpdater{}
 	fallbackStopCh := make(chan bool)
-	fallback.startFunc = func (onError func (error)) error {
+	fallback.startFunc = func(onError func(error)) error {
 		return nil
 	}
-	fallback.stopFunc = func () { 
-		go func() {fallbackStopCh <- true} ()
+	fallback.stopFunc = func() {
+		go func() { fallbackStopCh <- true }()
 	}
-	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0, true)
+	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)
@@ -332,64 +331,67 @@ func TestFlagConfigFallbackRetryWrapperMainStartFailFallbackSuccess(t *testing.T
 	assert.NotNil(t, mainOnError) // Main started called.
 	mainOnError = nil
 	select {
-	case <-fallbackStopCh: assert.Fail(t, "Unexpected fallback stopped")
+	case <-fallbackStopCh:
+		assert.Fail(t, "Unexpected fallback stopped")
 	default:
 	}
 
 	// Test next retry success.
-	main.startFunc = func (onError func (error)) error {
+	main.startFunc = func(onError func(error)) error {
 		mainOnError = onError
 		return nil
 	}
 	time.Sleep(1100 * time.Millisecond)
 	assert.NotNil(t, mainOnError) // Main errored.
-	<-fallbackStopCh // Fallback stopped.
+	<-fallbackStopCh              // Fallback stopped.
 
 	w.Stop()
 }
 
 func TestFlagConfigFallbackRetryWrapperMainUpdatingFail(t *testing.T) {
 	main := mockFlagConfigUpdater{}
-	var mainOnError func (error)
-	main.startFunc = func (onError func (error)) error {
+	var mainOnError func(error)
+	main.startFunc = func(onError func(error)) error {
 		mainOnError = onError
 		return nil
 	}
-	main.stopFunc = func () { 
-		mainOnError = nil 
+	main.stopFunc = func() {
+		mainOnError = nil
 	}
 	fallback := mockFlagConfigUpdater{}
 	fallbackStartCh := make(chan bool)
 	fallbackStopCh := make(chan bool)
-	fallback.startFunc = func (onError func (error)) error {
-		go func() {fallbackStartCh <- true} ()
+	fallback.startFunc = func(onError func(error)) error {
+		go func() { fallbackStartCh <- true }()
 		return nil
 	}
-	fallback.stopFunc = func () {}
-	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1 * time.Second, 0, true)
+	fallback.stopFunc = func() {}
+	w := NewFlagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, true)
 	// Start success
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)
 	select {
-	case <-fallbackStartCh: assert.Fail(t, "Unexpected fallback started")
+	case <-fallbackStartCh:
+		assert.Fail(t, "Unexpected fallback started")
 	default:
 	}
 
 	// Test main updating failed, fallback.
-	fallback.stopFunc = func () { // Start tracking fallback stops (Start() may call stops).
-		go func() {fallbackStopCh <- true} ()
+	fallback.stopFunc = func() { // Start tracking fallback stops (Start() may call stops).
+		go func() { fallbackStopCh <- true }()
 	}
 	mainOnError(errors.New("main updating error"))
 	mainOnError = nil
 	<-fallbackStartCh // Fallbacks started.
 	select {
-	case <-fallbackStopCh: assert.Fail(t, "Unexpected fallback stopped")
+	case <-fallbackStopCh:
+		assert.Fail(t, "Unexpected fallback stopped")
 	default:
 	}
 
 	// Test retry start fail as main updating fail.
-	main.startFunc = func (onError func (error)) error {
+	main.startFunc = func(onError func(error)) error {
 		mainOnError = onError
 		return errors.New("main start error")
 	}
@@ -397,20 +399,23 @@ func TestFlagConfigFallbackRetryWrapperMainUpdatingFail(t *testing.T) {
 	assert.NotNil(t, mainOnError) // Main started called.
 	mainOnError = nil
 	select { // Test no changes made to fallback updater.
-	case <-fallbackStartCh: assert.Fail(t, "Unexpected fallback started")
-	case <-fallbackStopCh: assert.Fail(t, "Unexpected fallback stopped")
+	case <-fallbackStartCh:
+		assert.Fail(t, "Unexpected fallback started")
+	case <-fallbackStopCh:
+		assert.Fail(t, "Unexpected fallback stopped")
 	default:
 	}
 
 	// Test next retry success.
-	main.startFunc = func (onError func (error)) error {
+	main.startFunc = func(onError func(error)) error {
 		mainOnError = onError
 		return nil
 	}
 	time.Sleep(1100 * time.Millisecond)
 	assert.NotNil(t, mainOnError) // Main errored.
 	select {
-	case <-fallbackStartCh: assert.Fail(t, "Unexpected fallback stopped")
+	case <-fallbackStartCh:
+		assert.Fail(t, "Unexpected fallback stopped")
 	default:
 	}
 	<-fallbackStopCh // Fallback stopped.
@@ -421,15 +426,15 @@ func TestFlagConfigFallbackRetryWrapperMainUpdatingFail(t *testing.T) {
 
 func TestFlagConfigFallbackRetryWrapperMainOnly(t *testing.T) {
 	main := mockFlagConfigUpdater{}
-	var mainOnError func (error)
-	main.startFunc = func (onError func (error)) error {
+	var mainOnError func(error)
+	main.startFunc = func(onError func(error)) error {
 		mainOnError = onError
 		return nil
 	}
-	main.stopFunc = func () { 
-		mainOnError = nil 
+	main.stopFunc = func() {
+		mainOnError = nil
 	}
-	w := NewFlagConfigFallbackRetryWrapper(&main, nil, 1 * time.Second, 0, true)
+	w := NewFlagConfigFallbackRetryWrapper(&main, nil, 1*time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)

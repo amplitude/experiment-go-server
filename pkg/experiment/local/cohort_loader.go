@@ -10,7 +10,7 @@ import (
 )
 
 type cohortLoader struct {
-	log *logger.Log
+	log               *logger.Log
 	cohortDownloadApi cohortDownloadApi
 	cohortStorage     cohortStorage
 	jobs              sync.Map

@@ -30,17 +30,17 @@ func difference(set1, set2 map[string]struct{}) map[string]struct{} {
 }
 
 func randTimeDuration(base time.Duration, jitter time.Duration) time.Duration {
-	if (jitter == 0) {
+	if jitter == 0 {
 		return base
 	}
 	dmin := base.Nanoseconds() - jitter.Nanoseconds()
-	if (dmin < 0) {
+	if dmin < 0 {
 		dmin = 0
 	}
 	dmiddle := base.Nanoseconds()
-	if (dmiddle > math.MaxInt64 - jitter.Nanoseconds()) {
+	if dmiddle > math.MaxInt64-jitter.Nanoseconds() {
 		dmiddle = math.MaxInt64 - jitter.Nanoseconds()
 	}
 	dmax := dmiddle + jitter.Nanoseconds()
-	return time.Duration(dmin + rand.Int64N(dmax - dmin))
+	return time.Duration(dmin + rand.Int64N(dmax-dmin))
 }

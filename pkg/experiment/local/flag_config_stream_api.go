@@ -16,21 +16,21 @@ const streamApiReconnInterval = 15 * time.Minute
 
 type flagConfigStreamApi interface {
 	Connect(
-		onInitUpdate func (map[string]*evaluation.Flag) error,
-		onUpdate func (map[string]*evaluation.Flag) error,
-		onError func (error),
+		onInitUpdate func(map[string]*evaluation.Flag) error,
+		onUpdate func(map[string]*evaluation.Flag) error,
+		onError func(error),
 	) error
 	Close()
 }
 
 type flagConfigStreamApiV2 struct {
-	DeploymentKey                        string
-	ServerURL                            string
-    connectionTimeout time.Duration
-	stopCh chan bool
-	lock sync.Mutex
-	newSseStreamFactory func (
-		authToken, 
+	DeploymentKey       string
+	ServerURL           string
+	connectionTimeout   time.Duration
+	stopCh              chan bool
+	lock                sync.Mutex
+	newSseStreamFactory func(
+		authToken,
 		url string,
 		connectionTimeout time.Duration,
 		keepaliveTimeout time.Duration,
@@ -40,24 +40,24 @@ type flagConfigStreamApiV2 struct {
 }
 
 func NewFlagConfigStreamApiV2(
-	deploymentKey                        string,
-	serverURL                            string,
-    connectionTimeout time.Duration,
+	deploymentKey string,
+	serverURL string,
+	connectionTimeout time.Duration,
 ) *flagConfigStreamApiV2 {
 	return &flagConfigStreamApiV2{
-		DeploymentKey:                        deploymentKey,
-		ServerURL:                            serverURL,
-		connectionTimeout: connectionTimeout,
-		stopCh: nil,
-		lock: sync.Mutex{},
+		DeploymentKey:       deploymentKey,
+		ServerURL:           serverURL,
+		connectionTimeout:   connectionTimeout,
+		stopCh:              nil,
+		lock:                sync.Mutex{},
 		newSseStreamFactory: NewSseStream,
 	}
 }
 
 func (api *flagConfigStreamApiV2) Connect(
-	onInitUpdate func (map[string]*evaluation.Flag) error,
-    onUpdate func (map[string]*evaluation.Flag) error,
-    onError func (error),
+	onInitUpdate func(map[string]*evaluation.Flag) error,
+	onUpdate func(map[string]*evaluation.Flag) error,
+	onError func(error),
 ) error {
 	api.lock.Lock()
 	defer api.lock.Unlock()
@@ -72,12 +72,12 @@ func (api *flagConfigStreamApiV2) Connect(
 	endpoint.Path = "sdk/stream/v1/flags"
 
 	// Create Stream.
-	stream := api.newSseStreamFactory("Api-Key " + api.DeploymentKey, endpoint.String(), api.connectionTimeout, streamApiKeepaliveTimeout, streamApiReconnInterval, streamApiMaxJitter)
+	stream := api.newSseStreamFactory("Api-Key "+api.DeploymentKey, endpoint.String(), api.connectionTimeout, streamApiKeepaliveTimeout, streamApiReconnInterval, streamApiMaxJitter)
 
 	streamMsgCh := make(chan StreamEvent)
 	streamErrCh := make(chan error)
 
-	closeStream := func () {
+	closeStream := func() {
 		stream.Cancel()
 		close(streamMsgCh)
 		close(streamErrCh)
@@ -85,26 +85,26 @@ func (api *flagConfigStreamApiV2) Connect(
 
 	// Connect.
 	err = stream.Connect(streamMsgCh, streamErrCh)
-	if (err != nil) {
+	if err != nil {
 		return err
 	}
 
 	// Retrieve first flag configs and parse it.
 	// If any error here means init error.
-	select{
+	select {
 	case msg := <-streamMsgCh:
 		// Parse message and verify data correct.
 		flags, err := parseData(msg.data)
-		if (err != nil) {
+		if err != nil {
 			closeStream()
 			return errors.New("flag config stream api corrupt data, cause: " + err.Error())
 		}
-		if (onInitUpdate != nil) {
+		if onInitUpdate != nil {
 			err = onInitUpdate(flags)
-		} else if (onUpdate != nil) {
+		} else if onUpdate != nil {
 			err = onUpdate(flags)
 		}
-		if (err != nil) {
+		if err != nil {
 			closeStream()
 			return err
 		}
@@ -126,11 +126,11 @@ func (api *flagConfigStreamApiV2) Connect(
 		api.lock.Lock()
 		defer api.lock.Unlock()
 		closeStream()
-		if (api.stopCh == stopCh) {
+		if api.stopCh == stopCh {
 			api.stopCh = nil
 		}
 		close(stopCh)
-		if (onError != nil) {
+		if onError != nil {
 			onError(err)
 		}
 	}
@@ -138,21 +138,21 @@ func (api *flagConfigStreamApiV2) Connect(
 	// Retrieve and pass on message forever until stopCh closes.
 	go func() {
 		for {
-			select{
+			select {
 			case <-stopCh: // Channel returns immediately when closed. Note the local channel is referred here, so it's guaranteed to not be nil.
 				closeStream()
 				return
 			case msg := <-streamMsgCh:
 				// Parse message and verify data correct.
 				flags, err := parseData(msg.data)
-				if (err != nil) {
+				if err != nil {
 					// Error, close everything.
 					closeAllAndNotify(errors.New("stream corrupt data, cause: " + err.Error()))
 					return
 				}
-				if (onUpdate != nil) {
+				if onUpdate != nil {
 					// Deliver async. Don't care about any errors.
-					go func() {onUpdate(flags)}()
+					go func() { onUpdate(flags) }()
 				}
 			case err := <-streamErrCh:
 				// Error, close everything.
@@ -181,7 +181,7 @@ func parseData(data []byte) (map[string]*evaluation.Flag, error) {
 }
 
 func (api *flagConfigStreamApiV2) closeInternal() {
-	if (api.stopCh != nil) {
+	if api.stopCh != nil {
 		close(api.stopCh)
 		api.stopCh = nil
 	}

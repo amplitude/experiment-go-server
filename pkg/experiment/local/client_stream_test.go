@@ -25,8 +25,8 @@ func init() {
 	}
 	streamClient = Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz",
 		&Config{
-			StreamUpdates: true,
-			StreamServerUrl: "https://stream.lab.amplitude.com",
+			StreamUpdates:    true,
+			StreamServerUrl:  "https://stream.lab.amplitude.com",
 			CohortSyncConfig: &cohortSyncConfig,
 		})
 	err = streamClient.Start()

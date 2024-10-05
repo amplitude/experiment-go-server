@@ -24,9 +24,9 @@ type Config struct {
 	ServerZone                     ServerZone
 	FlagConfigPollerInterval       time.Duration
 	FlagConfigPollerRequestTimeout time.Duration
-    StreamUpdates bool
-    StreamServerUrl string
-    StreamFlagConnTimeout time.Duration
+	StreamUpdates                  bool
+	StreamServerUrl                string
+	StreamFlagConnTimeout          time.Duration
 	AssignmentConfig               *AssignmentConfig
 	CohortSyncConfig               *CohortSyncConfig
 }
@@ -50,9 +50,9 @@ var DefaultConfig = &Config{
 	ServerZone:                     USServerZone,
 	FlagConfigPollerInterval:       30 * time.Second,
 	FlagConfigPollerRequestTimeout: 10 * time.Second,
-    StreamUpdates: false,
-    StreamServerUrl: "https://stream.lab.amplitude.com",
-    StreamFlagConnTimeout: 1500 * time.Millisecond,
+	StreamUpdates:                  false,
+	StreamServerUrl:                "https://stream.lab.amplitude.com",
+	StreamFlagConnTimeout:          1500 * time.Millisecond,
 }
 
 var DefaultAssignmentConfig = &AssignmentConfig{

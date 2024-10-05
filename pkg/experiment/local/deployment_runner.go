@@ -29,7 +29,7 @@ func newDeploymentRunner(
 	cohortLoader *cohortLoader,
 ) *deploymentRunner {
 	flagConfigUpdater := NewFlagConfigFallbackRetryWrapper(NewFlagConfigPoller(flagConfigApi, config, flagConfigStorage, cohortStorage, cohortLoader), nil, config.FlagConfigPollerInterval, updaterRetryMaxJitter, config.Debug)
-	if (flagConfigStreamApi != nil) {
+	if flagConfigStreamApi != nil {
 		flagConfigUpdater = NewFlagConfigFallbackRetryWrapper(NewFlagConfigStreamer(flagConfigStreamApi, config, flagConfigStorage, cohortStorage, cohortLoader), flagConfigUpdater, streamUpdaterRetryDelay, updaterRetryMaxJitter, config.Debug)
 	}
 	dr := &deploymentRunner{
@@ -37,7 +37,7 @@ func newDeploymentRunner(
 		flagConfigStorage: flagConfigStorage,
 		cohortLoader:      cohortLoader,
 		flagConfigUpdater: flagConfigUpdater,
-		poller: newPoller(),
+		poller:            newPoller(),
 		log:               logger.New(config.Debug),
 	}
 	return dr
@@ -47,7 +47,7 @@ func (dr *deploymentRunner) start() error {
 	dr.lock.Lock()
 	defer dr.lock.Unlock()
 	err := dr.flagConfigUpdater.Start(nil)
-	if (err != nil) {
+	if err != nil {
 		return err
 	}
 
