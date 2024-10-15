@@ -19,7 +19,7 @@ type User struct {
 	Carrier            string                                    `json:"carrier,omitempty"`
 	Library            string                                    `json:"library,omitempty"`
 	UserProperties     map[string]interface{}                    `json:"user_properties,omitempty"`
-	GroupProperties    map[string]map[string]string              `json:"group_properties,omitempty"`
+	GroupProperties    map[string]map[string]interface{}         `json:"group_properties,omitempty"`
 	Groups             map[string][]string                       `json:"groups,omitempty"`
 	CohortIds          map[string]struct{}                       `json:"cohort_ids,omitempty"`
 	GroupCohortIds     map[string]map[string]map[string]struct{} `json:"group_cohort_ids,omitempty"`
