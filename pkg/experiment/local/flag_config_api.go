@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/amplitude/experiment-go-server/internal/evaluation"
-	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/amplitude/experiment-go-server/internal/evaluation"
+	"github.com/amplitude/experiment-go-server/pkg/experiment"
 )
 
 type flagConfigApi interface {

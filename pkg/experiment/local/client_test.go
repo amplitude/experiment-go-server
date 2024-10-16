@@ -1,11 +1,12 @@
 package local
 
 import (
-	"github.com/amplitude/experiment-go-server/pkg/experiment"
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/amplitude/experiment-go-server/pkg/experiment"
+	"github.com/joho/godotenv"
 )
 
 var client *Client
