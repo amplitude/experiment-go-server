@@ -76,7 +76,7 @@ func fillConfigDefaults(c *Config) *Config {
 		switch c.ServerZone {
 		case USServerZone:
 			c.ServerUrl = DefaultConfig.ServerUrl
-			c.StreamServerUrl = DefaultConfig.ServerUrl
+			c.StreamServerUrl = DefaultConfig.StreamServerUrl
 		case EUServerZone:
 			c.ServerUrl = EUFlagServerUrl
 			c.StreamServerUrl = EUFlagStreamServerUrl
