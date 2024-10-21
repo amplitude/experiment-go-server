@@ -11,42 +11,49 @@ func TestFillConfigDefaults_ServerZoneAndServerUrl(t *testing.T) {
 		input        *Config
 		expectedZone ServerZone
 		expectedUrl  string
+		expectedStreamUrl  string
 	}{
 		{
 			name:         "Nil config",
 			input:        nil,
 			expectedZone: DefaultConfig.ServerZone,
 			expectedUrl:  DefaultConfig.ServerUrl,
+			expectedStreamUrl:  DefaultConfig.StreamServerUrl,
 		},
 		{
 			name:         "Empty ServerZone",
 			input:        &Config{},
 			expectedZone: DefaultConfig.ServerZone,
 			expectedUrl:  DefaultConfig.ServerUrl,
+			expectedStreamUrl:  DefaultConfig.StreamServerUrl,
 		},
 		{
 			name:         "ServerZone US",
 			input:        &Config{ServerZone: USServerZone},
 			expectedZone: USServerZone,
 			expectedUrl:  DefaultConfig.ServerUrl,
+			expectedStreamUrl:  DefaultConfig.StreamServerUrl,
 		},
 		{
 			name:         "ServerZone EU",
 			input:        &Config{ServerZone: EUServerZone},
 			expectedZone: EUServerZone,
 			expectedUrl:  EUFlagServerUrl,
+			expectedStreamUrl:  EUFlagStreamServerUrl,
 		},
 		{
 			name:         "Uppercase ServerZone EU",
 			input:        &Config{ServerZone: EUServerZone},
 			expectedZone: EUServerZone,
 			expectedUrl:  EUFlagServerUrl,
+			expectedStreamUrl:  EUFlagStreamServerUrl,
 		},
 		{
 			name:         "Custom ServerUrl",
-			input:        &Config{ServerZone: USServerZone, ServerUrl: "https://custom.url/"},
+			input:        &Config{ServerZone: USServerZone, ServerUrl: "https://custom.url/", StreamServerUrl: "https://stream.custom.url"},
 			expectedZone: USServerZone,
 			expectedUrl:  "https://custom.url/",
+			expectedStreamUrl:  "https://stream.custom.url",
 		},
 	}
 
@@ -58,6 +65,9 @@ func TestFillConfigDefaults_ServerZoneAndServerUrl(t *testing.T) {
 			}
 			if result.ServerUrl != tt.expectedUrl {
 				t.Errorf("expected ServerUrl %s, got %s", tt.expectedUrl, result.ServerUrl)
+			}
+			if result.StreamServerUrl != tt.expectedStreamUrl {
+				t.Errorf("expected StreamServerUrl %s, got %s", tt.expectedStreamUrl, result.StreamServerUrl)
 			}
 		})
 	}
@@ -133,6 +143,7 @@ func TestFillConfigDefaults_DefaultValues(t *testing.T) {
 			expected: &Config{
 				ServerZone:                     DefaultConfig.ServerZone,
 				ServerUrl:                      DefaultConfig.ServerUrl,
+				StreamServerUrl:                      DefaultConfig.StreamServerUrl,
 				FlagConfigPollerInterval:       DefaultConfig.FlagConfigPollerInterval,
 				FlagConfigPollerRequestTimeout: DefaultConfig.FlagConfigPollerRequestTimeout,
 			},
@@ -142,12 +153,14 @@ func TestFillConfigDefaults_DefaultValues(t *testing.T) {
 			input: &Config{
 				ServerZone:                     EUServerZone,
 				ServerUrl:                      "https://custom.url/",
+				StreamServerUrl:                "https://stream.custom.url",
 				FlagConfigPollerInterval:       60 * time.Second,
 				FlagConfigPollerRequestTimeout: 20 * time.Second,
 			},
 			expected: &Config{
 				ServerZone:                     EUServerZone,
 				ServerUrl:                      "https://custom.url/",
+				StreamServerUrl:                "https://stream.custom.url",
 				FlagConfigPollerInterval:       60 * time.Second,
 				FlagConfigPollerRequestTimeout: 20 * time.Second,
 			},
@@ -162,6 +175,9 @@ func TestFillConfigDefaults_DefaultValues(t *testing.T) {
 			}
 			if result.ServerUrl != tt.expected.ServerUrl {
 				t.Errorf("expected ServerUrl %s, got %s", tt.expected.ServerUrl, result.ServerUrl)
+			}
+			if result.StreamServerUrl != tt.expected.StreamServerUrl {
+				t.Errorf("expected StreamServerUrl %s, got %s", tt.expected.StreamServerUrl, result.StreamServerUrl)
 			}
 			if result.FlagConfigPollerInterval != tt.expected.FlagConfigPollerInterval {
 				t.Errorf("expected FlagConfigPollerInterval %v, got %v", tt.expected.FlagConfigPollerInterval, result.FlagConfigPollerInterval)
