@@ -119,7 +119,7 @@ func (api *flagConfigStreamApiV2) Connect(
 	stopCh := make(chan bool)
 	api.stopCh = stopCh
 
-	closeAllAndNotify := func(err error) {
+	closeAll := func() {
 		api.lock.Lock()
 		defer api.lock.Unlock()
 		closeStream()
@@ -127,9 +127,6 @@ func (api *flagConfigStreamApiV2) Connect(
 			api.stopCh = nil
 		}
 		close(stopCh)
-		if onError != nil {
-			onError(err)
-		}
 	}
 
 	// Retrieve and pass on message forever until stopCh closes.
@@ -144,7 +141,10 @@ func (api *flagConfigStreamApiV2) Connect(
 				flags, err := parseData(msg.data)
 				if err != nil {
 					// Error, close everything.
-					closeAllAndNotify(errors.New("stream corrupt data, cause: " + err.Error()))
+					closeAll()
+					if onError != nil {
+						onError(errors.New("stream corrupt data, cause: " + err.Error()))
+					}
 					return
 				}
 				if onUpdate != nil {
@@ -154,7 +154,10 @@ func (api *flagConfigStreamApiV2) Connect(
 				}
 			case err := <-streamErrCh:
 				// Error, close everything.
-				closeAllAndNotify(err)
+				closeAll()
+				if onError != nil {
+					onError(err)
+				}
 				return
 			}
 		}
