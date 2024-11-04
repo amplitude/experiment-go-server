@@ -22,9 +22,9 @@ func TestToEvent(t *testing.T) {
 			},
 		},
 		"flag-key-2": {
-			Key:      "control",
+			Key: "control",
 			Metadata: map[string]interface{}{
-				"default": true,
+				"default":     true,
 				"segmentName": "All Other Users",
 				"flagVersion": float64(12),
 			},

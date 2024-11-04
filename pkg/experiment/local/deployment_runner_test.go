@@ -19,11 +19,12 @@ func TestStartThrowsIfFirstFlagConfigLoadFails(t *testing.T) {
 	cohortDownloadAPI := &mockCohortDownloadApi{}
 	flagConfigStorage := newInMemoryFlagConfigStorage()
 	cohortStorage := newInMemoryCohortStorage()
-	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage)
+	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, true)
 
 	runner := newDeploymentRunner(
 		&Config{},
 		flagAPI,
+		nil,
 		flagConfigStorage,
 		cohortStorage,
 		cohortLoader,
@@ -45,11 +46,12 @@ func TestStartSucceedsEvenIfFirstCohortLoadFails(t *testing.T) {
 	}}
 	flagConfigStorage := newInMemoryFlagConfigStorage()
 	cohortStorage := newInMemoryCohortStorage()
-	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage)
+	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, true)
 
 	runner := newDeploymentRunner(
 		DefaultConfig,
 		flagAPI,
+		nil,
 		flagConfigStorage,
 		cohortStorage,
 		cohortLoader,

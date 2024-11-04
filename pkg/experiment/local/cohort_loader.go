@@ -1,11 +1,16 @@
 package local
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/amplitude/experiment-go-server/internal/logger"
 )
 
 type cohortLoader struct {
+	log               *logger.Log
 	cohortDownloadApi cohortDownloadApi
 	cohortStorage     cohortStorage
 	jobs              sync.Map
@@ -13,7 +18,7 @@ type cohortLoader struct {
 	lockJobs          sync.Mutex
 }
 
-func newCohortLoader(cohortDownloadApi cohortDownloadApi, cohortStorage cohortStorage) *cohortLoader {
+func newCohortLoader(cohortDownloadApi cohortDownloadApi, cohortStorage cohortStorage, debug bool) *cohortLoader {
 	return &cohortLoader{
 		cohortDownloadApi: cohortDownloadApi,
 		cohortStorage:     cohortStorage,
@@ -22,6 +27,7 @@ func newCohortLoader(cohortDownloadApi cohortDownloadApi, cohortStorage cohortSt
 				return &CohortLoaderTask{}
 			},
 		},
+		log: logger.New(debug),
 	}
 }
 
@@ -85,4 +91,35 @@ func (task *CohortLoaderTask) wait() error {
 func (cl *cohortLoader) downloadCohort(cohortID string) (*Cohort, error) {
 	cohort := cl.cohortStorage.getCohort(cohortID)
 	return cl.cohortDownloadApi.getCohort(cohortID, cohort)
+}
+
+func (cl *cohortLoader) downloadCohorts(cohortIDs map[string]struct{}) {
+	var wg sync.WaitGroup
+	errorChan := make(chan error, len(cohortIDs))
+
+	for cohortID := range cohortIDs {
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			task := cl.loadCohort(id)
+			if err := task.wait(); err != nil {
+				errorChan <- fmt.Errorf("cohort %s: %v", id, err)
+			}
+		}(cohortID)
+	}
+
+	go func() {
+		wg.Wait()
+		close(errorChan)
+	}()
+
+	var errorMessages []string
+	for err := range errorChan {
+		errorMessages = append(errorMessages, err.Error())
+		cl.log.Error("Error downloading cohort: %v", err)
+	}
+
+	if len(errorMessages) > 0 {
+		cl.log.Error("One or more cohorts failed to download:\n%s", strings.Join(errorMessages, "\n"))
+	}
 }

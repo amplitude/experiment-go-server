@@ -10,7 +10,7 @@ import (
 func TestLoadSuccess(t *testing.T) {
 	api := &MockCohortDownloadApi{}
 	storage := newInMemoryCohortStorage()
-	loader := newCohortLoader(api, storage)
+	loader := newCohortLoader(api, storage, true)
 
 	// Define mock behavior
 	api.On("getCohort", "a", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{Id: "a", LastModified: 0, Size: 1, MemberIds: []string{"1"}, GroupType: userGroupType}, nil)
@@ -48,7 +48,7 @@ func TestLoadSuccess(t *testing.T) {
 func TestFilterCohortsAlreadyComputed(t *testing.T) {
 	api := &MockCohortDownloadApi{}
 	storage := newInMemoryCohortStorage()
-	loader := newCohortLoader(api, storage)
+	loader := newCohortLoader(api, storage, true)
 
 	storage.putCohort(&Cohort{Id: "a", LastModified: 0, Size: 0, MemberIds: []string{}})
 	storage.putCohort(&Cohort{Id: "b", LastModified: 0, Size: 0, MemberIds: []string{}})
@@ -89,7 +89,7 @@ func TestFilterCohortsAlreadyComputed(t *testing.T) {
 func TestLoadDownloadFailureThrows(t *testing.T) {
 	api := &MockCohortDownloadApi{}
 	storage := newInMemoryCohortStorage()
-	loader := newCohortLoader(api, storage)
+	loader := newCohortLoader(api, storage, true)
 
 	// Define mock behavior
 	api.On("getCohort", "a", mock.AnythingOfType("*local.Cohort")).Return(&Cohort{Id: "a", LastModified: 0, Size: 1, MemberIds: []string{"1"}, GroupType: userGroupType}, nil)
