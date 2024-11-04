@@ -274,7 +274,7 @@ func TestFlagConfigFallbackRetryWrapper(t *testing.T) {
 	}
 	fallback.stopFunc = func() {
 	}
-	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, true)
+	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)
@@ -299,7 +299,7 @@ func TestFlagConfigFallbackRetryWrapperBothStartFail(t *testing.T) {
 	}
 	fallback.stopFunc = func() {
 	}
-	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, true)
+	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Equal(t, errors.New("fallback start error"), err)
 	assert.NotNil(t, mainOnError)
@@ -328,7 +328,7 @@ func TestFlagConfigFallbackRetryWrapperMainStartFailFallbackSuccess(t *testing.T
 	fallback.stopFunc = func() {
 		go func() { fallbackStopCh <- true }()
 	}
-	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, true)
+	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)
@@ -374,7 +374,7 @@ func TestFlagConfigFallbackRetryWrapperMainUpdatingFail(t *testing.T) {
 		return nil
 	}
 	fallback.stopFunc = func() {}
-	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, true)
+	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, true)
 	// Start success
 	err := w.Start(nil)
 	assert.Nil(t, err)
@@ -432,6 +432,94 @@ func TestFlagConfigFallbackRetryWrapperMainUpdatingFail(t *testing.T) {
 
 }
 
+func TestFlagConfigFallbackRetryWrapperMainUpdatingFailFallbackStartFail(t *testing.T) {
+	main := mockFlagConfigUpdater{}
+	var mainOnError func(error)
+	main.startFunc = func(onError func(error)) error {
+		mainOnError = onError
+		return nil
+	}
+	main.stopFunc = func() {
+		mainOnError = nil
+	}
+	fallback := mockFlagConfigUpdater{}
+	fallbackStartCh := make(chan bool)
+	fallbackStopCh := make(chan bool)
+	fallback.startFunc = func(onError func(error)) error {
+		println(1)
+		go func() { fallbackStartCh <- true }()
+		return errors.New("fallback start fail")
+	}
+	fallback.stopFunc = func() {}
+	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1100 * time.Millisecond, 0, 500 * time.Millisecond, 0, true)
+	// Start success
+	err := w.Start(nil)
+	assert.Nil(t, err)
+	assert.NotNil(t, mainOnError)
+	select {
+	case <-fallbackStartCh:
+		assert.Fail(t, "Unexpected fallback started")
+	default:
+	}
+
+	// Test main updating failed, fallback.
+	mainStartCh := make(chan bool)
+	main.startFunc = func(onError func(error)) error {
+		go func() { mainStartCh <- true }()
+		return errors.New("main start fail")
+	}
+	fallback.stopFunc = func() { // Start tracking fallback stops (Start() may call stops).
+		go func() { fallbackStopCh <- true }()
+	}
+	mainOnError(errors.New("main updating error"))
+	mainOnError = nil
+	<-fallbackStartCh // Fallbacks start tried.
+	<-fallbackStartCh // Fallbacks start retry once.
+	select {
+	case <-mainStartCh:
+		assert.Fail(t, "Unexpected fallback stopped")
+	default:
+	}
+	<-fallbackStartCh // Fallbacks start retry second.
+	select {
+	case <-mainStartCh:
+		assert.Fail(t, "Unexpected fallback stopped")
+	default:
+	}
+	// Main start failed again on retry.
+	<-mainStartCh
+	// Make next start success.
+	main.startFunc = func(onError func(error)) error {
+		go func() { mainStartCh <- true }()
+		return nil
+	}
+	// Fallback start continue to retry.
+	<-fallbackStartCh // Fallbacks start retry third.
+	select {
+	case <-mainStartCh:
+		assert.Fail(t, "Unexpected fallback stopped")
+	default:
+	}
+	<-fallbackStartCh // Fallbacks start retry fourth.
+	select {
+	case <-mainStartCh:
+		assert.Fail(t, "Unexpected fallback stopped")
+	default:
+	}
+	// Main start success.
+	<-mainStartCh
+
+	// No more fallback start.
+	time.Sleep(4100 * time.Millisecond)
+	select {
+	case <-fallbackStartCh:
+		assert.Fail(t, "Unexpected fallback start")
+	default:
+	}
+
+	w.Stop()
+}
+
 func TestFlagConfigFallbackRetryWrapperMainOnly(t *testing.T) {
 	main := mockFlagConfigUpdater{}
 	var mainOnError func(error)
@@ -442,7 +530,7 @@ func TestFlagConfigFallbackRetryWrapperMainOnly(t *testing.T) {
 	main.stopFunc = func() {
 		mainOnError = nil
 	}
-	w := newflagConfigFallbackRetryWrapper(&main, nil, 1*time.Second, 0, true)
+	w := newflagConfigFallbackRetryWrapper(&main, nil, 1*time.Second, 0, 1*time.Second, 0, true)
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)

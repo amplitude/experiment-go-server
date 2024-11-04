@@ -18,7 +18,7 @@ type deploymentRunner struct {
 }
 
 const streamUpdaterRetryDelay = 15 * time.Second
-const updaterRetryMaxJitter = 2 * time.Second
+const updaterRetryMaxJitter = 1 * time.Second
 
 func newDeploymentRunner(
 	config *Config,
@@ -28,9 +28,9 @@ func newDeploymentRunner(
 	cohortStorage cohortStorage,
 	cohortLoader *cohortLoader,
 ) *deploymentRunner {
-	flagConfigUpdater := newflagConfigFallbackRetryWrapper(newFlagConfigPoller(flagConfigApi, config, flagConfigStorage, cohortStorage, cohortLoader), nil, config.FlagConfigPollerInterval, updaterRetryMaxJitter, config.Debug)
+	flagConfigUpdater := newflagConfigFallbackRetryWrapper(newFlagConfigPoller(flagConfigApi, config, flagConfigStorage, cohortStorage, cohortLoader), nil, config.FlagConfigPollerInterval, updaterRetryMaxJitter, 0, 0, config.Debug)
 	if flagConfigStreamApi != nil {
-		flagConfigUpdater = newflagConfigFallbackRetryWrapper(newFlagConfigStreamer(flagConfigStreamApi, config, flagConfigStorage, cohortStorage, cohortLoader), flagConfigUpdater, streamUpdaterRetryDelay, updaterRetryMaxJitter, config.Debug)
+		flagConfigUpdater = newflagConfigFallbackRetryWrapper(newFlagConfigStreamer(flagConfigStreamApi, config, flagConfigStorage, cohortStorage, cohortLoader), flagConfigUpdater, streamUpdaterRetryDelay, updaterRetryMaxJitter, config.FlagConfigPollerInterval, 0, config.Debug)
 	}
 	dr := &deploymentRunner{
 		config:            config,

@@ -149,7 +149,7 @@ func (s *flagConfigStreamer) Start(onError func(error)) error {
 		func(err error) {
 			s.Stop()
 			if onError != nil {
-				onError(err)
+				go func() {onError(err)}()
 			}
 		},
 	)
@@ -205,7 +205,9 @@ func (p *flagConfigPoller) Start(onError func(error)) error {
 		if err := p.periodicRefresh(); err != nil {
 			p.log.Error("Periodic updateFlagConfigs failed: %v", err)
 			p.Stop()
-			onError(err)
+			if (onError != nil) {
+				go func() {onError(err)}()
+			}
 		}
 	})
 	return nil
@@ -253,7 +255,11 @@ type flagConfigFallbackRetryWrapper struct {
 	retryDelay      time.Duration
 	maxJitter       time.Duration
 	retryTimer      *time.Timer
+	fallbackStartRetryDelay      time.Duration
+	fallbackStartRetryMaxJitter       time.Duration
+	fallbackStartRetryTimer *time.Timer
 	lock            sync.Mutex
+	isRunning       bool
 }
 
 func newflagConfigFallbackRetryWrapper(
@@ -261,6 +267,8 @@ func newflagConfigFallbackRetryWrapper(
 	fallbackUpdater flagConfigUpdater,
 	retryDelay time.Duration,
 	maxJitter time.Duration,
+	fallbackStartRetryDelay      time.Duration,
+	fallbackStartRetryMaxJitter       time.Duration,
 	debug bool,
 ) flagConfigUpdater {
 	return &flagConfigFallbackRetryWrapper{
@@ -269,6 +277,9 @@ func newflagConfigFallbackRetryWrapper(
 		fallbackUpdater: fallbackUpdater,
 		retryDelay:      retryDelay,
 		maxJitter:       maxJitter,
+		fallbackStartRetryDelay:      fallbackStartRetryDelay,
+		fallbackStartRetryMaxJitter:       fallbackStartRetryMaxJitter,
+		isRunning: false,
 	}
 }
 
@@ -282,7 +293,7 @@ func newflagConfigFallbackRetryWrapper(
 // Thus, onError will never be called.
 func (w *flagConfigFallbackRetryWrapper) Start(onError func(error)) error {
 	// if (mainUpdater is flagConfigFallbackRetryWrapper) {
-	//     throw Error("Do not use flagConfigFallbackRetryWrapper as main updater. Fallback updater will never be used. Rewrite retry and fallback logic.")
+	//     return errors.New("Do not use flagConfigFallbackRetryWrapper as main updater. Fallback updater will never be used. Rewrite retry and fallback logic.")
 	// }
 
 	w.lock.Lock()
@@ -294,31 +305,34 @@ func (w *flagConfigFallbackRetryWrapper) Start(onError func(error)) error {
 	}
 
 	err := w.mainUpdater.Start(func(err error) {
-		w.log.Error("main updater updating err, starting fallback if available. error: ", err)
+		w.log.Debug("main updater updating err, starting fallback if available. error: ", err)
 		go func() { w.scheduleRetry() }() // Don't care if poller start error or not, always retry.
-		if w.fallbackUpdater != nil {
-			//nolint:errcheck
-			w.fallbackUpdater.Start(nil) // Don't care if fallback start success or fail.
-		}
+		go func() { w.fallbackStart() }()
 	})
 	if err == nil {
 		// Main start success, stop fallback.
+		if w.fallbackStartRetryTimer != nil {
+			w.fallbackStartRetryTimer.Stop()
+		}
 		if w.fallbackUpdater != nil {
 			w.fallbackUpdater.Stop()
 		}
+		w.isRunning = true
 		return nil
 	}
-	w.log.Debug("main updater start err, starting fallback. error: ", err)
 	if w.fallbackUpdater == nil {
 		// No fallback, main start failed is wrapper start fail
+		w.log.Error("main updater start err, no fallback. error: ", err)
 		return err
 	}
+	w.log.Debug("main updater start err, starting fallback. error: ", err)
 	err = w.fallbackUpdater.Start(nil)
 	if err != nil {
 		w.log.Debug("fallback updater start failed. error: ", err)
 		return err
 	}
 
+	w.isRunning = true
 	go func() { w.scheduleRetry() }()
 	return nil
 }
@@ -326,12 +340,16 @@ func (w *flagConfigFallbackRetryWrapper) Start(onError func(error)) error {
 func (w *flagConfigFallbackRetryWrapper) Stop() {
 	w.lock.Lock()
 	defer w.lock.Unlock()
+	w.isRunning = false
 
 	if w.retryTimer != nil {
 		w.retryTimer.Stop()
 		w.retryTimer = nil
 	}
 	w.mainUpdater.Stop()
+	if w.fallbackStartRetryTimer != nil {
+		w.fallbackStartRetryTimer.Stop()
+	}
 	if w.fallbackUpdater != nil {
 		w.fallbackUpdater.Stop()
 	}
@@ -341,6 +359,10 @@ func (w *flagConfigFallbackRetryWrapper) scheduleRetry() {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
+	if (!w.isRunning) {
+		return
+	}
+
 	if w.retryTimer != nil {
 		w.retryTimer.Stop()
 		w.retryTimer = nil
@@ -349,22 +371,26 @@ func (w *flagConfigFallbackRetryWrapper) scheduleRetry() {
 		w.lock.Lock()
 		defer w.lock.Unlock()
 
+		if (!w.isRunning) {
+			return
+		}
+
 		if w.retryTimer != nil {
 			w.retryTimer = nil
 		}
 
 		w.log.Debug("main updater retry start")
 		err := w.mainUpdater.Start(func(err error) {
-			w.log.Error("main updater updating err, starting fallback if available. error: ", err)
+			w.log.Debug("main updater updating err, starting fallback if available. error: ", err)
 			go func() { w.scheduleRetry() }() // Don't care if poller start error or not, always retry.
-			if w.fallbackUpdater != nil {
-				//nolint:errcheck
-				w.fallbackUpdater.Start(nil) // Don't care if fallback start success or fail.
-			}
+			go func() { w.fallbackStart() }()
 		})
 		if err == nil {
 			// Main start success, stop fallback.
 			w.log.Debug("main updater retry start success")
+			if w.fallbackStartRetryTimer != nil {
+				w.fallbackStartRetryTimer.Stop()
+			}
 			if w.fallbackUpdater != nil {
 				w.fallbackUpdater.Stop()
 			}
@@ -373,4 +399,24 @@ func (w *flagConfigFallbackRetryWrapper) scheduleRetry() {
 
 		go func() { w.scheduleRetry() }()
 	})
+}
+
+func (w *flagConfigFallbackRetryWrapper) fallbackStart() {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
+	if (!w.isRunning) {
+		return
+	}
+	if (w.fallbackUpdater == nil) {
+		return
+	}
+
+	err := w.fallbackUpdater.Start(nil)
+	if (err != nil) {
+		w.log.Debug("fallback updater start failed and scheduling retry")
+		w.fallbackStartRetryTimer = time.AfterFunc(randTimeDuration(w.fallbackStartRetryDelay, w.fallbackStartRetryMaxJitter), func() {
+			w.fallbackStart()
+		})
+	}
 }
