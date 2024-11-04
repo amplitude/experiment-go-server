@@ -283,14 +283,17 @@ func newflagConfigFallbackRetryWrapper(
 	}
 }
 
-// Start tries to start main updater first.
-//
-//	If it failed, start the fallback updater.
-//	  If fallback updater failed as well, return error.
-//	  If fallback updater succeed, main updater enters retry, return ok.
-//
-// Since the wrapper retries, so there will never be error case.
-// Thus, onError will never be called.
+/**
+ * Start tries to start main updater first.
+ * If it failed, start the fallback updater.
+ *   If fallback updater failed as well, return error.
+ *   If fallback updater succeed, main updater enters retry, return ok.
+ * After started, if main failed, main enters retry loop and fallback will start.
+ *   If fallback start failed, fallback will enter start retry loop until it's successfully started.
+ *   If fallback start success, but failed later, it's not monitored. It's recommended to wrap fallback with flagConfigFallbackRetryWrapper.
+ * Since the wrapper retries, so there will never be error case.
+ * Thus, onError will never be called.
+ */
 func (w *flagConfigFallbackRetryWrapper) Start(onError func(error)) error {
 	// if (mainUpdater is flagConfigFallbackRetryWrapper) {
 	//     return errors.New("Do not use flagConfigFallbackRetryWrapper as main updater. Fallback updater will never be used. Rewrite retry and fallback logic.")
