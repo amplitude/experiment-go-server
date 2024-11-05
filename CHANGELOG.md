@@ -1,3 +1,11 @@
+# [1.8.0](https://github.com/amplitude/experiment-go-server/compare/v1.7.0...v1.8.0) (2024-11-05)
+
+
+### Features
+
+* add flag push ([#30](https://github.com/amplitude/experiment-go-server/issues/30)) ([62dad32](https://github.com/amplitude/experiment-go-server/commit/62dad32d54803140893601024e6d3e2c0b087b72))
+* support non-string group prop values ([#31](https://github.com/amplitude/experiment-go-server/issues/31)) ([7064c5d](https://github.com/amplitude/experiment-go-server/commit/7064c5d3376a33e321e7016ed10907afb660d998))
+
 # [1.7.0](https://github.com/amplitude/experiment-go-server/compare/v1.6.0...v1.7.0) (2024-08-27)
 
 
