@@ -98,7 +98,7 @@ func fetch() {
 	}
 	duration := time.Since(start)
 	fmt.Println(duration)
-	b, _ := json.Marshal(variants)
+	b, _ := json.MarshalIndent(variants, "", "  ")
 	fmt.Printf("%v\n", string(b))
 }
 
@@ -227,6 +227,6 @@ func evaluate() {
 		return
 	}
 
-	b, _ := json.Marshal(variants)
+	b, _ := json.MarshalIndent(variants, "", "  ")
 	fmt.Printf("%v\n", string(b))
 }
