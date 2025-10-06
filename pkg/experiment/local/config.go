@@ -20,6 +20,7 @@ const (
 
 type Config struct {
 	Debug                          bool
+	DisableLogging                 bool
 	ServerUrl                      string
 	ServerZone                     ServerZone
 	FlagConfigPollerInterval       time.Duration

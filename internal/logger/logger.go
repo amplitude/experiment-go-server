@@ -12,6 +12,7 @@ const (
 	Verbose Level = iota
 	Debug
 	Error
+	none
 )
 
 type Log struct {
@@ -29,6 +30,13 @@ func New(debug bool) *Log {
 	return &Log{
 		logger: log.New(os.Stderr, "", log.LstdFlags),
 		level:  level,
+	}
+}
+
+func NewDisabled() *Log {
+	return &Log{
+		logger: log.New(os.Stderr, "", log.LstdFlags),
+		level:  none,
 	}
 }
 

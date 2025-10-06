@@ -35,8 +35,14 @@ func Initialize(apiKey string, config *Config) *Client {
 			panic("api key must be set")
 		}
 		config = fillConfigDefaults(config)
+
+		l := logger.New(config.Debug)
+		if config.DisableLogging {
+			l = logger.NewDisabled()
+		}
+
 		client = &Client{
-			log:    logger.New(config.Debug),
+			log:    l,
 			apiKey: apiKey,
 			config: config,
 			client: &http.Client{},

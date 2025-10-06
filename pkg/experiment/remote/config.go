@@ -5,10 +5,11 @@ import (
 )
 
 type Config struct {
-	Debug        bool
-	ServerUrl    string
-	FetchTimeout time.Duration
-	RetryBackoff *RetryBackoff
+	Debug          bool
+	DisableLogging bool
+	ServerUrl      string
+	FetchTimeout   time.Duration
+	RetryBackoff   *RetryBackoff
 }
 
 var DefaultConfig = &Config{
