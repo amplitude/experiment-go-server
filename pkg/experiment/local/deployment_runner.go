@@ -3,8 +3,6 @@ package local
 import (
 	"sync"
 	"time"
-
-	"github.com/amplitude/experiment-go-server/internal/logger"
 )
 
 type deploymentRunner struct {
@@ -14,7 +12,6 @@ type deploymentRunner struct {
 	cohortLoader      *cohortLoader
 	poller            *poller
 	lock              sync.Mutex
-	log               *logger.Log
 }
 
 const streamUpdaterRetryDelay = 15 * time.Second
@@ -28,9 +25,9 @@ func newDeploymentRunner(
 	cohortStorage cohortStorage,
 	cohortLoader *cohortLoader,
 ) *deploymentRunner {
-	flagConfigUpdater := newflagConfigFallbackRetryWrapper(newFlagConfigPoller(flagConfigApi, config, flagConfigStorage, cohortStorage, cohortLoader), nil, config.FlagConfigPollerInterval, updaterRetryMaxJitter, 0, 0, config.Debug)
+	flagConfigUpdater := newflagConfigFallbackRetryWrapper(newFlagConfigPoller(flagConfigApi, config, flagConfigStorage, cohortStorage, cohortLoader), nil, config.FlagConfigPollerInterval, updaterRetryMaxJitter, 0, 0, config.LogLevel, config.LoggerProvider)
 	if flagConfigStreamApi != nil {
-		flagConfigUpdater = newflagConfigFallbackRetryWrapper(newFlagConfigStreamer(flagConfigStreamApi, config, flagConfigStorage, cohortStorage, cohortLoader), flagConfigUpdater, streamUpdaterRetryDelay, updaterRetryMaxJitter, config.FlagConfigPollerInterval, 0, config.Debug)
+		flagConfigUpdater = newflagConfigFallbackRetryWrapper(newFlagConfigStreamer(flagConfigStreamApi, config, flagConfigStorage, cohortStorage, cohortLoader), flagConfigUpdater, streamUpdaterRetryDelay, updaterRetryMaxJitter, config.FlagConfigPollerInterval, 0, config.LogLevel, config.LoggerProvider)
 	}
 	dr := &deploymentRunner{
 		config:            config,
@@ -38,7 +35,6 @@ func newDeploymentRunner(
 		cohortLoader:      cohortLoader,
 		flagConfigUpdater: flagConfigUpdater,
 		poller:            newPoller(),
-		log:               logger.New(config.Debug),
 	}
 	return dr
 }

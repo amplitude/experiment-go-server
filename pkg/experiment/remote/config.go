@@ -2,20 +2,26 @@ package remote
 
 import (
 	"time"
+
+	"github.com/amplitude/experiment-go-server/logger"
 )
 
 type Config struct {
-	Debug        bool
-	ServerUrl    string
-	FetchTimeout time.Duration
-	RetryBackoff *RetryBackoff
+	Debug        		bool
+	LogLevel				logger.LogLevel
+	LoggerProvider	logger.LoggerProvider
+	ServerUrl    		string
+	FetchTimeout 		time.Duration
+	RetryBackoff 		*RetryBackoff
 }
 
 var DefaultConfig = &Config{
-	Debug:        false,
-	ServerUrl:    "https://api.lab.amplitude.com/",
-	FetchTimeout: 500 * time.Millisecond,
-	RetryBackoff: DefaultRetryBackoff,
+	Debug:        	false,
+	LogLevel:				logger.Error,
+	LoggerProvider:	logger.NewDefault(),
+	ServerUrl:    	"https://api.lab.amplitude.com/",
+	FetchTimeout: 	500 * time.Millisecond,
+	RetryBackoff: 	DefaultRetryBackoff,
 }
 
 type RetryBackoff struct {
@@ -46,6 +52,13 @@ func fillConfigDefaults(c *Config) *Config {
 	}
 	if c.RetryBackoff == nil {
 		c.RetryBackoff = DefaultConfig.RetryBackoff
+	}
+	if c.LogLevel == logger.Unknown {
+		if c.Debug {
+			c.LogLevel = logger.Debug
+		} else {
+			c.LogLevel = logger.Error
+		}
 	}
 	return c
 }

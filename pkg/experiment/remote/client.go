@@ -14,14 +14,14 @@ import (
 
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
 
-	"github.com/amplitude/experiment-go-server/internal/logger"
+	"github.com/amplitude/experiment-go-server/logger"
 )
 
 var clients = map[string]*Client{}
 var initMutex = sync.Mutex{}
 
 type Client struct {
-	log    *logger.Log
+	log    *logger.Logger
 	apiKey string
 	config *Config
 	client *http.Client
@@ -36,7 +36,7 @@ func Initialize(apiKey string, config *Config) *Client {
 		}
 		config = fillConfigDefaults(config)
 		client = &Client{
-			log:    logger.New(config.Debug),
+			log:    logger.New(config.LogLevel, config.LoggerProvider),
 			apiKey: apiKey,
 			config: config,
 			client: &http.Client{},

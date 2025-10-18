@@ -16,14 +16,14 @@ import (
 
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
 
-	"github.com/amplitude/experiment-go-server/internal/logger"
+	"github.com/amplitude/experiment-go-server/logger"
 )
 
 var clients = map[string]*Client{}
 var initMutex = sync.Mutex{}
 
 type Client struct {
-	log               *logger.Log
+	log               *logger.Logger
 	apiKey            string
 	config            *Config
 	client            *http.Client
@@ -45,7 +45,7 @@ func Initialize(apiKey string, config *Config) *Client {
 			panic("api key must be set")
 		}
 		config = fillConfigDefaults(config)
-		log := logger.New(config.Debug)
+		log := logger.New(config.LogLevel, config.LoggerProvider)
 		var as *assignmentService
 		if config.AssignmentConfig != nil && config.AssignmentConfig.APIKey != "" {
 			amplitudeClient := amplitude.NewClient(config.AssignmentConfig.Config)
@@ -59,8 +59,8 @@ func Initialize(apiKey string, config *Config) *Client {
 		var cohortLoader *cohortLoader
 		var deploymentRunner *deploymentRunner
 		if config.CohortSyncConfig != nil {
-			cohortDownloadApi := newDirectCohortDownloadApi(config.CohortSyncConfig.ApiKey, config.CohortSyncConfig.SecretKey, config.CohortSyncConfig.MaxCohortSize, config.CohortSyncConfig.CohortServerUrl, config.Debug)
-			cohortLoader = newCohortLoader(cohortDownloadApi, cohortStorage, config.Debug)
+			cohortDownloadApi := newDirectCohortDownloadApi(config.CohortSyncConfig.ApiKey, config.CohortSyncConfig.SecretKey, config.CohortSyncConfig.MaxCohortSize, config.CohortSyncConfig.CohortServerUrl, config.LogLevel, config.LoggerProvider)
+			cohortLoader = newCohortLoader(cohortDownloadApi, cohortStorage, config.LogLevel, config.LoggerProvider)
 		}
 		var flagStreamApi *flagConfigStreamApiV2
 		if config.StreamUpdates {

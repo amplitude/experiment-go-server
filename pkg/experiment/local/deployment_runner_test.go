@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
+	"github.com/amplitude/experiment-go-server/logger"
 )
 
 const (
@@ -19,10 +20,10 @@ func TestStartThrowsIfFirstFlagConfigLoadFails(t *testing.T) {
 	cohortDownloadAPI := &mockCohortDownloadApi{}
 	flagConfigStorage := newInMemoryFlagConfigStorage()
 	cohortStorage := newInMemoryCohortStorage()
-	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, true)
+	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, logger.Debug, logger.NewDefault())
 
 	runner := newDeploymentRunner(
-		&Config{},
+		&Config{LogLevel: logger.Error, LoggerProvider: logger.NewDefault()},
 		flagAPI,
 		nil,
 		flagConfigStorage,
@@ -46,7 +47,7 @@ func TestStartSucceedsEvenIfFirstCohortLoadFails(t *testing.T) {
 	}}
 	flagConfigStorage := newInMemoryFlagConfigStorage()
 	cohortStorage := newInMemoryCohortStorage()
-	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, true)
+	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, logger.Debug, logger.NewDefault())
 
 	runner := newDeploymentRunner(
 		DefaultConfig,

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/amplitude/experiment-go-server/logger"
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,14 +15,15 @@ func createTestPollerObjs() (mockFlagConfigApi, flagConfigStorage, cohortStorage
 	cohortDownloadAPI := &mockCohortDownloadApi{}
 	flagConfigStorage := newInMemoryFlagConfigStorage()
 	cohortStorage := newInMemoryCohortStorage()
-	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, true)
+	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, logger.Debug, logger.NewDefault())
 	return api, flagConfigStorage, cohortStorage, cohortLoader
 }
 
 func TestFlagConfigPoller(t *testing.T) {
 	api, flagConfigStorage, cohortStorage, cohortLoader := createTestPollerObjs()
 
-	poller := newFlagConfigPoller(&api, &Config{FlagConfigPollerInterval: 1 * time.Second}, flagConfigStorage, cohortStorage, cohortLoader)
+	config := &Config{FlagConfigPollerInterval: 1 * time.Second, LogLevel: logger.Error, LoggerProvider: logger.NewDefault()}
+	poller := newFlagConfigPoller(&api, config, flagConfigStorage, cohortStorage, cohortLoader)
 	errorCh := make(chan error)
 
 	// Poller start normal.
@@ -53,7 +55,8 @@ func TestFlagConfigPoller(t *testing.T) {
 func TestFlagConfigPollerStartFail(t *testing.T) {
 	api, flagConfigStorage, cohortStorage, cohortLoader := createTestPollerObjs()
 
-	poller := newFlagConfigPoller(&api, &Config{FlagConfigPollerInterval: 1 * time.Second}, flagConfigStorage, cohortStorage, cohortLoader)
+	config := &Config{FlagConfigPollerInterval: 1 * time.Second, LogLevel: logger.Error, LoggerProvider: logger.NewDefault()}
+	poller := newFlagConfigPoller(&api, config, flagConfigStorage, cohortStorage, cohortLoader)
 	errorCh := make(chan error)
 
 	// Poller start normal.
@@ -69,7 +72,8 @@ func TestFlagConfigPollerStartFail(t *testing.T) {
 func TestFlagConfigPollerPollingFail(t *testing.T) {
 	api, flagConfigStorage, cohortStorage, cohortLoader := createTestPollerObjs()
 
-	poller := newFlagConfigPoller(&api, &Config{FlagConfigPollerInterval: 1 * time.Second}, flagConfigStorage, cohortStorage, cohortLoader)
+	config := &Config{FlagConfigPollerInterval: 1 * time.Second, LogLevel: logger.Error, LoggerProvider: logger.NewDefault()}
+	poller := newFlagConfigPoller(&api, config, flagConfigStorage, cohortStorage, cohortLoader)
 	errorCh := make(chan error)
 
 	// Poller start normal.
@@ -130,14 +134,15 @@ func createTestStreamerObjs() (mockFlagConfigStreamApi, flagConfigStorage, cohor
 	cohortDownloadAPI := &mockCohortDownloadApi{}
 	flagConfigStorage := newInMemoryFlagConfigStorage()
 	cohortStorage := newInMemoryCohortStorage()
-	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, true)
+	cohortLoader := newCohortLoader(cohortDownloadAPI, cohortStorage, logger.Debug, logger.NewDefault())
 	return api, flagConfigStorage, cohortStorage, cohortLoader
 }
 
 func TestFlagConfigStreamer(t *testing.T) {
 	api, flagConfigStorage, cohortStorage, cohortLoader := createTestStreamerObjs()
 
-	streamer := newFlagConfigStreamer(&api, &Config{FlagConfigPollerInterval: 1 * time.Second}, flagConfigStorage, cohortStorage, cohortLoader)
+	config := &Config{FlagConfigPollerInterval: 1 * time.Second, LogLevel: logger.Debug, LoggerProvider: logger.NewDefault()}
+	streamer := newFlagConfigStreamer(&api, config, flagConfigStorage, cohortStorage, cohortLoader)
 	errorCh := make(chan error)
 
 	var updateCb func(map[string]*evaluation.Flag) error
@@ -183,7 +188,8 @@ func TestFlagConfigStreamer(t *testing.T) {
 func TestFlagConfigStreamerStartFail(t *testing.T) {
 	api, flagConfigStorage, cohortStorage, cohortLoader := createTestStreamerObjs()
 
-	streamer := newFlagConfigStreamer(&api, &Config{FlagConfigPollerInterval: 1 * time.Second}, flagConfigStorage, cohortStorage, cohortLoader)
+	config := &Config{FlagConfigPollerInterval: 1 * time.Second, LogLevel: logger.Debug, LoggerProvider: logger.NewDefault()}
+	streamer := newFlagConfigStreamer(&api, config, flagConfigStorage, cohortStorage, cohortLoader)
 	errorCh := make(chan error)
 
 	api.connectFunc = func(
@@ -206,7 +212,8 @@ func TestFlagConfigStreamerStartFail(t *testing.T) {
 func TestFlagConfigStreamerStreamingFail(t *testing.T) {
 	api, flagConfigStorage, cohortStorage, cohortLoader := createTestStreamerObjs()
 
-	streamer := newFlagConfigStreamer(&api, &Config{FlagConfigPollerInterval: 1 * time.Second}, flagConfigStorage, cohortStorage, cohortLoader)
+	config := &Config{FlagConfigPollerInterval: 1 * time.Second, LogLevel: logger.Debug, LoggerProvider: logger.NewDefault()}
+	streamer := newFlagConfigStreamer(&api, config, flagConfigStorage, cohortStorage, cohortLoader)
 	errorCh := make(chan error)
 
 	var updateCb func(map[string]*evaluation.Flag) error
@@ -274,7 +281,7 @@ func TestFlagConfigFallbackRetryWrapper(t *testing.T) {
 	}
 	fallback.stopFunc = func() {
 	}
-	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, true)
+	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, logger.Debug, logger.NewDefault())
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)
@@ -299,7 +306,7 @@ func TestFlagConfigFallbackRetryWrapperBothStartFail(t *testing.T) {
 	}
 	fallback.stopFunc = func() {
 	}
-	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, true)
+	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, logger.Debug, logger.NewDefault())
 	err := w.Start(nil)
 	assert.Equal(t, errors.New("fallback start error"), err)
 	assert.NotNil(t, mainOnError)
@@ -328,7 +335,7 @@ func TestFlagConfigFallbackRetryWrapperMainStartFailFallbackSuccess(t *testing.T
 	fallback.stopFunc = func() {
 		go func() { fallbackStopCh <- true }()
 	}
-	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, true)
+	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, logger.Debug, logger.NewDefault())
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)
@@ -374,7 +381,7 @@ func TestFlagConfigFallbackRetryWrapperMainUpdatingFail(t *testing.T) {
 		return nil
 	}
 	fallback.stopFunc = func() {}
-	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, true)
+	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1*time.Second, 0, 1*time.Second, 0, logger.Debug, logger.NewDefault())
 	// Start success
 	err := w.Start(nil)
 	assert.Nil(t, err)
@@ -451,7 +458,7 @@ func TestFlagConfigFallbackRetryWrapperMainUpdatingFailFallbackStartFail(t *test
 		return errors.New("fallback start fail")
 	}
 	fallback.stopFunc = func() {}
-	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1100 * time.Millisecond, 0, 500 * time.Millisecond, 0, true)
+	w := newflagConfigFallbackRetryWrapper(&main, &fallback, 1100 * time.Millisecond, 0, 500 * time.Millisecond, 0, logger.Debug, logger.NewDefault())
 	// Start success
 	err := w.Start(nil)
 	assert.Nil(t, err)
@@ -530,7 +537,7 @@ func TestFlagConfigFallbackRetryWrapperMainOnly(t *testing.T) {
 	main.stopFunc = func() {
 		mainOnError = nil
 	}
-	w := newflagConfigFallbackRetryWrapper(&main, nil, 1*time.Second, 0, 1*time.Second, 0, true)
+	w := newflagConfigFallbackRetryWrapper(&main, nil, 1*time.Second, 0, 1*time.Second, 0, logger.Debug, logger.NewDefault())
 	err := w.Start(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, mainOnError)

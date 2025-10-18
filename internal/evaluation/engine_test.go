@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/amplitude/experiment-go-server/internal/logger"
+	"github.com/amplitude/experiment-go-server/logger"
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"io/ioutil"
 	"net/http"
@@ -19,7 +19,7 @@ import (
 const deploymentKey = "server-NgJxxvg8OGwwBsWVXqyxQbdiflbhvugy"
 
 var flags []*Flag
-var engine = &Engine{logger.New(false)}
+var engine = &Engine{logger.New(logger.Error, logger.NewDefault())}
 
 func init() {
 	rawFlags, err := getFlagConfigsRaw()

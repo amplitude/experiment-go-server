@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amplitude/experiment-go-server/internal/logger"
+	"github.com/amplitude/experiment-go-server/logger"
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"github.com/stretchr/testify/require"
 )
@@ -82,7 +82,7 @@ func TestClient_FetchRetryWithDifferentResponseCodes(t *testing.T) {
 		// Update the client config to use the test server
 		config.ServerUrl = server.URL
 		client := &Client{
-			log:    logger.New(config.Debug),
+			log:    logger.New(logger.Debug, logger.NewDefault()),
 			apiKey: "apiKey",
 			config: config,
 			client: server.Client(), // Use the test server's client

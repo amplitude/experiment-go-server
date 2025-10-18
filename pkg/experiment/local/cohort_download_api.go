@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/amplitude/experiment-go-server/internal/logger"
+	"github.com/amplitude/experiment-go-server/logger"
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"net/http"
 	"strconv"
@@ -22,18 +22,20 @@ type directCohortDownloadApi struct {
 	SecretKey     string
 	MaxCohortSize int
 	ServerUrl     string
-	Debug         bool
-	log           *logger.Log
+	log           *logger.Logger
 }
 
-func newDirectCohortDownloadApi(apiKey, secretKey string, maxCohortSize int, serverUrl string, debug bool) *directCohortDownloadApi {
+func newDirectCohortDownloadApi(apiKey, secretKey string, 
+	maxCohortSize int, 
+	serverUrl string, 
+	logLevel logger.LogLevel,
+	loggerProvider logger.LoggerProvider) *directCohortDownloadApi {
 	api := &directCohortDownloadApi{
 		ApiKey:        apiKey,
 		SecretKey:     secretKey,
 		MaxCohortSize: maxCohortSize,
 		ServerUrl:     serverUrl,
-		Debug:         debug,
-		log:           logger.New(debug),
+		log:           logger.New(logLevel, loggerProvider),
 	}
 	return api
 }

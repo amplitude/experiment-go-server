@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
-	"github.com/amplitude/experiment-go-server/internal/logger"
+	"github.com/amplitude/experiment-go-server/logger"
 )
 
 type flagConfigUpdater interface {
@@ -23,7 +23,7 @@ type flagConfigUpdaterBase struct {
 	flagConfigStorage flagConfigStorage
 	cohortStorage     cohortStorage
 	cohortLoader      *cohortLoader
-	log               *logger.Log
+	log               *logger.Logger
 }
 
 func newFlagConfigUpdaterBase(
@@ -36,7 +36,7 @@ func newFlagConfigUpdaterBase(
 		flagConfigStorage: flagConfigStorage,
 		cohortStorage:     cohortStorage,
 		cohortLoader:      cohortLoader,
-		log:               logger.New(config.Debug),
+		log:               logger.New(config.LogLevel, config.LoggerProvider),
 	}
 }
 
@@ -249,7 +249,7 @@ func (p *flagConfigPoller) Stop() {
 // A wrapper around flag config updaters to retry and fallback.
 // If the main updater fails, it will fallback to the fallback updater and main updater enters retry loop.
 type flagConfigFallbackRetryWrapper struct {
-	log             *logger.Log
+	log             *logger.Logger
 	mainUpdater     flagConfigUpdater
 	fallbackUpdater flagConfigUpdater
 	retryDelay      time.Duration
@@ -269,10 +269,11 @@ func newflagConfigFallbackRetryWrapper(
 	maxJitter time.Duration,
 	fallbackStartRetryDelay      time.Duration,
 	fallbackStartRetryMaxJitter       time.Duration,
-	debug bool,
+	logLevel logger.LogLevel,
+	loggerProvider logger.LoggerProvider,
 ) flagConfigUpdater {
 	return &flagConfigFallbackRetryWrapper{
-		log:             logger.New(debug),
+		log:             logger.New(logLevel, loggerProvider),
 		mainUpdater:     mainUpdater,
 		fallbackUpdater: fallbackUpdater,
 		retryDelay:      retryDelay,
