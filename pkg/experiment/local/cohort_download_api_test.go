@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/amplitude/experiment-go-server/pkg/logger"
+
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -33,7 +35,7 @@ func TestCohortDownloadApi(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	api := newDirectCohortDownloadApi("api", "secret", 15000, "https://server.amplitude.com", false)
+	api := newDirectCohortDownloadApi("api", "secret", 15000, "https://server.amplitude.com", logger.Debug, logger.NewDefault())
 
 	t.Run("test_cohort_download_success", func(t *testing.T) {
 		cohort := &Cohort{Id: "1234", LastModified: 0, Size: 1, MemberIds: []string{"user"}, GroupType: "userGroupType"}

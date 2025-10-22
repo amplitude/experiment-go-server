@@ -3,6 +3,8 @@ package local
 import (
 	"testing"
 	"time"
+
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 )
 
 func TestFillConfigDefaults_ServerZoneAndServerUrl(t *testing.T) {
@@ -143,9 +145,11 @@ func TestFillConfigDefaults_DefaultValues(t *testing.T) {
 			expected: &Config{
 				ServerZone:                     DefaultConfig.ServerZone,
 				ServerUrl:                      DefaultConfig.ServerUrl,
-				StreamServerUrl:                      DefaultConfig.StreamServerUrl,
+				StreamServerUrl:                DefaultConfig.StreamServerUrl,
 				FlagConfigPollerInterval:       DefaultConfig.FlagConfigPollerInterval,
 				FlagConfigPollerRequestTimeout: DefaultConfig.FlagConfigPollerRequestTimeout,
+				LogLevel: 											DefaultConfig.LogLevel,
+				LoggerProvider: 								DefaultConfig.LoggerProvider,
 			},
 		},
 		{
@@ -156,6 +160,7 @@ func TestFillConfigDefaults_DefaultValues(t *testing.T) {
 				StreamServerUrl:                "https://stream.custom.url",
 				FlagConfigPollerInterval:       60 * time.Second,
 				FlagConfigPollerRequestTimeout: 20 * time.Second,
+				LogLevel: 											logger.Info,
 			},
 			expected: &Config{
 				ServerZone:                     EUServerZone,
@@ -163,6 +168,7 @@ func TestFillConfigDefaults_DefaultValues(t *testing.T) {
 				StreamServerUrl:                "https://stream.custom.url",
 				FlagConfigPollerInterval:       60 * time.Second,
 				FlagConfigPollerRequestTimeout: 20 * time.Second,
+				LogLevel:												logger.Info,
 			},
 		},
 	}
@@ -184,6 +190,51 @@ func TestFillConfigDefaults_DefaultValues(t *testing.T) {
 			}
 			if result.FlagConfigPollerRequestTimeout != tt.expected.FlagConfigPollerRequestTimeout {
 				t.Errorf("expected FlagConfigPollerRequestTimeout %v, got %v", tt.expected.FlagConfigPollerRequestTimeout, result.FlagConfigPollerRequestTimeout)
+			}
+			if result.LogLevel != tt.expected.LogLevel {
+				t.Errorf("expected LogLevel %d, got %d", tt.expected.LogLevel, result.LogLevel)
+			}
+		})
+	}
+}
+
+func TestFillLogDefaults_LoggingValues(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *Config
+		expected *Config
+	}{
+		{
+			name:     "Nil config",
+			input:    nil,
+			expected: DefaultConfig,
+		},
+		{
+			name:  "Empty config with Debug true",
+			input: &Config{
+				Debug:													true,
+			},
+			expected: &Config{
+				LogLevel: 											logger.Debug,
+			},
+		},
+		{
+			name: "Custom level with Debug true",
+			input: &Config{
+				Debug:													true,
+				LogLevel: 											logger.Info,
+			},
+			expected: &Config{
+				LogLevel: 											logger.Debug,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := fillConfigDefaults(tt.input)
+			if result.LogLevel != tt.expected.LogLevel {
+				t.Errorf("expected LogLevel %d, got %d", tt.expected.LogLevel, result.LogLevel)
 			}
 		})
 	}

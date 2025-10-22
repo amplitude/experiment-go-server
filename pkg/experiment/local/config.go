@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/amplitude/analytics-go/amplitude"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 )
 
 const EUFlagServerUrl = "https://flag.lab.eu.amplitude.com"
@@ -20,6 +21,8 @@ const (
 
 type Config struct {
 	Debug                          bool
+	LogLevel 										   logger.LogLevel											 
+	LoggerProvider								 logger.LoggerProvider
 	ServerUrl                      string
 	ServerZone                     ServerZone
 	FlagConfigPollerInterval       time.Duration
@@ -46,6 +49,8 @@ type CohortSyncConfig struct {
 
 var DefaultConfig = &Config{
 	Debug:                          false,
+	LogLevel:												logger.Error,
+	LoggerProvider:									logger.NewDefault(),
 	ServerUrl:                      "https://api.lab.amplitude.com/",
 	ServerZone:                     USServerZone,
 	FlagConfigPollerInterval:       30 * time.Second,
@@ -111,6 +116,18 @@ func fillConfigDefaults(c *Config) *Config {
 		case EUServerZone:
 			c.CohortSyncConfig.CohortServerUrl = EUCohortSyncUrl
 		}
+	}
+
+	if c.LogLevel == logger.Unknown {
+		c.LogLevel = logger.Error
+	}
+
+	if c.Debug {
+		c.LogLevel = logger.Debug
+	} 
+
+	if c.LoggerProvider == nil {
+		c.LoggerProvider = logger.NewDefault()
 	}
 
 	return c
