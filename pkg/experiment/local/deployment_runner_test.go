@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
-	"github.com/amplitude/experiment-go-server/logger"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 )
 
 const (

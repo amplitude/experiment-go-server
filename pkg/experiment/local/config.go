@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/amplitude/analytics-go/amplitude"
-	"github.com/amplitude/experiment-go-server/logger"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 )
 
 const EUFlagServerUrl = "https://flag.lab.eu.amplitude.com"

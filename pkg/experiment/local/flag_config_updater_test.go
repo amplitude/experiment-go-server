@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amplitude/experiment-go-server/logger"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
 	"github.com/stretchr/testify/assert"
 )

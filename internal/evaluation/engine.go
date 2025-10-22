@@ -3,7 +3,7 @@ package evaluation
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/amplitude/experiment-go-server/logger"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 	"github.com/spaolacci/murmur3"
 	"reflect"
 	"regexp"

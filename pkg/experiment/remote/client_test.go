@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amplitude/experiment-go-server/logger"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"github.com/stretchr/testify/require"
 )

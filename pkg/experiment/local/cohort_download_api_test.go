@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/amplitude/experiment-go-server/logger"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"

@@ -3,7 +3,7 @@ package remote
 import (
 	"time"
 
-	"github.com/amplitude/experiment-go-server/logger"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 )
 
 type Config struct {

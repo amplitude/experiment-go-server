@@ -14,7 +14,7 @@ import (
 
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
 
-	"github.com/amplitude/experiment-go-server/logger"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 )
 
 var clients = map[string]*Client{}
