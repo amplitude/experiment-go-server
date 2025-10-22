@@ -48,14 +48,6 @@ func (m *mockLoggerProvider) Error(format string, args ...interface{}) {
 	m.errorCalls = append(m.errorCalls, logCall{format: format, args: args})
 }
 
-func (m *mockLoggerProvider) reset() {
-	m.verboseCalls = make([]logCall, 0)
-	m.debugCalls = make([]logCall, 0)
-	m.infoCalls = make([]logCall, 0)
-	m.warnCalls = make([]logCall, 0)
-	m.errorCalls = make([]logCall, 0)
-}
-
 // TestNew tests the Logger constructor
 func TestNew(t *testing.T) {
 	tests := []struct {
