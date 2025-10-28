@@ -6,11 +6,11 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/amplitude/experiment-go-server/internal/logger"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 )
 
 type cohortLoader struct {
-	log               *logger.Log
+	log               *logger.Logger
 	cohortDownloadApi cohortDownloadApi
 	cohortStorage     cohortStorage
 	jobs              sync.Map
@@ -18,7 +18,10 @@ type cohortLoader struct {
 	lockJobs          sync.Mutex
 }
 
-func newCohortLoader(cohortDownloadApi cohortDownloadApi, cohortStorage cohortStorage, debug bool) *cohortLoader {
+func newCohortLoader(cohortDownloadApi cohortDownloadApi,
+	cohortStorage cohortStorage,
+	logLevel logger.LogLevel,
+	loggerProvider logger.LoggerProvider) *cohortLoader {
 	return &cohortLoader{
 		cohortDownloadApi: cohortDownloadApi,
 		cohortStorage:     cohortStorage,
@@ -27,7 +30,7 @@ func newCohortLoader(cohortDownloadApi cohortDownloadApi, cohortStorage cohortSt
 				return &CohortLoaderTask{}
 			},
 		},
-		log: logger.New(debug),
+		log: logger.New(logLevel, loggerProvider),
 	}
 }
 

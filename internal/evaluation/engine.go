@@ -3,7 +3,7 @@ package evaluation
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/amplitude/experiment-go-server/internal/logger"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 	"github.com/spaolacci/murmur3"
 	"reflect"
 	"regexp"
@@ -12,7 +12,7 @@ import (
 )
 
 type Engine struct {
-	log *logger.Log
+	log *logger.Logger
 }
 
 type target struct {
@@ -20,7 +20,7 @@ type target struct {
 	result  map[string]Variant
 }
 
-func NewEngine(log *logger.Log) *Engine {
+func NewEngine(log *logger.Logger) *Engine {
 	return &Engine{log}
 }
 

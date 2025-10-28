@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/amplitude/experiment-go-server/compare/v1.8.0...v1.9.0) (2025-10-22)
+
+
+### Features
+
+* allow for better user defined logging behavior with LogLevel and LoggerProvider config fields ([#38](https://github.com/amplitude/experiment-go-server/issues/38)) ([ac795db](https://github.com/amplitude/experiment-go-server/commit/ac795db4cf34b2002930fa140bbc5c823b04f3f7))
+
 # [1.8.0](https://github.com/amplitude/experiment-go-server/compare/v1.7.0...v1.8.0) (2024-11-05)
 
 
