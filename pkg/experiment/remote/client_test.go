@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amplitude/experiment-go-server/pkg/logger"
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 	"github.com/stretchr/testify/require"
 )
 
@@ -140,7 +140,7 @@ func TestClient_FetchV2WithOptions(t *testing.T) {
 		}
 		fillConfigDefaults(config)
 		client := &Client{
-			log:    logger.New(config.Debug),
+			log:    logger.New(logger.Debug, logger.NewDefault()),
 			apiKey: "apiKey",
 			config: config,
 			client: server.Client(), // Use the test server's client
