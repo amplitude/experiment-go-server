@@ -67,11 +67,22 @@ func (c *Client) FetchV2(user *experiment.User) (map[string]experiment.Variant, 
 
 // FetchV2WithContext fetches variants for a user from the remote evaluation service with a context.
 func (c *Client) FetchV2WithContext(user *experiment.User, ctx context.Context) (map[string]experiment.Variant, error) {
-	variants, err := c.doFetch(ctx, user, c.config.FetchTimeout)
+	return c.FetchV2WithContextAndOptions(user, ctx, nil)
+}
+
+// FetchV2WithOptions fetches variants for a user from the remote evaluation service with options.
+func (c *Client) FetchV2WithOptions(user *experiment.User, fetchOptions *FetchOptions) (map[string]experiment.Variant, error) {
+	ctx := context.Background()
+	return c.FetchV2WithContextAndOptions(user, ctx, fetchOptions)
+}
+
+// FetchV2WithContextAndOptions fetches variants for a user from the remote evaluation service with a context and options.
+func (c *Client) FetchV2WithContextAndOptions(user *experiment.User, ctx context.Context, fetchOptions *FetchOptions) (map[string]experiment.Variant, error) {
+	variants, err := c.doFetch(ctx, user, c.config.FetchTimeout, fetchOptions)
 	if err != nil {
 		c.log.Error("fetch error: %v", err)
 		if c.config.RetryBackoff.FetchRetries > 0 && shouldRetryFetch(err) {
-			return c.retryFetch(ctx, user)
+			return c.retryFetch(ctx, user, fetchOptions)
 		} else {
 			return nil, err
 		}
@@ -79,7 +90,7 @@ func (c *Client) FetchV2WithContext(user *experiment.User, ctx context.Context) 
 	return variants, err
 }
 
-func (c *Client) doFetch(ctx context.Context, user *experiment.User, timeout time.Duration) (map[string]experiment.Variant, error) {
+func (c *Client) doFetch(ctx context.Context, user *experiment.User, timeout time.Duration, fetchOptions *FetchOptions) (map[string]experiment.Variant, error) {
 	addLibraryContext(user)
 	endpoint, err := url.Parse(c.config.ServerUrl)
 	if err != nil {
@@ -103,6 +114,18 @@ func (c *Client) doFetch(ctx context.Context, user *experiment.User, timeout tim
 	req.Header.Set("Authorization", fmt.Sprintf("Api-Key %s", c.apiKey))
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	req.Header.Set("X-Amp-Exp-User", base64.StdEncoding.EncodeToString(jsonBytes))
+	if fetchOptions != nil {
+		if fetchOptions.TracksAssignment {
+			req.Header.Set("X-Amp-Exp-Track", "track")
+		} else if !fetchOptions.TracksAssignment {
+			req.Header.Set("X-Amp-Exp-Track", "no-track")
+		}
+		if fetchOptions.TracksExposure {
+			req.Header.Set("X-Amp-Exp-Exposure-Track", "track")
+		} else if !fetchOptions.TracksExposure {
+			req.Header.Set("X-Amp-Exp-Exposure-Track", "no-track")
+		}
+	}
 	c.log.Debug("fetch request: %v", req)
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -116,7 +139,7 @@ func (c *Client) doFetch(ctx context.Context, user *experiment.User, timeout tim
 	return c.parseResponse(resp)
 }
 
-func (c *Client) retryFetch(ctx context.Context, user *experiment.User) (map[string]experiment.Variant, error) {
+func (c *Client) retryFetch(ctx context.Context, user *experiment.User, fetchOptions *FetchOptions) (map[string]experiment.Variant, error) {
 	var err error
 	var variants map[string]experiment.Variant
 	var timer *time.Timer
@@ -125,7 +148,7 @@ func (c *Client) retryFetch(ctx context.Context, user *experiment.User) (map[str
 		c.log.Debug("retry attempt %v", i)
 		timer = time.NewTimer(delay)
 		<-timer.C
-		variants, err = c.doFetch(ctx, user, c.config.RetryBackoff.FetchRetryTimeout)
+		variants, err = c.doFetch(ctx, user, c.config.RetryBackoff.FetchRetryTimeout, fetchOptions)
 		if err == nil && variants != nil {
 			c.log.Debug("retry attempt %v success", i)
 			return variants, nil
