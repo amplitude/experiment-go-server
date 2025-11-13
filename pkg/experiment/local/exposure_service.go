@@ -25,7 +25,6 @@ func toExposureEvents(exposure *exposure, ttlMillis int64) []amplitude.Event {
 	canonicalized := exposure.Canonicalize()
 
 	for flagKey, variant := range exposure.results {
-		// TODO: We don't seem to use trackExposure metadata.
 		trackExposure, ok := variant.Metadata["trackExposure"].(bool)
 		if !ok {
 			trackExposure = true
