@@ -1,9 +1,10 @@
 package local
 
 import (
-	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"testing"
 	"time"
+
+	"github.com/amplitude/experiment-go-server/pkg/experiment"
 )
 
 func TestSingleAssignment(t *testing.T) {

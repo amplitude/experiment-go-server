@@ -31,6 +31,7 @@ type Client struct {
 	flagsMutex        *sync.RWMutex
 	engine            *evaluation.Engine
 	assignmentService *assignmentService
+	exposureService   *exposureService
 	cohortStorage     cohortStorage
 	flagConfigStorage flagConfigStorage
 	cohortLoader      *cohortLoader
@@ -53,6 +54,19 @@ func Initialize(apiKey string, config *Config) *Client {
 				amplitude: &amplitudeClient,
 				filter:    newAssignmentFilter(config.AssignmentConfig.CacheCapacity),
 			}
+		}
+
+		// Exposure service is always instantiated, using deployment key if no api key provided
+		exposureConfig := config.ExposureConfig
+		exposureApiKey := exposureConfig.APIKey
+		if exposureApiKey == "" {
+			exposureApiKey = apiKey
+		}
+		exposureConfig.APIKey = exposureApiKey
+		exposureAmplitudeClient := amplitude.NewClient(exposureConfig.Config)
+		es := &exposureService{
+			amplitude: &exposureAmplitudeClient,
+			filter:    newExposureFilter(exposureConfig.CacheCapacity),
 		}
 		cohortStorage := newInMemoryCohortStorage()
 		flagConfigStorage := newInMemoryFlagConfigStorage()
@@ -79,6 +93,7 @@ func Initialize(apiKey string, config *Config) *Client {
 			flagsMutex:        &sync.RWMutex{},
 			engine:            evaluation.NewEngine(log),
 			assignmentService: as,
+			exposureService:   es,
 			cohortStorage:     cohortStorage,
 			flagConfigStorage: flagConfigStorage,
 			cohortLoader:      cohortLoader,
@@ -123,6 +138,11 @@ func (c *Client) Evaluate(user *experiment.User, flagKeys []string) (map[string]
 }
 
 func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[string]experiment.Variant, error) {
+	return c.EvaluateV2WithOptions(user, &EvaluateOptions{FlagKeys: flagKeys})
+}
+
+func (c *Client) EvaluateV2WithOptions(user *experiment.User, options *EvaluateOptions) (map[string]experiment.Variant, error) {
+	flagKeys := options.FlagKeys
 	flagConfigs := c.flagConfigStorage.getFlagConfigs()
 	sortedFlags, err := topologicalSort(flagConfigs, flagKeys)
 	if err != nil {
@@ -148,6 +168,10 @@ func (c *Client) EvaluateV2(user *experiment.User, flagKeys []string) (map[strin
 			Metadata: result.Metadata,
 		}
 	}
+	if options.TracksExposure != nil && *options.TracksExposure {
+		c.exposureService.Track(newExposure(user, variants))
+	}
+	// Deprecated: Assignment tracking is deprecated. Use ExposureService with Exposure tracking instead.
 	if c.assignmentService != nil {
 		c.assignmentService.Track(newAssignment(user, variants))
 	}
