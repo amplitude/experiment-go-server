@@ -1,12 +1,15 @@
 package local
 
 import (
-	"github.com/amplitude/experiment-go-server/pkg/experiment"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/amplitude/experiment-go-server/pkg/experiment"
 )
 
+// assignment represents an assignment event.
+// Deprecated: Assignment tracking is deprecated. Use exposure with ExposureService instead.
 type assignment struct {
 	user      *experiment.User
 	results   map[string]experiment.Variant
