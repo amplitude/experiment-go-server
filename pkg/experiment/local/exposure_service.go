@@ -53,29 +53,23 @@ func toExposureEvents(exposure *exposure, ttlMillis int64) []amplitude.Event {
 		unset := make(map[string]interface{})
 		flagType, _ := variant.Metadata["flagType"].(string)
 		if flagType != flagTypeMutualExclusionGroup {
-			if isDefault {
-				unset[fmt.Sprintf("[Experiment] %s", flagKey)] = "-"
-			} else {
-				if variant.Key != "" {
-					set[fmt.Sprintf("[Experiment] %s", flagKey)] = variant.Key
-				} else if variant.Value != "" {
-					set[fmt.Sprintf("[Experiment] %s", flagKey)] = variant.Value
-				}
+			if variant.Key != "" {
+				set[fmt.Sprintf("[Experiment] %s", flagKey)] = variant.Key
+			} else if variant.Value != "" {
+				set[fmt.Sprintf("[Experiment] %s", flagKey)] = variant.Value
 			}
 		}
 
 		// Build event properties.
 		eventProperties := make(map[string]interface{})
-		if !isDefault {
-			eventProperties["[Experiment] Flag Key"] = flagKey
-			if variant.Key != "" {
-				eventProperties["[Experiment] Variant"] = variant.Key
-			} else if variant.Value != "" {
-				eventProperties["[Experiment] Variant"] = variant.Value
-			}
-			if variant.Metadata != nil {
-				eventProperties["metadata"] = variant.Metadata
-			}
+		eventProperties["[Experiment] Flag Key"] = flagKey
+		if variant.Key != "" {
+			eventProperties["[Experiment] Variant"] = variant.Key
+		} else if variant.Value != "" {
+			eventProperties["[Experiment] Variant"] = variant.Value
+		}
+		if variant.Metadata != nil {
+			eventProperties["metadata"] = variant.Metadata
 		}
 
 		// Build event.

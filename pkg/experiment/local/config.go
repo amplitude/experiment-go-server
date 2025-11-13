@@ -55,20 +55,6 @@ type CohortSyncConfig struct {
 	CohortServerUrl       string
 }
 
-var DefaultConfig = &Config{
-	Debug:                          false,
-	LogLevel:                       logger.Error,
-	LoggerProvider:                 logger.NewDefault(),
-	ServerUrl:                      "https://api.lab.amplitude.com/",
-	ServerZone:                     USServerZone,
-	FlagConfigPollerInterval:       30 * time.Second,
-	FlagConfigPollerRequestTimeout: 10 * time.Second,
-	StreamUpdates:                  false,
-	StreamServerUrl:                "https://stream.lab.amplitude.com",
-	StreamFlagConnTimeout:          1500 * time.Millisecond,
-	ExposureConfig:                 DefaultExposureConfig,
-}
-
 var DefaultAssignmentConfig = &AssignmentConfig{
 	CacheCapacity: 524288,
 }
@@ -81,6 +67,20 @@ var DefaultCohortSyncConfig = &CohortSyncConfig{
 	MaxCohortSize:         math.MaxInt32,
 	CohortPollingInterval: 60 * time.Second,
 	CohortServerUrl:       "https://cohort-v2.lab.amplitude.com",
+}
+
+var DefaultConfig = &Config{
+	Debug:                          false,
+	LogLevel:                       logger.Error,
+	LoggerProvider:                 logger.NewDefault(),
+	ServerUrl:                      "https://api.lab.amplitude.com/",
+	ServerZone:                     USServerZone,
+	FlagConfigPollerInterval:       30 * time.Second,
+	FlagConfigPollerRequestTimeout: 10 * time.Second,
+	StreamUpdates:                  false,
+	StreamServerUrl:                "https://stream.lab.amplitude.com",
+	StreamFlagConnTimeout:          1500 * time.Millisecond,
+	ExposureConfig:                 DefaultExposureConfig,
 }
 
 func fillConfigDefaults(c *Config) *Config {

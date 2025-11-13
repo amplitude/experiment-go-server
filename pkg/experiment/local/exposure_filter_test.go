@@ -266,4 +266,3 @@ func TestExposureFilterTTLBasedEviction(t *testing.T) {
 		t.Errorf("Exposure2 should not be tracked")
 	}
 }
-

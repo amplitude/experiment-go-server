@@ -235,21 +235,21 @@ func TestEvaluateV2GroupCohort(t *testing.T) {
 
 func TestEvaluateV2WithTracksExposureTracksNonDefaultVariants(t *testing.T) {
 	user := &experiment.User{UserId: "test_user"}
-	
+
 	// Capture tracked events
 	trackedEvents := make([]amplitude.Event, 0)
-	
+
 	// Create a mock amplitude client that captures events
 	mockAmplitudeClient := mockAmplitudeClientForTest{
 		trackedEvents: &trackedEvents,
 	}
-	
+
 	oldAmplitude := client.exposureService.amplitude
 	client.exposureService.amplitude = &mockAmplitudeClient
 	defer func() {
 		client.exposureService.amplitude = oldAmplitude
 	}()
-	
+
 	// Perform evaluation with TracksExposure=true
 	tracksExposure := true
 	options := &EvaluateOptions{
@@ -259,12 +259,12 @@ func TestEvaluateV2WithTracksExposureTracksNonDefaultVariants(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
-	
+
 	// Verify that track was called
 	if len(trackedEvents) == 0 {
 		t.Fatalf("Expected exposure events to be tracked, but none were tracked")
 	}
-	
+
 	// Count non-default variants
 	nonDefaultVariants := make(map[string]experiment.Variant)
 	for flagKey, variant := range variants {
@@ -273,12 +273,12 @@ func TestEvaluateV2WithTracksExposureTracksNonDefaultVariants(t *testing.T) {
 			nonDefaultVariants[flagKey] = variant
 		}
 	}
-	
+
 	// Verify that we have one event per non-default variant
 	if len(trackedEvents) != len(nonDefaultVariants) {
 		t.Fatalf("Expected %d exposure events, got %d", len(nonDefaultVariants), len(trackedEvents))
 	}
-	
+
 	// Verify each event has the correct structure
 	trackedFlagKeys := make(map[string]bool)
 	for _, event := range trackedEvents {
@@ -303,7 +303,7 @@ func TestEvaluateV2WithTracksExposureTracksNonDefaultVariants(t *testing.T) {
 			t.Errorf("Variant for %s should not be default", flagKey)
 		}
 	}
-	
+
 	// Verify all non-default variants were tracked
 	if len(trackedFlagKeys) != len(nonDefaultVariants) {
 		t.Errorf("Expected %d tracked flag keys, got %d", len(nonDefaultVariants), len(trackedFlagKeys))
@@ -322,4 +322,3 @@ type mockAmplitudeClientForTest struct {
 func (m *mockAmplitudeClientForTest) Track(event amplitude.Event) {
 	*m.trackedEvents = append(*m.trackedEvents, event)
 }
-

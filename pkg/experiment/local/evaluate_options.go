@@ -7,4 +7,3 @@ type EvaluateOptions struct {
 	// TracksExposure indicates whether to track exposure event for the evaluation.
 	TracksExposure *bool
 }
-

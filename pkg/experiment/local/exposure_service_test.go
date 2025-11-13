@@ -195,5 +195,3 @@ func TestTrackingCalled(t *testing.T) {
 		t.Errorf("Expected events to be generated")
 	}
 }
-
-

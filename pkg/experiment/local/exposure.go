@@ -49,4 +49,3 @@ func (e *exposure) Canonicalize() string {
 
 	return sb.String()
 }
-

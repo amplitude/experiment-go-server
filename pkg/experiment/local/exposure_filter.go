@@ -26,13 +26,11 @@ func (f *exposureFilter) shouldTrack(exposure *exposure) bool {
 	}
 	canonicalExposure := exposure.Canonicalize()
 	f.mu.Lock()
-	track, found := f.cache.Get(canonicalExposure)
+	defer f.mu.Unlock()
+	_, found := f.cache.Get(canonicalExposure)
 	if !found {
 		f.cache.Set(canonicalExposure, nil)
-		f.mu.Unlock()
 		return true
 	}
-	f.mu.Unlock()
-	return track == 0
+	return false
 }
-
