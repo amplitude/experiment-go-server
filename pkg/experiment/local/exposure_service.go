@@ -6,8 +6,14 @@ import (
 	"github.com/amplitude/analytics-go/amplitude"
 )
 
+// amplitudeTracker is an interface for tracking amplitude events
+// This allows us to mock the amplitude client in tests
+type amplitudeTracker interface {
+	Track(event amplitude.Event)
+}
+
 type exposureService struct {
-	amplitude *amplitude.Client
+	amplitude amplitudeTracker
 	filter    *exposureFilter
 }
 
@@ -15,7 +21,7 @@ func (s *exposureService) Track(exposure *exposure) {
 	if s.filter.shouldTrack(exposure) {
 		events := toExposureEvents(exposure, s.filter.ttlMillis)
 		for _, event := range events {
-			(*s.amplitude).Track(event)
+			s.amplitude.Track(event)
 		}
 	}
 }

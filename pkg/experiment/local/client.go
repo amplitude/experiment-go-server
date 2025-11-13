@@ -65,7 +65,7 @@ func Initialize(apiKey string, config *Config) *Client {
 		exposureConfig.APIKey = exposureApiKey
 		exposureAmplitudeClient := amplitude.NewClient(exposureConfig.Config)
 		es := &exposureService{
-			amplitude: &exposureAmplitudeClient,
+			amplitude: exposureAmplitudeClient,
 			filter:    newExposureFilter(exposureConfig.CacheCapacity),
 		}
 		cohortStorage := newInMemoryCohortStorage()
