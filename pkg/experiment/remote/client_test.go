@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amplitude/experiment-go-server/pkg/logger"
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
+	"github.com/amplitude/experiment-go-server/pkg/logger"
 	"github.com/stretchr/testify/require"
 )
 
@@ -101,5 +101,57 @@ func TestClient_FetchRetryWithDifferentResponseCodes(t *testing.T) {
 
 		// Assert the expected number of requests
 		require.Equal(t, data.fetchCalls, requestCount, "Unexpected number of requests")
+	}
+}
+
+func TestClient_FetchV2WithOptions(t *testing.T) {
+	testData := []FetchOptions{
+		{TracksAssignment: true, TracksExposure: true},
+		{TracksAssignment: true, TracksExposure: false},
+		{TracksAssignment: false, TracksExposure: true},
+		{TracksAssignment: false, TracksExposure: false},
+	}
+
+	for _, fetchOptions := range testData {
+		// Create a new httptest.Server for each iteration
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if fetchOptions.TracksAssignment {
+				require.Equal(t, r.Header.Get("X-Amp-Exp-Track"), "track")
+			} else {
+				require.Equal(t, r.Header.Get("X-Amp-Exp-Track"), "no-track")
+			}
+			if fetchOptions.TracksExposure {
+				require.Equal(t, r.Header.Get("X-Amp-Exp-Exposure-Track"), "track")
+			} else {
+				require.Equal(t, r.Header.Get("X-Amp-Exp-Exposure-Track"), "no-track")
+			}
+			// Return a 200 response
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte("{}"))
+			if err != nil {
+				fmt.Println("Response failed")
+			}
+		}))
+
+		// Update the client config to use the test server
+		config := &Config{
+			ServerUrl: server.URL,
+		}
+		fillConfigDefaults(config)
+		client := &Client{
+			log:    logger.New(logger.Debug, logger.NewDefault()),
+			apiKey: "apiKey",
+			config: config,
+			client: server.Client(), // Use the test server's client
+		}
+
+		_, err := client.FetchV2WithOptions(&experiment.User{UserId: "test_user"}, &fetchOptions)
+		if err != nil {
+			t.Errorf("FetchV2WithOptions failed: %v", err)
+			fmt.Println(err.Error())
+		}
+
+		// Close the server
+		server.Close()
 	}
 }
