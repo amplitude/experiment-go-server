@@ -117,12 +117,12 @@ func (c *Client) doFetch(ctx context.Context, user *experiment.User, timeout tim
 	if fetchOptions != nil {
 		if fetchOptions.TracksAssignment {
 			req.Header.Set("X-Amp-Exp-Track", "track")
-		} else if !fetchOptions.TracksAssignment {
+		} else {
 			req.Header.Set("X-Amp-Exp-Track", "no-track")
 		}
 		if fetchOptions.TracksExposure {
 			req.Header.Set("X-Amp-Exp-Exposure-Track", "track")
-		} else if !fetchOptions.TracksExposure {
+		} else {
 			req.Header.Set("X-Amp-Exp-Exposure-Track", "no-track")
 		}
 	}
