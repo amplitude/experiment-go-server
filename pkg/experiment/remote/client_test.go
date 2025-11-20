@@ -115,7 +115,6 @@ func TestClient_FetchV2WithOptions(t *testing.T) {
 	for _, fetchOptions := range testData {
 		// Create a new httptest.Server for each iteration
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Increment the request count
 			if fetchOptions.TracksAssignment {
 				require.Equal(t, r.Header.Get("X-Amp-Exp-Track"), "track")
 			} else {
