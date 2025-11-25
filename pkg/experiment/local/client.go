@@ -57,16 +57,14 @@ func Initialize(apiKey string, config *Config) *Client {
 		}
 
 		// Exposure service is always instantiated, using deployment key if no api key provided
-		exposureConfig := config.ExposureConfig
-		exposureApiKey := exposureConfig.APIKey
-		if exposureApiKey == "" {
-			exposureApiKey = apiKey
-		}
-		exposureConfig.APIKey = exposureApiKey
-		exposureAmplitudeClient := amplitude.NewClient(exposureConfig.Config)
-		es := &exposureService{
-			amplitude: exposureAmplitudeClient,
-			filter:    newExposureFilter(exposureConfig.CacheCapacity),
+		var es *exposureService
+		if config.ExposureConfig != nil && config.ExposureConfig.APIKey != "" {
+			exposureAmplitudeClient := amplitude.NewClient(config.ExposureConfig.Config)
+			es = &exposureService{
+				amplitude: exposureAmplitudeClient,
+				filter:    newExposureFilter(config.ExposureConfig.CacheCapacity),
+			}
+			println("exposure service instantiated")
 		}
 		cohortStorage := newInMemoryCohortStorage()
 		flagConfigStorage := newInMemoryFlagConfigStorage()

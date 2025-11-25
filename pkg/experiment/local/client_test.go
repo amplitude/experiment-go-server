@@ -234,6 +234,15 @@ func TestEvaluateV2GroupCohort(t *testing.T) {
 }
 
 func TestEvaluateV2WithTracksExposureTracksNonDefaultVariants(t *testing.T) {
+	exposureConfig := &ExposureConfig{Config: amplitude.Config{APIKey: "some_api_key"}}
+	clients["server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz"] = nil
+	client = Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz",
+		&Config{ExposureConfig: exposureConfig})
+	err := client.Start()
+	if err != nil {
+		panic(err)
+	}
+
 	user := &experiment.User{UserId: "test_user"}
 
 	// Capture tracked events

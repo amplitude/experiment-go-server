@@ -114,10 +114,7 @@ func fillConfigDefaults(c *Config) *Config {
 		c.AssignmentConfig.CacheCapacity = DefaultAssignmentConfig.CacheCapacity
 	}
 
-	if c.ExposureConfig == nil {
-		c.ExposureConfig = DefaultExposureConfig
-	}
-	if c.ExposureConfig.CacheCapacity == 0 {
+	if c.ExposureConfig != nil && c.ExposureConfig.CacheCapacity == 0 {
 		c.ExposureConfig.CacheCapacity = DefaultExposureConfig.CacheCapacity
 	}
 
