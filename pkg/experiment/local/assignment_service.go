@@ -2,23 +2,30 @@ package local
 
 import (
 	"fmt"
+
 	"github.com/amplitude/analytics-go/amplitude"
 )
 
 const dayMillis = 24 * 60 * 60 * 1000
 const flagTypeMutualExclusionGroup = "mutual-exclusion-group"
 
+// assignmentService handles assignment tracking.
+// Deprecated: Assignment tracking is deprecated. Use ExposureService with Exposure tracking instead.
 type assignmentService struct {
 	amplitude *amplitude.Client
 	filter    *assignmentFilter
 }
 
+// Track tracks an assignment event.
+// Deprecated: Assignment tracking is deprecated. Use ExposureService with Exposure tracking instead.
 func (s *assignmentService) Track(assignment *assignment) {
 	if s.filter.shouldTrack(assignment) {
 		(*s.amplitude).Track(toEvent(assignment))
 	}
 }
 
+// toEvent converts an assignment to an Amplitude event.
+// Deprecated: Assignment tracking is deprecated. Use Exposure tracking instead.
 func toEvent(assignment *assignment) amplitude.Event {
 
 	event := amplitude.Event{
