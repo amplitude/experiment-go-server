@@ -1,5 +1,5 @@
 xpmt: clean
-	go build -o xpmt cmd/xpmt/main.go
+	go build -o xpmt cmd/xpmt/*
 
 docker:
 	docker build -t experiment . --progress plain

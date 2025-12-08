@@ -7,21 +7,21 @@ import (
 )
 
 type Config struct {
-	Debug        		bool
-	LogLevel				logger.LogLevel
-	LoggerProvider	logger.LoggerProvider
-	ServerUrl    		string
-	FetchTimeout 		time.Duration
-	RetryBackoff 		*RetryBackoff
+	Debug          bool
+	LogLevel       logger.LogLevel
+	LoggerProvider logger.LoggerProvider
+	ServerUrl      string
+	FetchTimeout   time.Duration
+	RetryBackoff   *RetryBackoff
 }
 
 var DefaultConfig = &Config{
-	Debug:        	false,
-	LogLevel:				logger.Error,
-	LoggerProvider:	logger.NewDefault(),
-	ServerUrl:    	"https://api.lab.amplitude.com/",
-	FetchTimeout: 	500 * time.Millisecond,
-	RetryBackoff: 	DefaultRetryBackoff,
+	Debug:          false,
+	LogLevel:       logger.Error,
+	LoggerProvider: logger.NewDefault(),
+	ServerUrl:      "https://api.lab.amplitude.com/",
+	FetchTimeout:   500 * time.Millisecond,
+	RetryBackoff:   DefaultRetryBackoff,
 }
 
 type RetryBackoff struct {
@@ -59,6 +59,9 @@ func fillConfigDefaults(c *Config) *Config {
 		} else {
 			c.LogLevel = logger.Error
 		}
+	}
+	if c.LoggerProvider == nil {
+		c.LoggerProvider = logger.NewDefault()
 	}
 	return c
 }
