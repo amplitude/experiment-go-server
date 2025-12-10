@@ -21,8 +21,8 @@ const (
 
 type Config struct {
 	Debug                          bool
-	LogLevel 										   logger.LogLevel											 
-	LoggerProvider								 logger.LoggerProvider
+	LogLevel                       logger.LogLevel
+	LoggerProvider                 logger.LoggerProvider
 	ServerUrl                      string
 	ServerZone                     ServerZone
 	FlagConfigPollerInterval       time.Duration
@@ -30,11 +30,19 @@ type Config struct {
 	StreamUpdates                  bool
 	StreamServerUrl                string
 	StreamFlagConnTimeout          time.Duration
-	AssignmentConfig               *AssignmentConfig
+	AssignmentConfig               *AssignmentConfig // Deprecated: use ExposureConfig instead
+	ExposureConfig                 *ExposureConfig
 	CohortSyncConfig               *CohortSyncConfig
 }
 
+// AssignmentConfig is the configuration for assignment tracking.
+// Deprecated: Assignment tracking is deprecated. Use ExposureConfig with ExposureService instead.
 type AssignmentConfig struct {
+	amplitude.Config
+	CacheCapacity int
+}
+
+type ExposureConfig struct {
 	amplitude.Config
 	CacheCapacity int
 }
@@ -47,20 +55,11 @@ type CohortSyncConfig struct {
 	CohortServerUrl       string
 }
 
-var DefaultConfig = &Config{
-	Debug:                          false,
-	LogLevel:												logger.Error,
-	LoggerProvider:									logger.NewDefault(),
-	ServerUrl:                      "https://api.lab.amplitude.com/",
-	ServerZone:                     USServerZone,
-	FlagConfigPollerInterval:       30 * time.Second,
-	FlagConfigPollerRequestTimeout: 10 * time.Second,
-	StreamUpdates:                  false,
-	StreamServerUrl:                "https://stream.lab.amplitude.com",
-	StreamFlagConnTimeout:          1500 * time.Millisecond,
+var DefaultAssignmentConfig = &AssignmentConfig{
+	CacheCapacity: 524288,
 }
 
-var DefaultAssignmentConfig = &AssignmentConfig{
+var DefaultExposureConfig = &ExposureConfig{
 	CacheCapacity: 524288,
 }
 
@@ -68,6 +67,20 @@ var DefaultCohortSyncConfig = &CohortSyncConfig{
 	MaxCohortSize:         math.MaxInt32,
 	CohortPollingInterval: 60 * time.Second,
 	CohortServerUrl:       "https://cohort-v2.lab.amplitude.com",
+}
+
+var DefaultConfig = &Config{
+	Debug:                          false,
+	LogLevel:                       logger.Error,
+	LoggerProvider:                 logger.NewDefault(),
+	ServerUrl:                      "https://api.lab.amplitude.com/",
+	ServerZone:                     USServerZone,
+	FlagConfigPollerInterval:       30 * time.Second,
+	FlagConfigPollerRequestTimeout: 10 * time.Second,
+	StreamUpdates:                  false,
+	StreamServerUrl:                "https://stream.lab.amplitude.com",
+	StreamFlagConnTimeout:          1500 * time.Millisecond,
+	ExposureConfig:                 DefaultExposureConfig,
 }
 
 func fillConfigDefaults(c *Config) *Config {
@@ -101,6 +114,10 @@ func fillConfigDefaults(c *Config) *Config {
 		c.AssignmentConfig.CacheCapacity = DefaultAssignmentConfig.CacheCapacity
 	}
 
+	if c.ExposureConfig != nil && c.ExposureConfig.CacheCapacity == 0 {
+		c.ExposureConfig.CacheCapacity = DefaultExposureConfig.CacheCapacity
+	}
+
 	if c.CohortSyncConfig != nil && c.CohortSyncConfig.MaxCohortSize == 0 {
 		c.CohortSyncConfig.MaxCohortSize = DefaultCohortSyncConfig.MaxCohortSize
 	}
@@ -124,7 +141,7 @@ func fillConfigDefaults(c *Config) *Config {
 
 	if c.Debug {
 		c.LogLevel = logger.Debug
-	} 
+	}
 
 	if c.LoggerProvider == nil {
 		c.LoggerProvider = logger.NewDefault()

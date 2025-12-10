@@ -1,10 +1,13 @@
 package local
 
 import (
-	"github.com/amplitude/experiment-go-server/internal/cache"
 	"sync"
+
+	"github.com/amplitude/experiment-go-server/internal/cache"
 )
 
+// assignmentFilter filters duplicate assignments.
+// Deprecated: Assignment tracking is deprecated. Use ExposureFilter with ExposureService instead.
 type assignmentFilter struct {
 	mu    sync.Mutex
 	cache *cache.Cache
