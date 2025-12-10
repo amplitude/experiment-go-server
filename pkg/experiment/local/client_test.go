@@ -243,7 +243,7 @@ func TestEvaluateV2WithTracksExposureTracksNonDefaultVariants(t *testing.T) {
 		panic(err)
 	}
 
-	user := &experiment.User{UserId: "test_user"}
+	user := &experiment.User{UserId: "test_user", DeviceId: "device_id"}
 
 	// Capture tracked events
 	trackedEvents := make([]amplitude.Event, 0)
@@ -260,11 +260,10 @@ func TestEvaluateV2WithTracksExposureTracksNonDefaultVariants(t *testing.T) {
 	}()
 
 	// Perform evaluation with TracksExposure=true
-	tracksExposure := true
-	options := &EvaluateOptions{
-		TracksExposure: &tracksExposure,
+	options := EvaluateOptions{
+		TracksExposure: true,
 	}
-	variants, err := client.EvaluateV2WithOptions(user, options)
+	variants, err := client.EvaluateV2WithOptions(user, &options)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}

@@ -64,7 +64,6 @@ func Initialize(apiKey string, config *Config) *Client {
 				amplitude: exposureAmplitudeClient,
 				filter:    newExposureFilter(config.ExposureConfig.CacheCapacity),
 			}
-			println("exposure service instantiated")
 		}
 		cohortStorage := newInMemoryCohortStorage()
 		flagConfigStorage := newInMemoryFlagConfigStorage()
@@ -166,7 +165,7 @@ func (c *Client) EvaluateV2WithOptions(user *experiment.User, options *EvaluateO
 			Metadata: result.Metadata,
 		}
 	}
-	if options.TracksExposure != nil && *options.TracksExposure {
+	if options.TracksExposure {
 		c.exposureService.Track(newExposure(user, variants))
 	}
 	// Deprecated: Assignment tracking is deprecated. Use ExposureService with Exposure tracking instead.
