@@ -1,3 +1,11 @@
+# [1.10.0](https://github.com/amplitude/experiment-go-server/compare/v1.9.0...v1.10.0) (2026-01-07)
+
+
+### Features
+
+* add assignment exposure tracking option ([#39](https://github.com/amplitude/experiment-go-server/issues/39)) ([97ca314](https://github.com/amplitude/experiment-go-server/commit/97ca3147febdf92b174a652f79917838f2f1547b))
+* add exposure service ([#40](https://github.com/amplitude/experiment-go-server/issues/40)) ([466f8ce](https://github.com/amplitude/experiment-go-server/commit/466f8ce6b25c0c75e03289662bae6cddbafead1c))
+
 # [1.9.0](https://github.com/amplitude/experiment-go-server/compare/v1.8.0...v1.9.0) (2025-10-22)
 
 
