@@ -118,26 +118,29 @@ func (s *sseStream) connectInternal(
 		"X-Amp-Exp-Library": fmt.Sprintf("experiment-go-server/%v", experiment.VERSION),
 	})
 
-	connectCh := make(chan bool)
+	// Buffered size 1 to avoid goroutine leaks from TOCTOU races: the context
+	// may be cancelled between the ctx.Done() check and the channel send, which
+	// would leave a goroutine permanently blocked on an unbuffered channel.
+	connectCh := make(chan bool, 1)
 	esMsgCh := make(chan *sse.Event)
-	esConnectErrCh := make(chan error)
-	esDisconnectCh := make(chan bool)
+	esConnectErrCh := make(chan error, 1)
+	esDisconnectCh := make(chan bool, 1)
 	// Redirect on disconnect to a channel.
 	client.OnDisconnect(func(s *sse.Client) {
 		select {
 		case <-ctx.Done(): // Cancelled.
 			return
-		default:
-			esDisconnectCh <- true
+		case esDisconnectCh <- true: // Non-blocking due to buffer; ctx-aware to prevent TOCTOU leak.
 		}
 	})
 	// Redirect on connect to a channel.
+	// No goroutine spawn needed: the buffered channel accepts the send without
+	// blocking the SSE callback, and the select handles context cancellation.
 	client.OnConnect(func(s *sse.Client) {
 		select {
 		case <-ctx.Done(): // Cancelled.
 			return
-		default:
-			go func() { connectCh <- true }()
+		case connectCh <- true: // Non-blocking due to buffer; no goroutine spawn needed.
 		}
 	})
 	go func() {
@@ -145,7 +148,13 @@ func (s *sseStream) connectInternal(
 		// This should be a non blocking call, but unsure how long it takes.
 		err := client.SubscribeChanRawWithContext(ctx, esMsgCh)
 		if err != nil {
-			esConnectErrCh <- err
+			// Use select so this goroutine is never permanently blocked: if the
+			// context was already cancelled (e.g. connection timed out and the
+			// main event loop already exited), drop the error instead of leaking.
+			select {
+			case <-ctx.Done():
+			case esConnectErrCh <- err:
+			}
 		}
 	}()
 
