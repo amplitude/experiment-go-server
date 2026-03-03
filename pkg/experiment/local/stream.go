@@ -130,17 +130,17 @@ func (s *sseStream) connectInternal(
 		select {
 		case <-ctx.Done(): // Cancelled.
 			return
-		case esDisconnectCh <- true: // Non-blocking due to buffer; ctx-aware to prevent TOCTOU leak.
+		case esDisconnectCh <- true: // Non-blocking due to buffer.
 		}
 	})
 	// Redirect on connect to a channel.
 	// No goroutine spawn needed: the buffered channel accepts the send without
-	// blocking the SSE callback, and the select handles context cancellation.
+	// blocking the SSE callback.
 	client.OnConnect(func(s *sse.Client) {
 		select {
 		case <-ctx.Done(): // Cancelled.
 			return
-		case connectCh <- true: // Non-blocking due to buffer; no goroutine spawn needed.
+		case connectCh <- true: // Non-blocking due to buffer.
 		}
 	})
 	go func() {
