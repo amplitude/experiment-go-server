@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/amplitude/experiment-go-server/compare/v1.10.0...v1.10.1) (2026-03-06)
+
+
+### Bug Fixes
+
+* goroutine leak ([#41](https://github.com/amplitude/experiment-go-server/issues/41)) ([c8912ff](https://github.com/amplitude/experiment-go-server/commit/c8912ff9b7d3a0b43c298c036ceb603078239267))
+
 # [1.10.0](https://github.com/amplitude/experiment-go-server/compare/v1.9.0...v1.10.0) (2026-01-07)
 
 
