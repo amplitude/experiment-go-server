@@ -1,5 +1,6 @@
 .idea/
 xpmt
 .DS_Store
+node_modules/
 cmd/xpmt/bin/
 pkg/experiment/local/.env
