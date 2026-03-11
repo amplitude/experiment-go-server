@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "dependencies": {
+    "lodash": "latest",
+    "semantic-release": "latest",
+    "@semantic-release/changelog": "latest",
+    "@semantic-release/git": "latest",
+    "@google/semantic-release-replace-plugin": "latest",
+    "@semantic-release/exec": "latest"
+  }
+}

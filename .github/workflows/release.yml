@@ -48,14 +48,8 @@ jobs:
         GIT_COMMITTER_EMAIL: amplitude-sdk-bot@users.noreply.github.com
         GEM_HOST_API_KEY: ${{secrets.GEM_HOST_API_KEY}}
       run: |
-        npx \
-        -p lodash \
-        -p semantic-release \
-        -p @semantic-release/changelog \
-        -p @semantic-release/git \
-        -p @google/semantic-release-replace-plugin \
-        -p @semantic-release/exec \
-        semantic-release --dry-run
+        npm ci
+        npm exec semantic-release -- --dry-run
 
     - name: Semantic Release
       if: ${{ github.event.inputs.dryRun == 'false'}}
@@ -67,11 +61,5 @@ jobs:
         GIT_COMMITTER_EMAIL: amplitude-sdk-bot@users.noreply.github.com
         GEM_HOST_API_KEY: ${{secrets.GEM_HOST_API_KEY}}
       run: |
-        npx \
-        -p lodash \
-        -p semantic-release \
-        -p @semantic-release/changelog \
-        -p @semantic-release/git \
-        -p @google/semantic-release-replace-plugin \
-        -p @semantic-release/exec \
-        semantic-release
+        npm ci
+        npm exec semantic-release
