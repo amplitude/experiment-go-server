@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/amplitude/experiment-go-server/compare/v1.10.1...v1.11.0) (2026-04-28)
+
+
+### Features
+
+* support multi-value array properties for non-set operators ([#45](https://github.com/amplitude/experiment-go-server/issues/45)) ([da41c28](https://github.com/amplitude/experiment-go-server/commit/da41c282e77d0125b98386442174244d790b2709))
+
 ## [1.10.1](https://github.com/amplitude/experiment-go-server/compare/v1.10.0...v1.10.1) (2026-03-06)
 
 
