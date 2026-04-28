@@ -16,7 +16,7 @@ import (
 	"testing"
 )
 
-const deploymentKey = "server-NgJxxvg8OGwwBsWVXqyxQbdiflbhvugy"
+const deploymentKey = "server-VVhLULXCxxY0xqmszXouXxiEzoeJWmSh"
 
 var flags []*Flag
 var engine = &Engine{logger.New(logger.Error, logger.NewDefault())}
@@ -731,6 +731,95 @@ func TestSetDoesNotContainAny(t *testing.T) {
 	}
 }
 
+// Multi-value array property support — integration tests against the
+// VVhLULX deployment. Collection and JSON-array-string shapes of the
+// same property should match equivalently on both set and non-set
+// operators.
+
+func TestSetIsWithJsonArrayString(t *testing.T) {
+	user := userContext(map[string]interface{}{
+		"user_properties": map[string]interface{}{
+			"key": `["1", "2", "3"]`,
+		},
+	})
+	result := engine.Evaluate(user, flags)["test-set-is"]
+	if result.Key != "on" {
+		t.Fatalf("unexpected evaluation result %v", result.Key)
+	}
+}
+
+func TestIsArrayCollection(t *testing.T) {
+	user := userContext(map[string]interface{}{
+		"user_properties": map[string]interface{}{
+			"key": []string{"value1", "value2"},
+		},
+	})
+	result := engine.Evaluate(user, flags)["test-is-array"]
+	if result.Key != "on" {
+		t.Fatalf("unexpected evaluation result %v", result.Key)
+	}
+}
+
+func TestIsNotArrayCollection(t *testing.T) {
+	user := userContext(map[string]interface{}{
+		"user_properties": map[string]interface{}{
+			"key": []string{"value3", "value4"},
+		},
+	})
+	result := engine.Evaluate(user, flags)["test-is-not-array"]
+	if result.Key != "on" {
+		t.Fatalf("unexpected evaluation result %v", result.Key)
+	}
+}
+
+func TestContainsArrayCollection(t *testing.T) {
+	user := userContext(map[string]interface{}{
+		"user_properties": map[string]interface{}{
+			"key": []string{"has-target-value", "has", "value"},
+		},
+	})
+	result := engine.Evaluate(user, flags)["test-contains-array"]
+	if result.Key != "on" {
+		t.Fatalf("unexpected evaluation result %v", result.Key)
+	}
+}
+
+func TestDoesNotContainArrayCollection(t *testing.T) {
+	user := userContext(map[string]interface{}{
+		"user_properties": map[string]interface{}{
+			"key": []string{"has-value", "has", "value"},
+		},
+	})
+	result := engine.Evaluate(user, flags)["test-does-not-contain-array"]
+	if result.Key != "on" {
+		t.Fatalf("unexpected evaluation result %v", result.Key)
+	}
+}
+
+func TestIsArrayJsonString(t *testing.T) {
+	user := userContext(map[string]interface{}{
+		"user_properties": map[string]interface{}{
+			"key": `["value1", "value2"]`,
+		},
+	})
+	result := engine.Evaluate(user, flags)["test-is-array"]
+	if result.Key != "on" {
+		t.Fatalf("unexpected evaluation result %v", result.Key)
+	}
+}
+
+func TestDoesNotContainArrayJsonString(t *testing.T) {
+	user := userContext(map[string]interface{}{
+		"user_properties": map[string]interface{}{
+			"key": `["has-value", "has", "value"]`,
+		},
+	})
+	result := engine.Evaluate(user, flags)["test-does-not-contain-array"]
+	if result.Key != "on" {
+		t.Fatalf("unexpected evaluation result %v", result.Key)
+	}
+}
+
 func TestGlobMatch(t *testing.T) {
 	user := userContext(map[string]interface{}{
 		"user_properties": map[string]interface{}{
@@ -790,6 +879,44 @@ func TestIsWithBooleans(t *testing.T) {
 	}
 }
 
+// Multi-value array property support — unit tests driven by an inline
+// flag/condition harness (no remote dependency). Covers scalar, list, and
+// JSON-array-string shapes across set and non-set operators.
+
+func TestMultiValueArrayMatching(t *testing.T) {
+	cases := []struct {
+		name    string
+		propVal interface{}
+		op      string
+		values  []string
+		match   bool
+	}{
+		{"scalar string IS match", "hello", OpIs, []string{"hello"}, true},
+		{"scalar string CONTAINS match", "hello", OpContains, []string{"ell"}, true},
+		{"scalar string GREATER match", "2", OpGreaterThan, []string{"1"}, true},
+		{"scalar string IS no match", "world", OpIs, []string{"hello"}, false},
+		{"non-string scalar GREATER", 42, OpGreaterThan, []string{"1"}, true},
+		{"non-string scalar IS bool", true, OpIs, []string{"true"}, true},
+		{"JSON array string + set contains", `["a","b"]`, OpSetContains, []string{"a"}, true},
+		{"JSON array string + non-set IS", `["a","b"]`, OpIs, []string{"a"}, true},
+		{"collection + set contains", []string{"a", "b"}, OpSetContains, []string{"a"}, true},
+		{"collection + non-set IS", []string{"a", "b"}, OpIs, []string{"a"}, true},
+		{"malformed JSON falls through", "[broken", OpIs, []string{"[broken"}, true},
+		{"empty JSON array + set contains", "[]", OpSetContains, []string{"a"}, false},
+		{"leading whitespace non-set IS", ` ["a"]`, OpIs, []string{` ["a"]`}, true},
+		{"leading whitespace set contains", ` ["a"]`, OpSetContains, []string{"a"}, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.match {
+				assertMatch(t, tc.propVal, tc.op, tc.values)
+			} else {
+				assertNoMatch(t, tc.propVal, tc.op, tc.values)
+			}
+		})
+	}
+}
+
 // Util
 
 func userContext(u map[string]interface{}) map[string]interface{} {
@@ -798,6 +925,57 @@ func userContext(u map[string]interface{}) map[string]interface{} {
 
 func groupContext(g map[string]interface{}) map[string]interface{} {
 	return map[string]interface{}{"groups": g}
+}
+
+// flagWithCondition builds a minimal flag with a single segment, condition
+// group, and condition targeting context.user.user_properties.test_prop.
+func flagWithCondition(op string, values []string) *Flag {
+	return &Flag{
+		Key:      "test-flag",
+		Variants: map[string]*Variant{"on": {Key: "on"}},
+		Segments: []*Segment{
+			{
+				Conditions: [][]*Condition{{
+					{
+						Selector: []string{"context", "user", "user_properties", "test_prop"},
+						Op:       op,
+						Values:   values,
+					},
+				}},
+				Variant: "on",
+			},
+		},
+	}
+}
+
+func contextWithProp(value interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		"user": map[string]interface{}{
+			"user_properties": map[string]interface{}{
+				"test_prop": value,
+			},
+		},
+	}
+}
+
+func evaluateProp(propValue interface{}, op string, values []string) string {
+	flag := flagWithCondition(op, values)
+	ctx := contextWithProp(propValue)
+	return engine.Evaluate(ctx, []*Flag{flag})["test-flag"].Key
+}
+
+func assertMatch(t *testing.T, propValue interface{}, op string, values []string) {
+	t.Helper()
+	if k := evaluateProp(propValue, op, values); k != "on" {
+		t.Fatalf("expected match but got key=%q for propValue=%v op=%q values=%v", k, propValue, op, values)
+	}
+}
+
+func assertNoMatch(t *testing.T, propValue interface{}, op string, values []string) {
+	t.Helper()
+	if k := evaluateProp(propValue, op, values); k == "on" {
+		t.Fatalf("expected no match but got key=%q for propValue=%v op=%q values=%v", k, propValue, op, values)
+	}
 }
 
 func getFlagConfigsRaw() ([]byte, error) {

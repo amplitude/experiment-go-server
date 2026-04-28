@@ -90,24 +90,28 @@ func (e *Engine) evaluateSegment(target *target, flag *Flag, segment *Segment) *
 
 func (e *Engine) matchCondition(target *target, condition *Condition) bool {
 	propValue := selectEach(target, condition.Selector)
-	// We need special matching for null properties and set type prop values
-	// and operators. All other values are matched as strings, since the
-	// filter values are always strings.
 	if propValue == nil {
 		return matchNull(condition.Op, condition.Values)
-	} else if isSetOperator(condition.Op) {
-		propValueStringList, err := coerceStringList(propValue)
-		if err != nil {
+	}
+	// coerceStringList is called for every non-null value so non-set
+	// operators can match any element of an array/JSON-array-string
+	// (matches analytics/charts any-element semantics). A nil list means
+	// the value is not list-like; fall through to the scalar path.
+	propValueStringList, _ := coerceStringList(propValue)
+	if isSetOperator(condition.Op) {
+		if propValueStringList == nil {
 			return false
 		}
 		return matchSet(propValueStringList, condition.Op, condition.Values)
-	} else {
-		propValueString := coerceString(propValue)
-		if propValueString == nil {
-			return false
-		}
-		return matchString(*propValueString, condition.Op, condition.Values)
 	}
+	if propValueStringList != nil {
+		return matchStringsNonSet(propValueStringList, condition.Op, condition.Values)
+	}
+	propValueString := coerceString(propValue)
+	if propValueString == nil {
+		return false
+	}
+	return matchString(*propValueString, condition.Op, condition.Values)
 }
 
 func (e *Engine) getHash(key string) uint64 {
@@ -225,6 +229,19 @@ func matchString(propValue string, op string, filterValues []string) bool {
 	default:
 		return false
 	}
+}
+
+// matchStringsNonSet returns true if any element in propValues satisfies
+// the non-set operator against filterValues. Negation operators (is not,
+// does not contain) also use any-match — true if any single element
+// satisfies the negation — matching analytics/charts behavior.
+func matchStringsNonSet(propValues []string, op string, filterValues []string) bool {
+	for _, v := range propValues {
+		if matchString(v, op, filterValues) {
+			return true
+		}
+	}
+	return false
 }
 
 func matchesIs(propValue string, filterValues []string) bool {
@@ -485,6 +502,12 @@ func coerceStringList(value interface{}) ([]string, error) {
 		// Parse a string as json array and convert to list of strings, or
 		// return null if the string could not be parsed as a json array.
 		stringValue := fmt.Sprintf("%v", value)
+		// Cheap pre-check: avoid exception-driven control flow when the
+		// value is clearly not a JSON array. This runs for every non-null
+		// value now that non-set operators also consult coerceStringList.
+		if !strings.HasPrefix(stringValue, "[") {
+			return nil, nil
+		}
 		var stringList []string
 		err := json.Unmarshal([]byte(stringValue), &stringList)
 		if err != nil {
