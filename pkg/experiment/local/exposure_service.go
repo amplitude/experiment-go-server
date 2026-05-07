@@ -68,6 +68,9 @@ func toExposureEvents(exposure *exposure, ttlMillis int64) []amplitude.Event {
 		} else if variant.Value != "" {
 			eventProperties["[Experiment] Variant"] = variant.Value
 		}
+		if experimentKey, ok := variant.Metadata["experimentKey"].(string); ok && experimentKey != "" {
+			eventProperties["[Experiment] Experiment Key"] = experimentKey
+		}
 		if variant.Metadata != nil {
 			eventProperties["metadata"] = variant.Metadata
 		}

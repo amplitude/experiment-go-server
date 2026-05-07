@@ -76,14 +76,25 @@ func TestToExposureEvents(t *testing.T) {
 			Value: "on",
 		},
 		"empty_variant": {},
+		"with_experiment_key": {
+			Key:   "treatment",
+			Value: "treatment",
+			Metadata: map[string]interface{}{
+				"segmentName":   "All Other Users",
+				"flagType":      "experiment",
+				"flagVersion":   float64(10),
+				"default":       false,
+				"experimentKey": "exp-1",
+			},
+		},
 	}
 
 	exposure := newExposure(user, results)
 	events := toExposureEvents(exposure, dayMillis)
 	// Should exclude default (default=true) only
-	// basic, different_value, mutex, holdout, partial_metadata, empty_metadata, empty_variant = 7 events
-	if len(events) != 7 {
-		t.Errorf("Expected 7 events, got %d", len(events))
+	// basic, different_value, mutex, holdout, partial_metadata, empty_metadata, empty_variant, with_experiment_key = 8 events
+	if len(events) != 8 {
+		t.Errorf("Expected 8 events, got %d", len(events))
 	}
 
 	for _, event := range events {
@@ -109,6 +120,17 @@ func TestToExposureEvents(t *testing.T) {
 		if variant.Metadata != nil {
 			if !reflect.DeepEqual(event.EventProperties["metadata"], variant.Metadata) {
 				t.Errorf("Metadata mismatch")
+			}
+		}
+
+		// Validate experiment key is lifted to top-level event property when present
+		if flagKey == "with_experiment_key" {
+			if event.EventProperties["[Experiment] Experiment Key"] != "exp-1" {
+				t.Errorf("Expected [Experiment] Experiment Key to be exp-1, got %v", event.EventProperties["[Experiment] Experiment Key"])
+			}
+		} else {
+			if _, present := event.EventProperties["[Experiment] Experiment Key"]; present {
+				t.Errorf("[Experiment] Experiment Key should be absent for flag %s", flagKey)
 			}
 		}
 
