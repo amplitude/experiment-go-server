@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/amplitude/experiment-go-server/compare/v1.11.0...v1.11.1) (2026-05-08)
+
+
+### Bug Fixes
+
+* include experiment key on local-eval exposure events ([#46](https://github.com/amplitude/experiment-go-server/issues/46)) ([dc85e36](https://github.com/amplitude/experiment-go-server/commit/dc85e36a76293a538e59b29aea2adf1f43041639)), closes [amplitude/experiment-node-server#83](https://github.com/amplitude/experiment-node-server/issues/83)
+
 # [1.11.0](https://github.com/amplitude/experiment-go-server/compare/v1.10.1...v1.11.0) (2026-04-28)
 
 
