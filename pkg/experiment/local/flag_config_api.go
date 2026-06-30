@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/amplitude/experiment-go-server/internal/evaluation"
@@ -37,7 +38,7 @@ func (a *flagConfigApiV2) getFlagConfigs() (map[string]*evaluation.Flag, error) 
 	if err != nil {
 		return nil, err
 	}
-	endpoint.Path = "sdk/v2/flags"
+	endpoint.Path = path.Join(endpoint.Path, "sdk/v2/flags")
 	endpoint.RawQuery = "v=0"
 	ctx, cancel := context.WithTimeout(context.Background(), a.FlagConfigPollerRequestTimeoutMillis)
 	defer cancel()

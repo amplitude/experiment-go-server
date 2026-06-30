@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"path"
 	"sync"
 	"time"
 
@@ -96,7 +97,7 @@ func (c *Client) doFetch(ctx context.Context, user *experiment.User, timeout tim
 	if err != nil {
 		return nil, err
 	}
-	endpoint.Path = "sdk/v2/vardata"
+	endpoint.Path = path.Join(endpoint.Path, "sdk/v2/vardata")
 	if c.config.Debug {
 		endpoint.RawQuery = fmt.Sprintf("d=%s", randStringRunes(5))
 	}
