@@ -1,3 +1,10 @@
+## [1.11.2](https://github.com/amplitude/experiment-go-server/compare/v1.11.1...v1.11.2) (2026-06-30)
+
+
+### Bug Fixes
+
+* use server url for base path ([#47](https://github.com/amplitude/experiment-go-server/issues/47)) ([2089cb3](https://github.com/amplitude/experiment-go-server/commit/2089cb3e4fb88221144b7834c71b69886ed1adf5))
+
 ## [1.11.1](https://github.com/amplitude/experiment-go-server/compare/v1.11.0...v1.11.1) (2026-05-08)
 
 
