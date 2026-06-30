@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"reflect"
 	"sync"
 
@@ -209,7 +210,7 @@ func (c *Client) doFlagsV2() (map[string]*evaluation.Flag, error) {
 	if err != nil {
 		return nil, err
 	}
-	endpoint.Path = "sdk/v2/flags"
+	endpoint.Path = path.Join(endpoint.Path, "sdk/v2/flags")
 	endpoint.RawQuery = "v=0"
 	ctx, cancel := context.WithTimeout(context.Background(), c.config.FlagConfigPollerRequestTimeout)
 	defer cancel()
@@ -252,7 +253,7 @@ func (c *Client) doRules() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	endpoint.Path = "sdk/rules"
+	endpoint.Path = path.Join(endpoint.Path, "sdk/rules")
 	endpoint.RawQuery = "eval_mode=local"
 	ctx, cancel := context.WithTimeout(context.Background(), c.config.FlagConfigPollerRequestTimeout)
 	defer cancel()
@@ -306,7 +307,7 @@ func (c *Client) doFlags() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	endpoint.Path = "sdk/v1/flags"
+	endpoint.Path = path.Join(endpoint.Path, "sdk/v1/flags")
 	ctx, cancel := context.WithTimeout(context.Background(), c.config.FlagConfigPollerRequestTimeout)
 	defer cancel()
 	req, err := http.NewRequest("GET", endpoint.String(), nil)
