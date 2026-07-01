@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/url"
+	"path"
 	"sync"
 	"time"
 
@@ -69,7 +70,7 @@ func (api *flagConfigStreamApiV2) Connect(
 	if err != nil {
 		return err
 	}
-	endpoint.Path = "sdk/stream/v1/flags"
+	endpoint.Path = path.Join(endpoint.Path, "sdk/stream/v1/flags")
 
 	// Create Stream.
 	stream := api.newSseStreamFactory("Api-Key "+api.DeploymentKey, endpoint.String(), api.connectionTimeout, streamApiKeepaliveTimeout, streamApiReconnInterval, streamApiMaxJitter)
