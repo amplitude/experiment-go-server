@@ -2,6 +2,10 @@
 
 Amplitude Experiment SDK for Go.
 
+## Requirements
+
+Go **1.22** or newer is required.
+
 ## Documentation
 
 Visit our [developer docs site for the full SDK documentation](https://docs.developers.amplitude.com/experiment/sdks/go-sdk/).
