@@ -182,10 +182,6 @@ func addLibraryContext(user *experiment.User) {
 
 // Helper
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func randStringRunes(n int) string {
