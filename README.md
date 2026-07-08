@@ -6,10 +6,9 @@ Amplitude Experiment SDK for Go.
 
 Go **1.22** or newer is required.
 
-> **Breaking change:** As of the next major release, the minimum supported Go
-> version increases from 1.12 to **1.22** (required by the `tmaxmax/go-sse`
-> dependency). Upgrade your Go toolchain before updating this SDK if you are on
-> Go 1.21 or older.
+> **Note:** The minimum supported Go version has increased from 1.12 to **1.22**
+> (required by the `tmaxmax/go-sse` dependency). Upgrade your Go toolchain before
+> updating this SDK if you are on Go 1.21 or older.
 
 ## Documentation
 
