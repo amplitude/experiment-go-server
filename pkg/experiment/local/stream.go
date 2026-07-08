@@ -10,8 +10,7 @@ import (
 	"time"
 
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
-	"github.com/r3labs/sse/v2"
-	"gopkg.in/cenkalti/backoff.v1"
+	tmsse "github.com/tmaxmax/go-sse"
 )
 
 // Keep alive data.
@@ -24,20 +23,98 @@ func mutePanic(f func()) {
 	}
 }
 
-// This is a boiled down version of sse.Client.
+type connCallback func()
+
+type sseEvent struct {
+	Data []byte
+}
+
+// eventSource is a boiled down version of an SSE client.
 type eventSource interface {
-	OnDisconnect(fn sse.ConnCallback)
-	OnConnect(fn sse.ConnCallback)
-	SubscribeChanRawWithContext(ctx context.Context, ch chan *sse.Event) error
+	OnDisconnect(fn connCallback)
+	OnConnect(fn connCallback)
+	SubscribeChanRawWithContext(ctx context.Context, ch chan *sseEvent) error
+}
+
+type tmaxmaxEventSource struct {
+	httpClient   *http.Client
+	url          string
+	headers      map[string]string
+	onConnect    connCallback
+	onDisconnect connCallback
 }
 
 func newEventSource(httpClient *http.Client, url string, headers map[string]string) eventSource {
-	client := sse.NewClient(url)
-	client.Connection = httpClient
-	client.Headers = headers
-	sse.ClientMaxBufferSize(1 << 32)(client)
-	client.ReconnectStrategy = &backoff.StopBackOff{}
-	return client
+	return &tmaxmaxEventSource{
+		httpClient: httpClient,
+		url:        url,
+		headers:    headers,
+	}
+}
+
+func (e *tmaxmaxEventSource) OnDisconnect(fn connCallback) {
+	e.onDisconnect = fn
+}
+
+func (e *tmaxmaxEventSource) OnConnect(fn connCallback) {
+	e.onConnect = fn
+}
+
+func (e *tmaxmaxEventSource) SubscribeChanRawWithContext(ctx context.Context, ch chan *sseEvent) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, e.url, http.NoBody)
+	if err != nil {
+		return err
+	}
+	for key, value := range e.headers {
+		req.Header.Set(key, value)
+	}
+
+	connected := false
+	signalConnect := func() {
+		if connected {
+			return
+		}
+		connected = true
+		if e.onConnect != nil {
+			e.onConnect()
+		}
+	}
+
+	client := &tmsse.Client{
+		HTTPClient: e.httpClient,
+		ResponseValidator: func(res *http.Response) error {
+			if err := tmsse.DefaultValidator(res); err != nil {
+				return err
+			}
+			signalConnect()
+			return nil
+		},
+		Backoff: tmsse.Backoff{
+			MaxRetries: -1,
+		},
+	}
+	conn := client.NewConnection(req)
+	conn.Buffer(nil, 1<<32)
+
+	conn.SubscribeToAll(func(ev tmsse.Event) {
+		select {
+		case <-ctx.Done():
+			return
+		case ch <- &sseEvent{Data: []byte(ev.Data)}:
+		}
+	})
+
+	err = conn.Connect()
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, context.Canceled) {
+		return err
+	}
+	if connected && e.onDisconnect != nil {
+		e.onDisconnect()
+	}
+	return err
 }
 
 type streamEvent struct {
@@ -122,11 +199,11 @@ func (s *sseStream) connectInternal(
 	// may be cancelled between the ctx.Done() check and the channel send, which
 	// would leave a goroutine permanently blocked on an unbuffered channel.
 	connectCh := make(chan bool, 1)
-	esMsgCh := make(chan *sse.Event)
+	esMsgCh := make(chan *sseEvent)
 	esConnectErrCh := make(chan error, 1)
 	esDisconnectCh := make(chan bool, 1)
 	// Redirect on disconnect to a channel.
-	client.OnDisconnect(func(s *sse.Client) {
+	client.OnDisconnect(func() {
 		select {
 		case <-ctx.Done(): // Cancelled.
 			return
@@ -136,7 +213,7 @@ func (s *sseStream) connectInternal(
 	// Redirect on connect to a channel.
 	// No goroutine spawn needed: the buffered channel accepts the send without
 	// blocking the SSE callback.
-	client.OnConnect(func(s *sse.Client) {
+	client.OnConnect(func() {
 		select {
 		case <-ctx.Done(): // Cancelled.
 			return

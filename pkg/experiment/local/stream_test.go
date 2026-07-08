@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/r3labs/sse/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,20 +20,20 @@ type mockEventSource struct {
 	chConnected        chan bool
 
 	ctx         context.Context
-	messageChan chan *sse.Event
-	onDisCb     sse.ConnCallback
-	onConnCb    sse.ConnCallback
+	messageChan chan *sseEvent
+	onDisCb     connCallback
+	onConnCb    connCallback
 }
 
-func (s *mockEventSource) OnDisconnect(fn sse.ConnCallback) {
+func (s *mockEventSource) OnDisconnect(fn connCallback) {
 	s.onDisCb = fn
 }
 
-func (s *mockEventSource) OnConnect(fn sse.ConnCallback) {
+func (s *mockEventSource) OnConnect(fn connCallback) {
 	s.onConnCb = fn
 }
 
-func (s *mockEventSource) SubscribeChanRawWithContext(ctx context.Context, ch chan *sse.Event) error {
+func (s *mockEventSource) SubscribeChanRawWithContext(ctx context.Context, ch chan *sseEvent) error {
 	s.ctx = ctx
 	s.messageChan = ch
 	s.chConnected <- true
@@ -66,19 +65,19 @@ func TestStream(t *testing.T) {
 	assert.NotNil(t, s.headers["X-Amp-Exp-Library"])
 
 	// Signal connected.
-	s.onConnCb(nil)
+	s.onConnCb()
 
 	// Send update 1, ensure received.
-	go func() { s.messageChan <- &sse.Event{Data: []byte("data1")} }()
+	go func() { s.messageChan <- &sseEvent{Data: []byte("data1")} }()
 	assert.Equal(t, []byte("data1"), (<-messageCh).data)
 
 	// Send keep alive, not passed down, checked later along with updates 2 and 3.
-	go func() { s.messageChan <- &sse.Event{Data: []byte(" ")} }()
+	go func() { s.messageChan <- &sseEvent{Data: []byte(" ")} }()
 
 	// Send update 2 and 3, ensure received in order.
 	go func() {
-		s.messageChan <- &sse.Event{Data: []byte("data2")}
-		s.messageChan <- &sse.Event{Data: []byte("data3")}
+		s.messageChan <- &sseEvent{Data: []byte("data2")}
+		s.messageChan <- &sseEvent{Data: []byte("data3")}
 	}()
 	assert.Equal(t, []byte("data2"), (<-messageCh).data)
 	assert.Equal(t, []byte("data3"), (<-messageCh).data)
@@ -88,7 +87,7 @@ func TestStream(t *testing.T) {
 	assert.True(t, errors.Is(s.ctx.Err(), context.Canceled))
 
 	// No message is passed through after cancel even it's received.
-	go func() { s.messageChan <- &sse.Event{Data: []byte("data4")} }()
+	go func() { s.messageChan <- &sseEvent{Data: []byte("data4")} }()
 
 	// Ensure no message after cancel.
 	select {
@@ -132,23 +131,23 @@ func TestStreamKeepAliveTimeout(t *testing.T) {
 	// Make connection.
 	client.Connect(messageCh, errorCh)
 	<-s.chConnected
-	s.onConnCb(nil)
+	s.onConnCb()
 
 	// Send keepalive 1 and wait.
-	go func() { s.messageChan <- &sse.Event{Data: []byte(" ")} }()
+	go func() { s.messageChan <- &sseEvent{Data: []byte(" ")} }()
 	time.Sleep(1*time.Second - 10*time.Millisecond)
 	assert.False(t, errors.Is(s.ctx.Err(), context.Canceled))
 	// Send keepalive 2 and wait.
-	go func() { s.messageChan <- &sse.Event{Data: []byte(" ")} }()
+	go func() { s.messageChan <- &sseEvent{Data: []byte(" ")} }()
 	time.Sleep(1*time.Second - 10*time.Millisecond)
 	assert.False(t, errors.Is(s.ctx.Err(), context.Canceled))
 	// Send data and wait, data should reset keepalive.
-	go func() { s.messageChan <- &sse.Event{Data: []byte("data1")} }()
+	go func() { s.messageChan <- &sseEvent{Data: []byte("data1")} }()
 	assert.Equal(t, []byte("data1"), (<-messageCh).data)
 	time.Sleep(1*time.Second - 10*time.Millisecond)
 	assert.False(t, errors.Is(s.ctx.Err(), context.Canceled))
 	// Send data ensure stream is open.
-	go func() { s.messageChan <- &sse.Event{Data: []byte("data1")} }()
+	go func() { s.messageChan <- &sseEvent{Data: []byte("data1")} }()
 	assert.Equal(t, []byte("data1"), (<-messageCh).data)
 	assert.False(t, errors.Is(s.ctx.Err(), context.Canceled))
 	// Wait for keepalive to timeout, stream should close.
@@ -167,16 +166,16 @@ func TestStreamReconnectsTimeout(t *testing.T) {
 	// Make connection.
 	client.Connect(messageCh, errorCh)
 	<-s.chConnected
-	s.onConnCb(nil)
+	s.onConnCb()
 
-	go func() { s.messageChan <- &sse.Event{Data: []byte("data1")} }()
+	go func() { s.messageChan <- &sseEvent{Data: []byte("data1")} }()
 	assert.Equal(t, []byte("data1"), (<-messageCh).data)
 	// Sleep for reconnect to timeout, data should pass through.
 	time.Sleep(2*time.Second + 100*time.Millisecond)
 	<-s.chConnected
-	s.onConnCb(nil)
-	go func() { s.messageChan <- &sse.Event{Data: []byte(" ")} }()
-	go func() { s.messageChan <- &sse.Event{Data: []byte("data2")} }()
+	s.onConnCb()
+	go func() { s.messageChan <- &sseEvent{Data: []byte(" ")} }()
+	go func() { s.messageChan <- &sseEvent{Data: []byte("data2")} }()
 	assert.Equal(t, []byte("data2"), (<-messageCh).data)
 	assert.False(t, errors.Is(s.ctx.Err(), context.Canceled))
 	// Cancel stream, should cancel context.
@@ -227,10 +226,10 @@ func TestStreamChannelCloseOk(t *testing.T) {
 	// Connect and send message, the client should cancel right away.
 	client.Connect(messageCh, errorCh)
 	<-s.chConnected
-	s.onConnCb(nil)
+	s.onConnCb()
 
 	// Test no message received for closed channel.
-	s.messageChan <- &sse.Event{Data: []byte("data1")}
+	s.messageChan <- &sseEvent{Data: []byte("data1")}
 	assert.True(t, errors.Is(s.ctx.Err(), context.Canceled))
 
 	select {
@@ -257,10 +256,10 @@ func TestStreamDisconnectErrorPasses(t *testing.T) {
 	// Make connection.
 	client.Connect(messageCh, errorCh)
 	<-s.chConnected
-	s.onConnCb(nil)
+	s.onConnCb()
 
 	// Disconnect error goes through.
-	s.onDisCb(nil)
+	s.onDisCb()
 	assert.Equal(t, errors.New("stream disconnected error"), <-errorCh)
 
 	select {
@@ -284,7 +283,7 @@ func TestStreamConnectErrorPasses(t *testing.T) {
 	s.subscribeChanError = errors.New("some error occurred")
 	client.Connect(messageCh, errorCh)
 	<-s.chConnected
-	s.onConnCb(nil)
+	s.onConnCb()
 
 	// Connect error goes through.
 	assert.Equal(t, errors.New("some error occurred"), <-errorCh)
@@ -306,15 +305,15 @@ func TestStreamConnectErrorPasses(t *testing.T) {
 // due to a connection timeout (Leak 2).
 type mockEventSourceBlockingSubscribe struct {
 	ctx         context.Context
-	messageChan chan *sse.Event
+	messageChan chan *sseEvent
 	chConnected chan bool
-	onDisCb     sse.ConnCallback
-	onConnCb    sse.ConnCallback
+	onDisCb     connCallback
+	onConnCb    connCallback
 }
 
-func (s *mockEventSourceBlockingSubscribe) OnDisconnect(fn sse.ConnCallback) { s.onDisCb = fn }
-func (s *mockEventSourceBlockingSubscribe) OnConnect(fn sse.ConnCallback)    { s.onConnCb = fn }
-func (s *mockEventSourceBlockingSubscribe) SubscribeChanRawWithContext(ctx context.Context, ch chan *sse.Event) error {
+func (s *mockEventSourceBlockingSubscribe) OnDisconnect(fn connCallback) { s.onDisCb = fn }
+func (s *mockEventSourceBlockingSubscribe) OnConnect(fn connCallback)    { s.onConnCb = fn }
+func (s *mockEventSourceBlockingSubscribe) SubscribeChanRawWithContext(ctx context.Context, ch chan *sseEvent) error {
 	s.ctx = ctx
 	s.messageChan = ch
 	s.chConnected <- true
@@ -359,7 +358,7 @@ func TestStreamNoGoroutineLeakOnConnectCancelRace(t *testing.T) {
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
-			s.onConnCb(nil)
+			s.onConnCb()
 		}()
 		client.Cancel()
 		<-done
@@ -427,13 +426,13 @@ func TestStreamNoGoroutineLeakOnDisconnectCancelRace(t *testing.T) {
 		errorCh := make(chan error, 1)
 		client.Connect(messageCh, errorCh)
 		<-s.chConnected
-		s.onConnCb(nil)
+		s.onConnCb()
 
 		// Fire OnDisconnect and Cancel concurrently to hit the TOCTOU window.
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
-			s.onDisCb(nil)
+			s.onDisCb()
 		}()
 		client.Cancel()
 		<-done

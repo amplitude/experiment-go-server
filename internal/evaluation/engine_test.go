@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/amplitude/experiment-go-server/pkg/logger"
 	"github.com/amplitude/experiment-go-server/pkg/experiment"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -1001,7 +1001,7 @@ func getFlagConfigsRaw() ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
