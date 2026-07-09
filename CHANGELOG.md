@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/amplitude/experiment-go-server/compare/v1.11.2...v1.12.0) (2026-07-09)
+
+
+### Features
+
+* **local:** require Go 1.22 for tmaxmax/go-sse and cover the SSE adapter ([#49](https://github.com/amplitude/experiment-go-server/issues/49)) ([dd61724](https://github.com/amplitude/experiment-go-server/commit/dd61724291a11eeb303508ccde54d21726f0fff5)), closes [#48](https://github.com/amplitude/experiment-go-server/issues/48)
+
 ## [1.11.2](https://github.com/amplitude/experiment-go-server/compare/v1.11.1...v1.11.2) (2026-06-30)
 
 
