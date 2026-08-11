@@ -116,6 +116,13 @@ func (c *Client) doFetch(ctx context.Context, user *experiment.User, timeout tim
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	req.Header.Set("X-Amp-Exp-User", base64.StdEncoding.EncodeToString(jsonBytes))
 	if fetchOptions != nil {
+		if fetchOptions.FlagKeys != nil {
+			flagKeysJSON, err := json.Marshal(fetchOptions.FlagKeys)
+			if err != nil {
+				return nil, err
+			}
+			req.Header.Set("X-Amp-Exp-Flag-Keys", base64.RawURLEncoding.EncodeToString(flagKeysJSON))
+		}
 		if fetchOptions.TracksAssignment {
 			req.Header.Set("X-Amp-Exp-Track", "track")
 		} else {

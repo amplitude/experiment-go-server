@@ -1,6 +1,8 @@
 package remote
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -31,6 +33,43 @@ func TestClient_FetchV2_ReturnsDefaultVariants(t *testing.T) {
 	variant := result["sdk-ci-test"]
 	require.NotNil(t, variant)
 	require.Equal(t, "off", variant.Key)
+}
+
+func TestClient_FetchV2WithOptions_FlagKeys_Partial(t *testing.T) {
+	client := Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz", nil)
+	user := &experiment.User{UserId: "test_user"}
+	result, err := client.FetchV2WithOptions(user, &FetchOptions{
+		FlagKeys:         []string{"sdk-ci-test"},
+		TracksAssignment: true,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	variant := result["sdk-ci-test"]
+	require.Equal(t, "on", variant.Key)
+	require.Equal(t, "on", variant.Value)
+	require.Equal(t, "payload", variant.Payload)
+}
+
+func TestClient_FetchV2WithOptions_FlagKeys_None_ReturnsAll(t *testing.T) {
+	client := Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz", nil)
+	user := &experiment.User{UserId: "test_user"}
+	result, err := client.FetchV2WithOptions(user, &FetchOptions{
+		TracksAssignment: true,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.GreaterOrEqual(t, len(result), 2)
+}
+
+func TestClient_FetchV2WithOptions_FlagKeys_NonExistent(t *testing.T) {
+	client := Initialize("server-qz35UwzJ5akieoAdIgzM4m9MIiOLXLoz", nil)
+	user := &experiment.User{UserId: "test_user"}
+	result, err := client.FetchV2WithOptions(user, &FetchOptions{
+		FlagKeys:         []string{"123"},
+		TracksAssignment: true,
+	})
+	require.NoError(t, err)
+	require.Empty(t, result)
 }
 
 func TestClient_FetchRetryWithDifferentResponseCodes(t *testing.T) {
@@ -107,14 +146,25 @@ func TestClient_FetchRetryWithDifferentResponseCodes(t *testing.T) {
 func TestClient_FetchV2WithOptions(t *testing.T) {
 	testData := []FetchOptions{
 		{TracksAssignment: true, TracksExposure: true},
-		{TracksAssignment: true, TracksExposure: false},
-		{TracksAssignment: false, TracksExposure: true},
-		{TracksAssignment: false, TracksExposure: false},
+		{FlagKeys: []string{}, TracksAssignment: true, TracksExposure: false},
+		{FlagKeys: []string{"flag-1"}, TracksAssignment: false, TracksExposure: true},
+		{FlagKeys: []string{"flag-1", "flag-2"}, TracksAssignment: false, TracksExposure: false},
 	}
 
 	for _, fetchOptions := range testData {
 		// Create a new httptest.Server for each iteration
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if fetchOptions.FlagKeys == nil {
+				require.Empty(t, r.Header.Get("X-Amp-Exp-Flag-Keys"))
+			} else {
+				flagKeysJSON, err := json.Marshal(fetchOptions.FlagKeys)
+				require.NoError(t, err)
+				require.Equal(
+					t,
+					base64.RawURLEncoding.EncodeToString(flagKeysJSON),
+					r.Header.Get("X-Amp-Exp-Flag-Keys"),
+				)
+			}
 			if fetchOptions.TracksAssignment {
 				require.Equal(t, r.Header.Get("X-Amp-Exp-Track"), "track")
 			} else {
