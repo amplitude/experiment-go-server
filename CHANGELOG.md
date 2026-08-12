@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/amplitude/experiment-go-server/compare/v1.12.0...v1.13.0) (2026-08-12)
+
+
+### Features
+
+* **remote:** add FlagKeys option to fetch requests ([#50](https://github.com/amplitude/experiment-go-server/issues/50)) ([c5b8161](https://github.com/amplitude/experiment-go-server/commit/c5b81616d932c17dd94304dacf786ae6e37bcdc6))
+
 # [1.12.0](https://github.com/amplitude/experiment-go-server/compare/v1.11.2...v1.12.0) (2026-07-09)
 
 
