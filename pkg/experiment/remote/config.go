@@ -60,5 +60,8 @@ func fillConfigDefaults(c *Config) *Config {
 			c.LogLevel = logger.Error
 		}
 	}
+	if c.LoggerProvider == nil {
+		c.LoggerProvider = logger.NewDefault()
+	}
 	return c
 }
