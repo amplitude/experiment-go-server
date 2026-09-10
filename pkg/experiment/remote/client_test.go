@@ -183,6 +183,24 @@ func TestInitialize_UserSuppliedConfig_DoesNotPanic(t *testing.T) {
 	})
 }
 
+// recordingLoggerProvider records debug messages and delegates the rest to the default provider.
+type recordingLoggerProvider struct {
+	logger.LoggerProvider
+	debugMessages []string
+}
+
+func (p *recordingLoggerProvider) Debug(message string, args ...interface{}) {
+	p.debugMessages = append(p.debugMessages, message)
+}
+
+func TestInitialize_UserSuppliedLoggerProvider_IsUsed(t *testing.T) {
+	provider := &recordingLoggerProvider{LoggerProvider: logger.NewDefault()}
+
+	Initialize("apiKey-user-supplied-logger-provider", &Config{Debug: true, LoggerProvider: provider})
+
+	require.NotEmpty(t, provider.debugMessages, "expected the supplied logger provider to receive the debug logs")
+}
+
 func TestClient_FetchV2WithOptions(t *testing.T) {
 	testData := []FetchOptions{
 		{TracksAssignment: true, TracksExposure: true},
