@@ -143,6 +143,46 @@ func TestClient_FetchRetryWithDifferentResponseCodes(t *testing.T) {
 	}
 }
 
+func TestClient_UserSuppliedConfig_FetchLoggingDoesNotPanic(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Fetch Exception 500", http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	testData := []struct {
+		name   string
+		config *Config
+	}{
+		// Debug logs are emitted before the request is even sent.
+		{"debug enabled", &Config{Debug: true}},
+		// Nothing is logged until the fetch fails at the default error level.
+		{"default log level", &Config{}},
+	}
+
+	for _, data := range testData {
+		t.Run(data.name, func(t *testing.T) {
+			data.config.ServerUrl = server.URL
+			config := fillConfigDefaults(data.config)
+			client := &Client{
+				log:    logger.New(config.LogLevel, config.LoggerProvider),
+				apiKey: "apiKey",
+				config: config,
+				client: server.Client(),
+			}
+
+			require.NotPanics(t, func() {
+				_, _ = client.Fetch(&experiment.User{UserId: "test_user"})
+			})
+		})
+	}
+}
+
+func TestInitialize_UserSuppliedConfig_DoesNotPanic(t *testing.T) {
+	require.NotPanics(t, func() {
+		Initialize("apiKey-user-supplied-config", &Config{Debug: true})
+	})
+}
+
 func TestClient_FetchV2WithOptions(t *testing.T) {
 	testData := []FetchOptions{
 		{TracksAssignment: true, TracksExposure: true},
