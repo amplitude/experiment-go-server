@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/amplitude/experiment-go-server/compare/v1.13.0...v1.13.1) (2026-09-10)
+
+
+### Bug Fixes
+
+* **remote:** default LoggerProvider when a config is supplied ([#51](https://github.com/amplitude/experiment-go-server/issues/51)) ([5dd8e06](https://github.com/amplitude/experiment-go-server/commit/5dd8e06855399491e5457dad87b1d96065dfcdb0))
+
 # [1.13.0](https://github.com/amplitude/experiment-go-server/compare/v1.12.0...v1.13.0) (2026-08-12)
 
 
