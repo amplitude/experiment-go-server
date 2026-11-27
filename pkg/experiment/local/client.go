@@ -147,7 +147,7 @@ func (c *Client) EvaluateV2WithOptions(user *experiment.User, options *EvaluateO
 		return nil, err
 	}
 	c.requiredCohortsInStorage(sortedFlags)
-	enrichedUser, err := c.enrichUserWithCohorts(user, flagConfigs)
+	enrichedUser, err := c.enrichUserWithCohorts(user, sortedFlags)
 	if err != nil {
 		return nil, err
 	}
@@ -392,13 +392,12 @@ func (c *Client) requiredCohortsInStorage(flagConfigs []*evaluation.Flag) {
 	}
 }
 
-func (c *Client) enrichUserWithCohorts(user *experiment.User, flagConfigs map[string]*evaluation.Flag) (*experiment.User, error) {
-	flagConfigSlice := make([]*evaluation.Flag, 0, len(flagConfigs))
-
-	for _, value := range flagConfigs {
-		flagConfigSlice = append(flagConfigSlice, value)
-	}
-	groupedCohortIDs := getGroupedCohortIDsFromFlags(flagConfigSlice)
+// enrichUserWithCohorts looks up the user's (and groups') membership only in
+// cohorts targeted by the given flags. Pass the flags being evaluated (the
+// requested flags plus their dependencies), not every flag in the deployment:
+// cohorts no evaluated flag references would be looked up and never read.
+func (c *Client) enrichUserWithCohorts(user *experiment.User, flags []*evaluation.Flag) (*experiment.User, error) {
+	groupedCohortIDs := getGroupedCohortIDsFromFlags(flags)
 
 	if cohortIDs, ok := groupedCohortIDs[userGroupType]; ok {
 		if len(cohortIDs) > 0 && user.UserId != "" {
