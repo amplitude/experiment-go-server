@@ -393,9 +393,8 @@ func (c *Client) requiredCohortsInStorage(flagConfigs []*evaluation.Flag) {
 }
 
 // enrichUserWithCohorts looks up the user's (and groups') membership only in
-// cohorts targeted by the given flags. Pass the flags being evaluated (the
-// requested flags plus their dependencies), not every flag in the deployment:
-// cohorts no evaluated flag references would be looked up and never read.
+// cohorts targeted by the requested flags(plus their dependencies)
+// There's no need to check every single flag in the deployment.
 func (c *Client) enrichUserWithCohorts(user *experiment.User, flags []*evaluation.Flag) (*experiment.User, error) {
 	groupedCohortIDs := getGroupedCohortIDsFromFlags(flags)
 
