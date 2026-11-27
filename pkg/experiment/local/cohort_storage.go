@@ -1,6 +1,7 @@
 package local
 
 import (
+	"slices"
 	"sync"
 )
 
@@ -60,11 +61,9 @@ func (s *inMemoryCohortStorage) getCohortsForGroup(groupType, groupName string, 
 	for cohortID := range cohortIDs {
 		if _, exists := groupTypeCohorts[cohortID]; exists {
 			if cohort, found := s.cohortStore[cohortID]; found {
-				for _, memberID := range cohort.MemberIds {
-					if memberID == groupName {
-						result[cohortID] = struct{}{}
-						break
-					}
+				// MemberIds is sorted in putCohort, so membership is a binary search.
+				if _, isMember := slices.BinarySearch(cohort.MemberIds, groupName); isMember {
+					result[cohortID] = struct{}{}
 				}
 			}
 		}
@@ -73,7 +72,12 @@ func (s *inMemoryCohortStorage) getCohortsForGroup(groupType, groupName string, 
 	return result
 }
 
+// putCohort stores the cohort, sorting its MemberIds in place so that
+// getCohortsForGroup can binary search them. The sort runs before taking the
+// lock: the cohort is not yet visible to readers, and sorting a large cohort
+// should not block evaluations.
 func (s *inMemoryCohortStorage) putCohort(cohort *Cohort) {
+	slices.Sort(cohort.MemberIds)
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if _, exists := s.groupToCohortStore[cohort.GroupType]; !exists {
